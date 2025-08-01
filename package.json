@@ -1,0 +1,29 @@
+{
+  "version": "0.0.1",
+  "private": false,
+  "name": "jopi-node-space",
+  "license": "MIT",
+  "homepage": "https://github.com/johanpiquet/jopi-node-space",
+
+  "keywords": [],
+  "author": "Johan PIQUET",
+  "description": "An helper for hybrid apps",
+
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+
+  "devDependencies": {
+    "@types/node": "latest",
+    "@types/bun": "latest"
+  },
+
+  "dependencies": {
+    "jopi-logs": "workspace:*"
+  },
+
+  "scripts": {
+    "tsc": "tsc",
+    "npm-publish": "npm publish"
+  }
+}
