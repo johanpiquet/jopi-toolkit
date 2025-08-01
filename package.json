@@ -18,12 +18,10 @@
     "@types/bun": "latest"
   },
 
-  "dependencies": {
-    "jopi-logs": "workspace:*"
-  },
-
   "scripts": {
+    "bun-install": "bun install",
     "tsc": "tsc",
+
     "npm-publish": "npm publish"
   }
 }
