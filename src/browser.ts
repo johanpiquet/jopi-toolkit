@@ -1,9 +1,10 @@
-import {init_nodeSpaceWhat} from "./nodeSpaceWhat.ts";
-import {init_nodeSpaceApp} from "./nodeSpaceApp.ts";
-import {init_nodeSpaceProcess} from "./nodeSpaceProcess.ts";
-import {init_nodeSpaceTimer} from "./nodeSpaceTimer.ts";
-import {init_nodeSpaceThread} from "./nodeSpaceThread.ts";
-import {init_nodeSpaceExtensionPoints} from "./nodeSpaceExtensionPoints";
+import {init_nodeSpaceWhat} from "./_what";
+import {init_nodeSpaceApp} from "./_app";
+import {init_nodeSpaceProcess} from "./_process";
+import {init_nodeSpaceTimer} from "./_timer";
+import {init_nodeSpaceThread} from "./_thread";
+import {init_nodeSpaceExtensionPoints} from "./_extensionPoints";
+import {init_term} from "./_term";
 
 export function initBrowser() {
     init_nodeSpaceWhat();
@@ -12,4 +13,5 @@ export function initBrowser() {
     init_nodeSpaceTimer();
     init_nodeSpaceThread();
     init_nodeSpaceExtensionPoints();
+    init_term();
 }

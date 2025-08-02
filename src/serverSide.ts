@@ -1,43 +1,10 @@
-import {isMainThread, parentPort, Worker as NodeWorker, workerData} from "node:worker_threads";
-import {declareUsingWorker} from "./internal.ts";
-import fs from "node:fs/promises";
+import {patch_process} from "./_process_s";
+import {patch_server} from "./_thread_s";
+import {patch_fs} from "./_fs_s";
 
-NodeSpace.process = {
-    argv: process.argv,
-    env: process.env as { [key: string]: string },
-    isProduction: process.env.NODE_ENV === 'production'
-};
-
-NodeSpace.thread = {
-    isMainThread: isMainThread,
-    currentWorker: parentPort as unknown as Worker,
-    getCurrentWorkerData: () => workerData,
-
-    newWorker: (fileName, data?: any) => {
-        declareUsingWorker();
-
-        const res = data ?
-            new NodeWorker(fileName, {workerData: data}) :
-            new NodeWorker(fileName);
-
-        return res as unknown as Worker
-    },
-
-    unrefThisWorker: (worker: Worker) => {
-        (worker as unknown as NodeWorker).unref();
-    },
-
-    closeCurrentThread() {
-        if (parentPort) {
-            parentPort.close();
-        }
-    }
-}
-
-NodeSpace.fs = {
-    mkDir: (dirPath: string) => fs.mkdir(dirPath, {recursive: true})
-}
+patch_process();
+patch_server();
+patch_fs();
 
 NodeSpace.app.declareServerSideReady();
-
 process.on('exit', () => NodeSpace.app.declareAppExiting());

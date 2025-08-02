@@ -1,4 +1,4 @@
-import {type EpCaller, type EpListener} from "./common.ts";
+import {type EpCaller, type EpListener} from "./__global.ts";
 
 interface ExtensionPoint {
     listeners: EpListener[];

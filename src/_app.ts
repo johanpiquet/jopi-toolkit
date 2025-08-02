@@ -1,5 +1,6 @@
-import {execListeners, isBunJs, isNodeJs, type Listener} from "./common.ts";
+import {execListeners, isBunJs, isNodeJs} from "./common.ts";
 import {isUsingWorker} from "./internal.ts";
+import type {Listener} from "./__global";
 
 export function init_nodeSpaceApp() {
     const onServerSideReady: Listener[] = [];
@@ -8,20 +9,20 @@ export function init_nodeSpaceApp() {
     const onAppStart: Listener[] = [];
     let isServerSideReady = !(isNodeJs() || isBunJs());
 
-    let isHotReload = globalThis.jopiHotReloader !== undefined;
+    let isHotReload = globalThis.jopiHotReload !== undefined;
     let isAppStarted = false;
 
     if (isHotReload) {
-        execListeners(globalThis.jopiHotReloader.onHotReload).then();
+        execListeners(globalThis.jopiHotReload.onHotReload).then();
     } else {
-        globalThis.jopiHotReloader = {
+        globalThis.jopiHotReload = {
             onHotReload: [],
             memory: {}
         }
     }
 
-    const onHotReload = globalThis.jopiHotReloader.onHotReload;
-    const memory = globalThis.jopiHotReloader.memory;
+    const onHotReload = globalThis.jopiHotReload.onHotReload;
+    const memory = globalThis.jopiHotReload.memory;
 
     NodeSpace.app = {
         onServerSideReady: (listener) => {

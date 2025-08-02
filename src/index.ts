@@ -1,8 +1,9 @@
-import {isBunJs, isNodeJs, isServerSide, type ServerType} from "./common.ts";
+import {isBunJs, isNodeJs, isServerSide} from "./common.ts";
 
 export * from "./common.ts";
 
 import {initBrowser} from "./browser.ts";
+import type {ServerType} from "./__global";
 
 // Will init with the common stuffs.
 initBrowser();
