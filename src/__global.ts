@@ -1,5 +1,3 @@
-import {deferred, ONE_DAY, ONE_HOUR, ONE_MINUTE, ONE_SECOND, type TimerCallback} from "./_timer";
-
 declare global {
     var NodeSpace: NodeSpaceType;
     var jopiHotReload: HotReloadType;
@@ -26,7 +24,7 @@ export interface NodeSpaceType {
 
     // >>> Server side only
 
-    fs?: FileSystemImpl;
+    fs: FileSystemImpl;
 
     // >>> Tools
 
@@ -63,6 +61,8 @@ interface ProcessImpl {
     isProduction: boolean;
 }
 
+export type TimerCallback = () => void|boolean|Promise<void|boolean>;
+
 interface TimerImpl {
     ONE_SECOND: number,
     ONE_MINUTE: number,
@@ -74,8 +74,30 @@ interface TimerImpl {
     deferred: (callback: ()=>void) => void;
 }
 
+export interface FileState {
+    size: number,
+
+    mtimeMs: number,
+    ctimeMs: number,
+    birthtimeMs: number,
+
+    isDirectory: () => boolean,
+    isFile: () => boolean,
+    isSymbolicLink: () => boolean,
+}
+
+
 interface FileSystemImpl {
     mkDir: (dirPath: string) => Promise<string | undefined>;
+    fileURLToPath: (url: string) => string;
+    pathToFileURL: (fsPath: string) => URL;
+
+    getMimeTypeFromName: (fileName: string) => string;
+    getFileSize: (filePath: string) => Promise<number>;
+    getFileStat: (filePath: string) => Promise<FileState>;
+
+    writeResponseToFile: (response: Response, filePath: string) => Promise<void>;
+    createResponseFromFile: (filePath: string, status?: number, headers?: {[key: string]: string}|Headers) => Response;
 }
 
 interface AppImpl {
