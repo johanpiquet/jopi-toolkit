@@ -135,11 +135,6 @@ interface ExtensionPointImpl {
 }
 
 interface TerminalImpl {
-    /**
-     * Do a console.log, but replace the current line or add a new one.
-     */
-    consoleLogErasable: (erase: boolean, ...args: unknown[])=>void;
-
     T_RESET: string;
     T_BOLD: string;
     T_UNDERLINE: string;
@@ -164,6 +159,11 @@ interface TerminalImpl {
     B_MAGENTA: string;
     B_CYAN: string;
     B_WHITE: string;
+
+    /**
+     * Do a console.log, but replace the current line or add a new one.
+     */
+    consoleLogErasable: (erase: boolean, ...args: unknown[])=>void;
 
     colorize(...params: string[]): string;
     cssText(text: string, css: string): void;

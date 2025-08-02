@@ -85,9 +85,15 @@ export function init_term() {
         moveUp, moveDown, moveLeft, moveRight, goAt,
 
         consoleLogErasable: (erase: boolean, ...args: unknown[]) => {
-        if (erase) console.log("\r\x1B[1F\x1B[1F\x1b[K", ...args);
-        else console.log(...args);
-    }
+            if (erase) {
+                let first = args.shift();
+                if (first) first = "" + first;
+                console.log("\r\x1B[1F\x1B[1F\x1b[K" + first, ...args);
+            }
+            else {
+                console.log(...args);
+            }
+        }
 
     }
 }
