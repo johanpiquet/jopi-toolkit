@@ -51,6 +51,24 @@ function goAt(x: number, y: number) {
 
 export function init_term() {
     NodeSpace.term = {
+        colorize(...params: string[]): string {
+            return params.join("") + T_RESET;
+        },
+
+        cssText,
+
+        moveUp, moveDown, moveLeft, moveRight, goAt,
+
+        consoleLogTemp: (isTemp: boolean, ...args: unknown[]) => {
+            let first = args.shift();
+            if (first) first = "" + first;
+
+            //console.log("\r\x1B[1F\x1B[1F\x1b[K" + first, ...args);
+            console.log(moveLeft(1000) + moveUp(1) + first, ...args);
+
+            if (!isTemp) console.log();
+        },
+
         C_RED,
         C_GREEN,
         C_BLUE,
@@ -74,26 +92,6 @@ export function init_term() {
         T_REWRITE_LINE,
         T_CLEAR_LINE,
         T_CLEAR_LINE_END,
-        T_LINE_START,
-
-        colorize(...params: string[]): string {
-            return params.join("") + T_RESET;
-        },
-
-        cssText,
-
-        moveUp, moveDown, moveLeft, moveRight, goAt,
-
-        consoleLogErasable: (erase: boolean, ...args: unknown[]) => {
-            if (erase) {
-                let first = args.shift();
-                if (first) first = "" + first;
-                console.log("\r\x1B[1F\x1B[1F\x1b[K" + first, ...args);
-            }
-            else {
-                console.log(...args);
-            }
-        }
-
+        T_LINE_START
     }
 }

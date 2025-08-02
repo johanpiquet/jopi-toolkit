@@ -38,7 +38,7 @@ export interface HotReloadType {
     memory: { [key: string]: any };
 }
 
-interface WhatInfos {
+export interface WhatInfos {
     isNodeJS: boolean;
     isBunJs: boolean;
     isBrowser: boolean;
@@ -46,7 +46,7 @@ interface WhatInfos {
     serverType: ServerType;
 }
 
-interface ThreadImpl {
+export interface ThreadImpl {
     isMainThread: boolean;
     currentWorker: Worker | null;
     newWorker: (fileName: string | URL, data?: any) => Worker;
@@ -55,7 +55,7 @@ interface ThreadImpl {
     closeCurrentThread(): void;
 }
 
-interface ProcessImpl {
+export interface ProcessImpl {
     argv: string[];
     env: { [key: string]: string };
     isProduction: boolean;
@@ -63,7 +63,7 @@ interface ProcessImpl {
 
 export type TimerCallback = () => void|boolean|Promise<void|boolean>;
 
-interface TimerImpl {
+export interface TimerImpl {
     ONE_SECOND: number,
     ONE_MINUTE: number,
     ONE_HOUR: number,
@@ -86,7 +86,7 @@ export interface FileState {
     isSymbolicLink: () => boolean,
 }
 
-interface FileSystemImpl {
+export interface FileSystemImpl {
     mkDir: (dirPath: string) => Promise<string | undefined>;
     fileURLToPath: (url: string) => string;
     pathToFileURL: (fsPath: string) => URL;
@@ -99,7 +99,7 @@ interface FileSystemImpl {
     createResponseFromFile: (filePath: string, status?: number, headers?: {[key: string]: string}|Headers) => Response;
 }
 
-interface AppImpl {
+export interface AppImpl {
     onServerSideReady(listener: Listener): void;
     waitServerSideReady: () => Promise<void>;
     declareServerSideReady(): void;
@@ -116,7 +116,7 @@ interface AppImpl {
     clearHotReloadKey: (key: string) => void;
 }
 
-interface ExtensionPointImpl {
+export interface ExtensionPointImpl {
     /**
      * Register an extension point.
      * Allow knowing who is using it as an host.
@@ -134,7 +134,21 @@ interface ExtensionPointImpl {
     on(epName: string, importMetaUrl: string, fct: EpListener): void;
 }
 
-interface TerminalImpl {
+export interface TerminalImpl {
+    colorize: (...params: string[]) => string;
+    cssText: (text: string, css: string) => void;
+
+    moveUp: (n: number) => string;
+    moveDown: (n: number) => string;
+    moveLeft: (n: number) => string;
+    moveRight: (n: number) => string;
+    goAt: (x: number, y: number) => string;
+
+    /**
+     * Write a temporary message, which are replaced each time by the next temp message.
+     */
+    consoleLogTemp: (isTemp: boolean, ...args: unknown[]) => void,
+
     T_RESET: string;
     T_BOLD: string;
     T_UNDERLINE: string;
@@ -159,18 +173,4 @@ interface TerminalImpl {
     B_MAGENTA: string;
     B_CYAN: string;
     B_WHITE: string;
-
-    /**
-     * Do a console.log, but replace the current line or add a new one.
-     */
-    consoleLogErasable: (erase: boolean, ...args: unknown[])=>void;
-
-    colorize(...params: string[]): string;
-    cssText(text: string, css: string): void;
-
-    moveUp(n: number): string;
-    moveDown(n: number): string;
-    moveLeft(n: number): string;
-    moveRight(n: number): string;
-    goAt(x: number, y: number): string;
 }

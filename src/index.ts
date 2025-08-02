@@ -1,9 +1,9 @@
 import {isBunJs, isNodeJs, isServerSide} from "./common.ts";
 
-export * from "./common.ts";
+export * from "./__global.ts";
 
 import {initBrowser} from "./browser.ts";
-import type {ServerType} from "./__global";
+import type {ServerType} from "./__global.ts";
 
 // Will init with the common stuffs.
 initBrowser();
@@ -34,3 +34,5 @@ if (isServerSide()) {
     //
     await import(/* @vite-ignore */ fileName);
 }
+
+export default NodeSpace;

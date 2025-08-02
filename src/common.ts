@@ -31,8 +31,3 @@ export function isNodeJs(): boolean {
     if (_isNodeJs) return _isNodeJs;
     return _isNodeJs = typeof(self)==="undefined";
 }
-
-export function tick(delayMs: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, delayMs));
-}
-
