@@ -5,6 +5,7 @@ const T_UNDERLINE = "\x1b[4m";
 
 const T_CLEAR_LINE = "\x1b[2K";
 const T_CLEAR_LINE_END = "\x1b[K";
+const T_REWRITE_LINE = "\r\x1B[1F\x1B[1F\x1b[K";
 const T_CLEAR_SCREEN = "\x1b[2J";
 const T_LINE_START = "\r";
 
@@ -70,6 +71,7 @@ export function init_term() {
         T_BOLD,
         T_CLEAR_SCREEN,
         T_UNDERLINE,
+        T_REWRITE_LINE,
         T_CLEAR_LINE,
         T_CLEAR_LINE_END,
         T_LINE_START,
@@ -80,7 +82,12 @@ export function init_term() {
 
         cssText,
 
-        moveUp, moveDown, moveLeft, moveRight, goAt
+        moveUp, moveDown, moveLeft, moveRight, goAt,
+
+        consoleLogErasable: (erase: boolean, ...args: unknown[]) => {
+        if (erase) console.log("\r\x1B[1F\x1B[1F\x1b[K", ...args);
+        else console.log(...args);
+    }
 
     }
 }

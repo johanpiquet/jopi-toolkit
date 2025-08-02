@@ -86,7 +86,6 @@ export interface FileState {
     isSymbolicLink: () => boolean,
 }
 
-
 interface FileSystemImpl {
     mkDir: (dirPath: string) => Promise<string | undefined>;
     fileURLToPath: (url: string) => string;
@@ -136,9 +135,15 @@ interface ExtensionPointImpl {
 }
 
 interface TerminalImpl {
+    /**
+     * Do a console.log, but replace the current line or add a new one.
+     */
+    consoleLogErasable: (erase: boolean, ...args: unknown[])=>void;
+
     T_RESET: string;
     T_BOLD: string;
     T_UNDERLINE: string;
+    T_REWRITE_LINE: string;
     T_CLEAR_LINE: string;
     T_CLEAR_LINE_END: string;
     T_CLEAR_SCREEN: string;
