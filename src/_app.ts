@@ -109,6 +109,10 @@ export function init_nodeSpaceApp() {
             let current = memory[key];
             if (current!==undefined) return current;
             return memory[key] = provider();
+        },
+
+        clearHotReloadKey: (key) => {
+            delete(memory[key]);
         }
     };
 }

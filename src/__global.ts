@@ -1,3 +1,5 @@
+import {deferred, ONE_DAY, ONE_HOUR, ONE_MINUTE, ONE_SECOND, type TimerCallback} from "./_timer";
+
 declare global {
     var NodeSpace: NodeSpaceType;
     var jopiHotReload: HotReloadType;
@@ -25,6 +27,10 @@ export interface NodeSpaceType {
     // >>> Server side only
 
     fs?: FileSystemImpl;
+
+    // >>> Tools
+
+    applyDefaults<T>(source: T|undefined, defaults: T): T;
 }
 
 // ********************************************
@@ -58,7 +64,14 @@ interface ProcessImpl {
 }
 
 interface TimerImpl {
+    ONE_SECOND: number,
+    ONE_MINUTE: number,
+    ONE_HOUR: number,
+    ONE_DAY: number,
+
     tick: (delayMs: number) => Promise<void>;
+    newInterval: (durationInMs: number, callback: TimerCallback) => void;
+    deferred: (callback: ()=>void) => void;
 }
 
 interface FileSystemImpl {
@@ -79,6 +92,7 @@ interface AppImpl {
 
     onHotReload(listener: Listener): void;
     keepOnHotReload<T>(key: string, provider: ()=>T): T;
+    clearHotReloadKey: (key: string) => void;
 }
 
 interface ExtensionPointImpl {
