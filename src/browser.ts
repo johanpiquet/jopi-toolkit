@@ -11,8 +11,14 @@ function applyDefaults<T>(source: T|undefined, defaults: T): T {
     return {...defaults, ...source};
 }
 
+function getErrorMessage(e: unknown): string {
+    if (e instanceof Error) return e.message;
+    return "" + e;
+}
+
 export function initBrowser() {
     NodeSpace.applyDefaults = applyDefaults;
+    NodeSpace.getErrorMessage = getErrorMessage;
 
     init_nodeSpaceWhat();
     init_nodeSpaceApp();

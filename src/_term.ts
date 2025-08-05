@@ -49,15 +49,24 @@ function goAt(x: number, y: number) {
     return "\x1b[" + y + ";" + x + "H";
 }
 
+function buildWriter(...colors: any[]) {
+    let before = colors.join("");
+    return (...values: any[]) => before + values.join(" ") + T_RESET;
+}
+
 export function init_term() {
     NodeSpace.term = {
-        colorize(...params: string[]): string {
-            return params.join("") + T_RESET;
-        },
-
         cssText,
 
         moveUp, moveDown, moveLeft, moveRight, goAt,
+
+        C_RED, C_GREEN, C_BLUE, C_LIGHT_BLUE, C_GREY, C_ORANGE,
+        B_BLACK, B_BLUE, B_CYAN, B_GREEN, B_MAGENTA, B_RED, B_WHITE, B_YELLOW,
+        T_RESET, T_BOLD, T_CLEAR_SCREEN, T_UNDERLINE, T_REWRITE_LINE, T_CLEAR_LINE, T_CLEAR_LINE_END, T_LINE_START,
+
+        colorize(...params: string[]): string {
+            return params.join("") + T_RESET;
+        },
 
         consoleLogTemp: (isTemp: boolean, ...args: unknown[]) => {
             let first = args.shift();
@@ -68,30 +77,15 @@ export function init_term() {
 
             if (!isTemp) console.log();
         },
+        buildWriter: buildWriter,
 
-        C_RED,
-        C_GREEN,
-        C_BLUE,
-        C_LIGHT_BLUE,
-        C_GREY,
-        C_ORANGE,
+        buildLogger(...colors) {
+            const writer = buildWriter(...colors);
+            return (...values) => console.log(writer(...values));
+        },
 
-        B_BLACK,
-        B_BLUE,
-        B_CYAN,
-        B_GREEN,
-        B_MAGENTA,
-        B_RED,
-        B_WHITE,
-        B_YELLOW,
-
-        T_RESET,
-        T_BOLD,
-        T_CLEAR_SCREEN,
-        T_UNDERLINE,
-        T_REWRITE_LINE,
-        T_CLEAR_LINE,
-        T_CLEAR_LINE_END,
-        T_LINE_START
+        indentText(spacer, text) {
+            return spacer + text.replaceAll("\r", "").replaceAll("\n", spacer + "\n");
+        }
     }
 }

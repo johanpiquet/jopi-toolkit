@@ -29,6 +29,7 @@ export interface NodeSpaceType {
     // >>> Tools
 
     applyDefaults<T>(source: T|undefined, defaults: T): T;
+    getErrorMessage(e: unknown): string;
 }
 
 // ********************************************
@@ -143,6 +144,21 @@ export interface TerminalImpl {
     moveLeft: (n: number) => string;
     moveRight: (n: number) => string;
     goAt: (x: number, y: number) => string;
+
+    /**
+     * Build a console.log function that uses the colors provided in params.
+     */
+    buildLogger: (...colors: string[]) => ((...params: any[])=>void);
+
+    /**
+     * Build a console.log function that uses the colors provided in params.
+     */
+    buildWriter: (...colors: string[]) => ((...params: any[])=>string);
+
+    /**
+     * Indent a multiline text.
+     */
+    indentText: (space: string, text: string) => string;
 
     /**
      * Write a temporary message, which are replaced each time by the next temp message.
