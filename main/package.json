@@ -21,10 +21,7 @@
   "scripts": {
     "bun-install": "bun install",
     "tsc": "tsc",
-    "npm-publish": "npm publish",
-
-    "bun link": "bun link",
-    "bun unlink": "bun unlink"
+    "npm-publish": "npm publish"
   },
 
   "dependencies": {
