@@ -5,7 +5,7 @@ import {init_nodeSpaceTimer} from "./_timer.ts";
 import {init_nodeSpaceThread} from "./_thread.ts";
 import {init_nodeSpaceExtensionPoints} from "./_extensionPoints.ts";
 import {init_term} from "./_term.ts";
-import type {CompressImpl, CryptoImpl, FileSystemImpl} from "./__global.ts";
+import type {CompressImpl, CryptoImpl, FileSystemImpl, OsImpl} from "./__global.ts";
 
 function applyDefaults<T>(source: T|undefined, defaults: T): T {
     if (!source) source = {} as T;
@@ -34,4 +34,5 @@ export function initBrowser() {
     NodeSpace.fs = {} as FileSystemImpl;
     NodeSpace.crypto = {} as CryptoImpl;
     NodeSpace.compress = {} as CompressImpl;
+    NodeSpace.os = {} as OsImpl;
 }
