@@ -4,13 +4,36 @@ import {fileURLToPath} from "url";
 import {isBunJs} from "./common.ts";
 import {pathToFileURL} from "node:url";
 import { lookup } from "mime-types";
-import type {Readable} from "node:stream";
+import {Readable} from "node:stream";
 import {createReadStream} from "node:fs";
 import type {FileState, FileSystemImpl} from "./__global.ts";
 import {merge} from "./internal.ts";
 import path from "node:path";
 
 //region Node.js adapter
+
+class WebToNodeReadableStreamAdapter extends Readable {
+    private webStreamReader: ReadableStreamDefaultReader<any>;
+
+    constructor(webStream: ReadableStream<any>) {
+        super();
+        this.webStreamReader = webStream.getReader();
+    }
+
+    _read() {
+        this.webStreamReader.read().then(({ done, value }) => {
+            if (done) {this.push(null); return; }
+            const buffer = Buffer.from(value);
+            if (!this.push(buffer)) this.webStreamReader.cancel();
+        }).catch(err => {
+            this.destroy(err);
+        });
+    }
+
+    _destroy(err: Error | null, callback: (error?: Error | null) => void): void {
+        this.webStreamReader.cancel().finally(() => { callback(err) });
+    }
+}
 
 async function writeResponseToFile(response: Response, filePath: string, createDir: boolean = true) {
     if (createDir) await mkDirRec(path.dirname(filePath));
@@ -27,6 +50,10 @@ function nodeStreamToWebStream(nodeStream: Readable): ReadableStream {
                 nodeStream.on('error', (err) => { controller.error(err) });
             }
         });
+}
+
+function webStreamToNodeStream(webStream: ReadableStream): Readable {
+    return new WebToNodeReadableStreamAdapter(webStream);
 }
 
 function createResponseFromFile(filePath: string, status: number = 200, headers?: {[key: string]: string}|Headers): Response {
@@ -103,6 +130,8 @@ export function patch_fs() {
         createResponseFromFile,
         getFileStat,
         readFileToBytes,
+
+        nodeStreamToWebStream, webStreamToNodeStream,
 
         writeTextToFile, readTextFromFile, readTextSyncFromFile,
         isFile, isDirectory

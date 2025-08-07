@@ -122,6 +122,9 @@ export interface FileSystemImpl {
     isDirectory(dirPath: string): Promise<boolean>;
 
     readFileToBytes(filePath: string): Promise<Uint8Array>;
+
+    nodeStreamToWebStream(nodeStream: NodeJS.ReadableStream): ReadableStream;
+    webStreamToNodeStream(webStream: ReadableStream): NodeJS.ReadableStream
 }
 
 export interface AppImpl {
