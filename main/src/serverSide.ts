@@ -6,6 +6,7 @@ import {patch_compress} from "./_compress_s.ts";
 
 import type {ServerType} from "./__global.ts";
 import {isBunJs, isNodeJs} from "./common.ts";
+import {patch_os} from "./_os_s.ts";
 
 let serverType: ServerType = "nodejs";
 if (isBunJs()) serverType = "bunjs";
@@ -24,6 +25,7 @@ patch_thread();
 patch_fs();
 patch_crypto();
 patch_compress();
+patch_os();
 
 NodeSpace.app.declareServerSideReady();
 process.on('exit', () => NodeSpace.app.declareAppExiting());

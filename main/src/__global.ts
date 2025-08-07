@@ -17,6 +17,7 @@ export interface NodeSpaceType {
     what: WhatInfos;
     thread: ThreadImpl;
     process: ProcessImpl;
+    os: OsImpl;
     timer: TimerImpl;
     app: AppImpl;
     extensionPoints: ExtensionPointImpl;
@@ -67,7 +68,11 @@ export interface ProcessImpl {
     argv: string[];
     env: { [key: string]: string };
     isProduction: boolean;
+}
+
+export interface OsImpl {
     exec(command: string): Promise<void>;
+    which(toolName: string): Promise<string|null>;
 }
 
 export type TimerCallback = () => void|boolean|Promise<void|boolean>;
