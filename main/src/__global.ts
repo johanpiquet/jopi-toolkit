@@ -88,19 +88,23 @@ export interface FileState {
 }
 
 export interface FileSystemImpl {
-    mkDir: (dirPath: string) => Promise<string | undefined>;
+    mkDir: (dirPath: string) => Promise<void>;
     fileURLToPath: (url: string) => string;
     pathToFileURL: (fsPath: string) => URL;
 
     getMimeTypeFromName: (fileName: string) => string;
     getFileSize: (filePath: string) => Promise<number>;
-    getFileStat: (filePath: string) => Promise<FileState>;
+    getFileStat: (filePath: string) => Promise<FileState|undefined>;
 
     writeResponseToFile: (response: Response, filePath: string) => Promise<void>;
     createResponseFromFile: (filePath: string, status?: number, headers?: {[key: string]: string}|Headers) => Response;
 
     writeTextToFile(filePath: string, text: string, createDir?: boolean): Promise<void>;
     readTextFromFile(filePath: string): Promise<string>;
+    readTextSyncFromFile(filePath: string): string;
+
+    isFile(filePath: string): Promise<boolean>;
+    isDirectory(dirPath: string): Promise<boolean>;
 }
 
 export interface AppImpl {

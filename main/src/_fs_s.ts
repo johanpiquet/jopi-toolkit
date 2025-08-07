@@ -1,4 +1,5 @@
 import fs from "node:fs/promises";
+import fss from "node:fs";
 import {fileURLToPath} from "url";
 import {isBunJs} from "./common.ts";
 import {pathToFileURL} from "node:url";
@@ -7,6 +8,7 @@ import type {Readable} from "node:stream";
 import {createReadStream} from "node:fs";
 import type {FileState, FileSystemImpl} from "./__global.ts";
 import {merge} from "./internal";
+import path from "node:path";
 
 //region NodeJS adapter
 
@@ -33,12 +35,17 @@ function createResponseFromFile(filePath: string, status: number = 200, headers?
 }
 
 async function getFileSize(filePath: string): Promise<number> {
-    const stat = await fs.stat(filePath);
-    return stat.size;
+    try {
+        return (await fs.stat(filePath)).size;
+    }
+    catch {
+        return 0;
+    }
 }
 
-function getFileStat(filePath: string): Promise<FileState> {
-    return fs.stat(filePath);
+function getFileStat(filePath: string): Promise<FileState|undefined> {
+    try { return fs.stat(filePath); }
+    catch { return Promise.resolve(undefined); }
 }
 
 //endregion
@@ -49,18 +56,41 @@ function getMimeTypeFromName(fileName: string) {
     return found;
 }
 
+async function mkDirRect(dirPath: string): Promise<void> {
+    try {
+        await fs.mkdir(dirPath, {recursive: true});
+    }
+    catch {}
+}
+
 async function writeTextToFile(filePath: string, text: string, createDir: boolean = true): Promise<void> {
-    if (createDir) await fs.mkdir(filePath, {recursive: true});
-    await fs.writeFile(filePath, text, 'utf8');
+    if (createDir) await mkDirRect(path.dirname(filePath));
+    await fs.writeFile(filePath, text, {encoding: 'utf8', flag: 'w'});
 }
 
 function readTextFromFile(filePath: string): Promise<string> {
     return fs.readFile(filePath, 'utf8');
 }
 
+function readTextSyncFromFile(filePath: string): string {
+    return fss.readFileSync(filePath, 'utf8');
+}
+
+async function isFile(filePath: string): Promise<boolean> {
+    const stats = await getFileStat(filePath);
+    if (!stats) return false;
+    return stats.isFile();
+}
+
+async function isDirectory(filePath: string): Promise<boolean> {
+    const stats = await getFileStat(filePath);
+    if (!stats) return false;
+    return stats.isDirectory();
+}
+
 export function patch_fs() {
     const myFS: FileSystemImpl = {
-        mkDir: (dirPath: string) => fs.mkdir(dirPath, {recursive: true}),
+        mkDir: mkDirRect,
         fileURLToPath: (url) => fileURLToPath(url),
         pathToFileURL: (fsPath) => pathToFileURL(fsPath),
 
@@ -70,7 +100,8 @@ export function patch_fs() {
         createResponseFromFile,
         getFileStat,
 
-        writeTextToFile, readTextFromFile
+        writeTextToFile, readTextFromFile, readTextSyncFromFile,
+        isFile, isDirectory
     };
 
     merge(NodeSpace.fs, myFS);
