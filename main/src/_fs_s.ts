@@ -36,17 +36,13 @@ function createResponseFromFile(filePath: string, status: number = 200, headers?
 }
 
 async function getFileSize(filePath: string): Promise<number> {
-    try {
-        return (await fs.stat(filePath)).size;
-    }
-    catch {
-        return 0;
-    }
+    try { return (await fs.stat(filePath)).size; }
+    catch { return 0; }
 }
 
-function getFileStat(filePath: string): Promise<FileState|undefined> {
-    try { return fs.stat(filePath); }
-    catch { return Promise.resolve(undefined); }
+async function getFileStat(filePath: string): Promise<FileState|undefined> {
+    try { return await fs.stat(filePath); }
+    catch { return undefined; }
 }
 
 //endregion
