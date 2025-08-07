@@ -1,10 +1,10 @@
-import type {OsImpl} from "./__global";
-import {merge} from "./internal";
+import type {OsImpl} from "./__global.ts";
+import {merge} from "./internal.ts";
 import {exec} from "node:child_process";
 import {env} from "node:process";
 import * as path from "node:path";
 import * as fs from "node:fs/promises";
-import {isBunJs} from "./common";
+import {isBunJs} from "./common.ts";
 
 async function which(command: string): Promise<string|null> {
     const pathArray = (env.PATH || '').split(process.platform === 'win32' ? ';' : ':');
