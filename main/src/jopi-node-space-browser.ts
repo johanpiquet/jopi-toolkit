@@ -17,7 +17,7 @@ function getErrorMessage(e: unknown): string {
     return "" + e;
 }
 
-export function initBrowser() {
+function initBrowser() {
     NodeSpace.applyDefaults = applyDefaults;
     NodeSpace.getErrorMessage = getErrorMessage;
 
@@ -36,3 +36,5 @@ export function initBrowser() {
     NodeSpace.compress = {} as CompressImpl;
     NodeSpace.os = {} as OsImpl;
 }
+
+initBrowser();
