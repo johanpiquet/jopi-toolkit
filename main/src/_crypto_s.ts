@@ -1,7 +1,7 @@
-import {merge} from "./internal";
+import {merge} from "./internal.ts";
 import crypto from "node:crypto";
-import type {CryptoImpl} from "./__global";
-import {isBunJs} from "./common";
+import type {CryptoImpl} from "./__global.ts";
+import {isBunJs} from "./common.ts";
 
 const sha256 = crypto.createHash('sha256');
 const md5 = crypto.createHash('md5');

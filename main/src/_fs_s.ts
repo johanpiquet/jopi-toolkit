@@ -7,12 +7,13 @@ import { lookup } from "mime-types";
 import type {Readable} from "node:stream";
 import {createReadStream} from "node:fs";
 import type {FileState, FileSystemImpl} from "./__global.ts";
-import {merge} from "./internal";
+import {merge} from "./internal.ts";
 import path from "node:path";
 
-//region NodeJS adapter
+//region Node.js adapter
 
-async function writeResponseToFile(response: Response, filePath: string) {
+async function writeResponseToFile(response: Response, filePath: string, createDir: boolean = true) {
+    if (createDir) await mkDirRec(path.dirname(filePath));
     const bufferDonnees = await response.arrayBuffer();
     const bufferNode = Buffer.from(bufferDonnees);
     await fs.writeFile(filePath, bufferNode);
@@ -56,7 +57,7 @@ function getMimeTypeFromName(fileName: string) {
     return found;
 }
 
-async function mkDirRect(dirPath: string): Promise<void> {
+async function mkDirRec(dirPath: string): Promise<void> {
     try {
         await fs.mkdir(dirPath, {recursive: true});
     }
@@ -64,7 +65,7 @@ async function mkDirRect(dirPath: string): Promise<void> {
 }
 
 async function writeTextToFile(filePath: string, text: string, createDir: boolean = true): Promise<void> {
-    if (createDir) await mkDirRect(path.dirname(filePath));
+    if (createDir) await mkDirRec(path.dirname(filePath));
     await fs.writeFile(filePath, text, {encoding: 'utf8', flag: 'w'});
 }
 
@@ -88,31 +89,36 @@ async function isDirectory(filePath: string): Promise<boolean> {
     return stats.isDirectory();
 }
 
+async function readFileToBytes(filePath: string): Promise<Uint8Array> {
+    const buffer = await fs.readFile(filePath);
+    return new Uint8Array(buffer);
+}
+
 export function patch_fs() {
     const myFS: FileSystemImpl = {
-        mkDir: mkDirRect,
+        mkDir: mkDirRec,
         fileURLToPath: (url) => fileURLToPath(url),
         pathToFileURL: (fsPath) => pathToFileURL(fsPath),
+        unlink: (filePath) => fs.unlink(filePath),
 
         getFileSize,
         getMimeTypeFromName,
         writeResponseToFile,
         createResponseFromFile,
         getFileStat,
+        readFileToBytes,
 
         writeTextToFile, readTextFromFile, readTextSyncFromFile,
         isFile, isDirectory
     };
 
-    merge(NodeSpace.fs, myFS);
-
     if (isBunJs()) {
-        NodeSpace.fs.fileURLToPath = (url) => Bun.fileURLToPath(url);
-        NodeSpace.fs.pathToFileURL = (fsPath) => Bun.pathToFileURL(fsPath);
-        NodeSpace.fs.writeResponseToFile = async (r: Response, p: string) => { await Bun.file(p).write(r); }
-
-        NodeSpace.fs.createResponseFromFile = (filePath, status, headers) => {
-            return new Response(Bun.file(filePath), {status, headers});
-        };
+        myFS.fileURLToPath = (url) => Bun.fileURLToPath(url);
+        myFS.pathToFileURL = (fsPath) => Bun.pathToFileURL(fsPath);
+        myFS.writeResponseToFile = async (r: Response, p: string) => { await Bun.file(p).write(r); }
+        myFS.createResponseFromFile = (filePath, status, headers) => new Response(Bun.file(filePath), {status, headers});
+        myFS.readFileToBytes = async (filePath) => Bun.file(filePath).bytes();
     }
+    
+    merge(NodeSpace.fs, myFS);
 }

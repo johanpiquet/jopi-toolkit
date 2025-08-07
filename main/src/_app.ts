@@ -1,6 +1,6 @@
 import {execListeners, isBunJs, isNodeJs} from "./common.ts";
 import {isUsingWorker} from "./internal.ts";
-import type {Listener} from "./__global";
+import type {Listener} from "./__global.ts";
 
 export function init_nodeSpaceApp() {
     const onServerSideReady: Listener[] = [];

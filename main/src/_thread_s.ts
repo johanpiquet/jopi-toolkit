@@ -1,7 +1,7 @@
 import {isMainThread, parentPort, workerData} from "node:worker_threads";
-import {declareUsingWorker, merge} from "./internal";
-import {Worker as NodeWorker} from "worker_threads";
-import type {ThreadImpl} from "./__global";
+import {declareUsingWorker, merge} from "./internal.ts";
+import {Worker as NodeWorker} from "node:worker_threads";
+import type {ThreadImpl} from "./__global.ts";
 
 export function patch_thread() {
     const myThread: ThreadImpl = {

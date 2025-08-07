@@ -1,5 +1,5 @@
-import type {ProcessImpl} from "./__global";
-import {merge} from "./internal";
+import type {ProcessImpl} from "./__global.ts";
+import {merge} from "./internal.ts";
 
 export function patch_process() {
     const myProcess: ProcessImpl = {

@@ -22,9 +22,8 @@
   "dependencies": {
     "mime-types": "^3.0.1"
   },
-  "nodeSwitch": {
-    "node": "dist",
-    "bun": "src"
-  },
-  "types": "dist/index.d.ts"
+
+  "types": "dist/index.d.ts",
+
+  "noNodeSwitch": "Must force using the compiled version"
 }

@@ -1,38 +1,17 @@
-import {isBunJs, isNodeJs, isServerSide} from "./common.ts";
-
+import {isServerSide} from "./common.ts";
 export * from "./__global.ts";
 
 import {initBrowser} from "./browser.ts";
-import type {ServerType} from "./__global.ts";
 
 // Will init with the common stuffs.
 initBrowser();
 
 if (isServerSide()) {
-    let serverType: ServerType = "nodejs";
-    if (isBunJs()) serverType = "bunjs";
+    //let ext = import.meta.filename.split(".").pop();
+    //const fileName = "./serverSide." + ext;
 
-    // Allow conditional code to be ok
-    // despite the "await import" is not done yet.
-    //
-    const nodeSpace = globalThis.NodeSpace;
-
-    nodeSpace.what = {
-        isNodeJS: isNodeJs(),
-        isBunJs: isBunJs(),
-        isBrowser: false,
-        isServerSide: true,
-        serverType: serverType,
-    }
-
-    let ext = import.meta.filename.split(".").pop();
-    const fileName = "./serverSide." + ext;
-
-    // To know: the caller will not wait for the await to resolve.
-    // Wait is after will not be interpreted immediately by the caller
-    // doing that specifics server-side things will not be ok now.
-    //
-    await import(/* @vite-ignore */ fileName);
+    // Is synchronous, it's why we use "require" here instead of "import".
+    require(/* @vite-ignore */ "./serverSide.js");
 }
 
 export default NodeSpace;

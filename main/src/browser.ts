@@ -1,11 +1,11 @@
-import {init_nodeSpaceWhat} from "./_what";
-import {init_nodeSpaceApp} from "./_app";
-import {init_nodeSpaceProcess} from "./_process";
-import {init_nodeSpaceTimer} from "./_timer";
-import {init_nodeSpaceThread} from "./_thread";
-import {init_nodeSpaceExtensionPoints} from "./_extensionPoints";
-import {init_term} from "./_term";
-import type {CryptoImpl, FileSystemImpl} from "./__global";
+import {init_nodeSpaceWhat} from "./_what.ts";
+import {init_nodeSpaceApp} from "./_app.ts";
+import {init_nodeSpaceProcess} from "./_process.ts";
+import {init_nodeSpaceTimer} from "./_timer.ts";
+import {init_nodeSpaceThread} from "./_thread.ts";
+import {init_nodeSpaceExtensionPoints} from "./_extensionPoints.ts";
+import {init_term} from "./_term.ts";
+import type {CompressImpl, CryptoImpl, FileSystemImpl} from "./__global.ts";
 
 function applyDefaults<T>(source: T|undefined, defaults: T): T {
     if (!source) source = {} as T;
@@ -33,4 +33,5 @@ export function initBrowser() {
     //
     NodeSpace.fs = {} as FileSystemImpl;
     NodeSpace.crypto = {} as CryptoImpl;
+    NodeSpace.compress = {} as CompressImpl;
 }

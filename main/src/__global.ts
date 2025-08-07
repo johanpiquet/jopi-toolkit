@@ -26,6 +26,7 @@ export interface NodeSpaceType {
 
     fs: FileSystemImpl;
     crypto: CryptoImpl;
+    compress: CompressImpl;
 
     // >>> Tools
 
@@ -34,6 +35,11 @@ export interface NodeSpaceType {
 }
 
 // ********************************************
+
+export interface CompressImpl {
+    gunzipSync(data: Uint8Array|string): Uint8Array;
+    gzipSync(data: Uint8Array|string): Uint8Array;
+}
 
 export interface HotReloadType {
     onHotReload: Listener[];
@@ -97,8 +103,10 @@ export interface FileSystemImpl {
     getFileSize: (filePath: string) => Promise<number>;
     getFileStat: (filePath: string) => Promise<FileState|undefined>;
 
-    writeResponseToFile: (response: Response, filePath: string) => Promise<void>;
+    writeResponseToFile: (response: Response, filePath: string, createDir?: boolean) => Promise<void>;
     createResponseFromFile: (filePath: string, status?: number, headers?: {[key: string]: string}|Headers) => Response;
+
+    unlink(filePath: string): Promise<void>;
 
     writeTextToFile(filePath: string, text: string, createDir?: boolean): Promise<void>;
     readTextFromFile(filePath: string): Promise<string>;
@@ -106,6 +114,8 @@ export interface FileSystemImpl {
 
     isFile(filePath: string): Promise<boolean>;
     isDirectory(dirPath: string): Promise<boolean>;
+
+    readFileToBytes(filePath: string): Promise<Uint8Array>;
 }
 
 export interface AppImpl {
