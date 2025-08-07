@@ -5,7 +5,7 @@ import {init_nodeSpaceTimer} from "./_timer";
 import {init_nodeSpaceThread} from "./_thread";
 import {init_nodeSpaceExtensionPoints} from "./_extensionPoints";
 import {init_term} from "./_term";
-import type {FileSystemImpl} from "./__global";
+import type {CryptoImpl, FileSystemImpl} from "./__global";
 
 function applyDefaults<T>(source: T|undefined, defaults: T): T {
     if (!source) source = {} as T;
@@ -30,5 +30,7 @@ export function initBrowser() {
     init_term();
 
     // Allow the ref to exist.
+    //
     NodeSpace.fs = {} as FileSystemImpl;
+    NodeSpace.crypto = {} as CryptoImpl;
 }
