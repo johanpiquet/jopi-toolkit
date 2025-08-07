@@ -3,6 +3,7 @@ export function init_nodeSpaceProcess() {
         isProduction: false,
         argv: [],
         env: {},
+        exec: () => Promise.resolve()
     };
 
     // For bundlers.

@@ -67,6 +67,7 @@ export interface ProcessImpl {
     argv: string[];
     env: { [key: string]: string };
     isProduction: boolean;
+    exec(command: string): Promise<void>;
 }
 
 export type TimerCallback = () => void|boolean|Promise<void|boolean>;
