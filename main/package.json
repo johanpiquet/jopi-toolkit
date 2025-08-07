@@ -8,28 +8,23 @@
   "author": "Johan PIQUET",
   "description": "An helper for hybrid apps",
   "type": "module",
-
   "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-
   "devDependencies": {
     "@types/bun": "latest",
     "@types/node": "latest",
     "@types/mime-types": "latest"
   },
-
   "scripts": {
     "bun-install": "bun install",
     "tsc": "tsc",
     "npm-publish": "npm publish"
   },
-
   "dependencies": {
     "mime-types": "^3.0.1"
   },
-
   "nodeSwitch": {
     "node": "dist",
     "bun": "src"
-  }
+  },
+  "types": "dist/index.d.ts"
 }

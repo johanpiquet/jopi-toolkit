@@ -1,9 +1,10 @@
 import {isMainThread, parentPort, workerData} from "node:worker_threads";
-import {declareUsingWorker} from "./internal";
+import {declareUsingWorker, merge} from "./internal";
 import {Worker as NodeWorker} from "worker_threads";
+import type {ThreadImpl} from "./__global";
 
-export function patch_server() {
-    NodeSpace.thread = {
+export function patch_thread() {
+    const myThread: ThreadImpl = {
         isMainThread: isMainThread,
         currentWorker: parentPort as unknown as Worker,
         getCurrentWorkerData: () => workerData,
@@ -28,4 +29,6 @@ export function patch_server() {
             }
         }
     }
+
+    merge(NodeSpace.thread, myThread);
 }

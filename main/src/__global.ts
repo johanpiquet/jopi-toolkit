@@ -98,6 +98,9 @@ export interface FileSystemImpl {
 
     writeResponseToFile: (response: Response, filePath: string) => Promise<void>;
     createResponseFromFile: (filePath: string, status?: number, headers?: {[key: string]: string}|Headers) => Response;
+
+    writeTextToFile(filePath: string, text: string, createDir?: boolean): Promise<void>;
+    readTextFromFile(filePath: string): Promise<string>;
 }
 
 export interface AppImpl {

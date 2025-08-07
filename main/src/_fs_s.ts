@@ -5,7 +5,8 @@ import {pathToFileURL} from "node:url";
 import { lookup } from "mime-types";
 import type {Readable} from "node:stream";
 import {createReadStream} from "node:fs";
-import type {FileState} from "./__global.ts";
+import type {FileState, FileSystemImpl} from "./__global.ts";
+import {merge} from "./internal";
 
 //region NodeJS adapter
 
@@ -48,8 +49,17 @@ function getMimeTypeFromName(fileName: string) {
     return found;
 }
 
+async function writeTextToFile(filePath: string, text: string, createDir: boolean = true): Promise<void> {
+    if (createDir) await fs.mkdir(filePath, {recursive: true});
+    await fs.writeFile(filePath, text, 'utf8');
+}
+
+function readTextFromFile(filePath: string): Promise<string> {
+    return fs.readFile(filePath, 'utf8');
+}
+
 export function patch_fs() {
-    NodeSpace.fs = {
+    const myFS: FileSystemImpl = {
         mkDir: (dirPath: string) => fs.mkdir(dirPath, {recursive: true}),
         fileURLToPath: (url) => fileURLToPath(url),
         pathToFileURL: (fsPath) => pathToFileURL(fsPath),
@@ -58,8 +68,12 @@ export function patch_fs() {
         getMimeTypeFromName,
         writeResponseToFile,
         createResponseFromFile,
-        getFileStat
+        getFileStat,
+
+        writeTextToFile, readTextFromFile
     };
+
+    merge(NodeSpace.fs, myFS);
 
     if (isBunJs()) {
         NodeSpace.fs.fileURLToPath = (url) => Bun.fileURLToPath(url);
@@ -68,6 +82,6 @@ export function patch_fs() {
 
         NodeSpace.fs.createResponseFromFile = (filePath, status, headers) => {
             return new Response(Bun.file(filePath), {status, headers});
-        }
+        };
     }
 }
