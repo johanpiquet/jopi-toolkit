@@ -102,6 +102,8 @@ export interface FileState {
 
 export interface FileSystemImpl {
     mkDir: (dirPath: string) => Promise<void>;
+    rmDir: (dirPath: string) => Promise<void>;
+
     fileURLToPath: (url: string) => string;
     pathToFileURL: (fsPath: string) => URL;
 

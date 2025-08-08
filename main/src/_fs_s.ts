@@ -87,6 +87,11 @@ async function mkDirRec(dirPath: string): Promise<void> {
     catch {}
 }
 
+async function rmDirRec(dirPath: string): Promise<void> {
+    try { await fs.rm(dirPath, {recursive: true, force: true}); }
+    catch {}
+}
+
 async function writeTextToFile(filePath: string, text: string, createDir: boolean = true): Promise<void> {
     if (createDir) await mkDirRec(path.dirname(filePath));
     await fs.writeFile(filePath, text, {encoding: 'utf8', flag: 'w'});
@@ -120,6 +125,7 @@ async function readFileToBytes(filePath: string): Promise<Uint8Array> {
 export function patch_fs() {
     const myFS: FileSystemImpl = {
         mkDir: mkDirRec,
+        rmDir: rmDirRec,
         fileURLToPath: (url) => fileURLToPath(url),
         pathToFileURL: (fsPath) => pathToFileURL(fsPath),
         unlink: (filePath) => fs.unlink(filePath),
