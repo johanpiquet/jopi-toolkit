@@ -28,6 +28,7 @@ export interface NodeSpaceType {
     fs: FileSystemImpl;
     crypto: CryptoImpl;
     compress: CompressImpl;
+    stream: StreamImpl;
 
     // >>> Tools
 
@@ -98,6 +99,10 @@ export interface FileState {
     isDirectory: () => boolean,
     isFile: () => boolean,
     isSymbolicLink: () => boolean,
+}
+
+export interface StreamImpl {
+    teeResponse(response: Response): Promise<[ReadableStream, Response]>;
 }
 
 export interface FileSystemImpl {
