@@ -24,7 +24,7 @@ class WebToNodeReadableStreamAdapter extends Readable {
         this.webStreamReader.read().then(({ done, value }) => {
             if (done) {this.push(null); return; }
             const buffer = Buffer.from(value);
-            if (!this.push(buffer)) this.webStreamReader.cancel();
+            if (!this.push(buffer)) this.webStreamReader.cancel().then();
         }).catch(err => {
             this.destroy(err);
         });
