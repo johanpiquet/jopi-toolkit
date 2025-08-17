@@ -15,7 +15,7 @@ which are incompatible with bundlers (e.g., ViteJS).
 
 ### Packed with common tools
 
-The second objective of Jopi NodeSpace is to provide common tools.
+The second objective of Jopi NodeSpace is to provide common tools for both Node.js and Bun.js, acting as a compatibility layer.
 
 * Application lifecycle: ability to attach listeners to be notified when the application exits.
 * Hot-Reload: detection and management of hot-reload (a bun.js feature).
