@@ -1,5 +1,5 @@
 {
-  "version": "0.0.7",
+  "version": "0.0.8",
   "private": false,
   "name": "jopi-node-space",
   "license": "MIT",
@@ -7,23 +7,25 @@
   "keywords": [],
   "author": "Johan PIQUET",
   "description": "An helper for hybrid apps",
+
+  "engines": {"bun": "^1.2.18", "node": ">=22.18.0"},
+
   "type": "module",
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+
+  "scripts": {
+    "tsc": "tsc",
+    "npm-publish": "npm publish"
+  },
+
   "devDependencies": {
     "@types/bun": "latest",
     "@types/node": "latest",
     "@types/mime-types": "latest"
   },
-  "scripts": {
-    "bun-install": "bun install",
-    "tsc": "tsc",
-    "npm-publish": "npm publish"
-  },
+
   "dependencies": {
     "mime-types": "^3.0.1"
-  },
-
-  "types": "dist/index.d.ts",
-
-  "noNodeSwitch": "Must force using the compiled version"
+  }
 }
