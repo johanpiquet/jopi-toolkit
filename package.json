@@ -16,7 +16,8 @@
 
   "scripts": {
     "tsc": "tsc",
-    "npm-publish": "npm publish"
+    "bun-install": "bun install",
+    "bun-publish": "tsc; bun publish"
   },
 
   "devDependencies": {
