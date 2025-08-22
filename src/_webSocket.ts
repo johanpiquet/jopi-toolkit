@@ -4,8 +4,8 @@ export function init_webSocket() {
             socket.addEventListener('close', () => { listener() });
         },
 
-        sendTextMessage(socket, text): void {
-            socket.send(text);
+        sendMessage(socket, msg): void {
+            socket.send(msg);
         },
 
         onMessage(socket, listener) {

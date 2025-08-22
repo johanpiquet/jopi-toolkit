@@ -43,7 +43,7 @@ export interface WebSocketImpl {
     /**
      * Is called when the socket is closed.
      */
-    sendTextMessage(socket: WebSocket, text: string): void;
+    sendMessage(socket: WebSocket, msg: string|Buffer|Uint8Array|ArrayBuffer): void;
 
     /**
      * Send a text message through this webSocket.
