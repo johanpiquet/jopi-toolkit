@@ -3,8 +3,8 @@ export function init_webSocket() {
         onClosed(socket, listener) {
             socket.addEventListener('close', () => { listener(); });
         },
-        sendTextMessage(socket, text) {
-            socket.send(text);
+        sendMessage(socket, msg) {
+            socket.send(msg);
         },
         onMessage(socket, listener) {
             socket.addEventListener('message', (event) => { listener(event.data); });
