@@ -1,5 +1,9 @@
 export function init_webSocket() {
     NodeSpace.webSocket = {
+        openConnection(wsUrl: string, protocol): WebSocket {
+            return new WebSocket(wsUrl, protocol);
+        },
+
         onClosed(socket, listener): void {
             socket.addEventListener('close', () => { listener() });
         },

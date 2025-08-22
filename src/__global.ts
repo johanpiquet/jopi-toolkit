@@ -41,6 +41,13 @@ export interface NodeSpaceType {
 
 export interface WebSocketImpl {
     /**
+     * Open a connection to a server.
+     * The url must be of the type "ws://host-name:optionalPort/optionalPath".
+     * Ex: "ws://127.0.0.1:3000/my-end-point".
+     */
+    openConnection(wsUrl: string, protocol?: string|string[]): WebSocket;
+
+    /**
      * Is called when the socket is closed.
      */
     sendMessage(socket: WebSocket, msg: string|Buffer|Uint8Array|ArrayBuffer): void;

@@ -1,6 +1,12 @@
-import { isBunJs } from "./common.js";
+import { isBunJs, isNodeJs } from "./common.js";
+import { WebSocket as WsWebSocket } from "ws";
 export function patch_webSocket() {
-    if (isBunJs()) {
+    if (isNodeJs()) {
+        NodeSpace.webSocket.openConnection = (wsUrl, protocol) => {
+            return new WsWebSocket(wsUrl, protocol);
+        };
+    }
+    else if (isBunJs()) {
         NodeSpace.webSocket.onClosed = (socket, listener) => {
             const data = (socket.data);
             data.onClosed = listener;
