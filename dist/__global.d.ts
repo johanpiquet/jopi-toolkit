@@ -31,7 +31,7 @@ export interface WebSocketImpl {
     /**
      * Send a text message through this webSocket.
      */
-    onTextMessage(socket: WebSocket, listener: ((text: string) => void)): void;
+    onMessage(socket: WebSocket, listener: ((msg: string | Buffer) => void)): void;
     /**
      * Add a listener which is called when the socket receives a message.
      */

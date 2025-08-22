@@ -1,19 +1,15 @@
 export function init_webSocket() {
     NodeSpace.webSocket = {
-        onClosed(socket: WebSocket, listener: (socket: WebSocket) => void): void {
-            socket.addEventListener('close', () => {
-                listener(socket);
-            });
+        onClosed(socket, listener): void {
+            socket.addEventListener('close', () => { listener() });
         },
 
-        sendTextMessage(socket: WebSocket, text: string): void {
+        sendTextMessage(socket, text): void {
             socket.send(text);
         },
 
-        onTextMessage(socket: WebSocket, listener: (text: string) => void): void {
-            socket.addEventListener('message', (event) => {
-                listener(event.data);
-            });
+        onMessage(socket, listener) {
+            socket.addEventListener('message', (event) => { listener(event.data) });
         }
     };
 }

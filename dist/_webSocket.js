@@ -1,17 +1,13 @@
 export function init_webSocket() {
     NodeSpace.webSocket = {
         onClosed(socket, listener) {
-            socket.addEventListener('close', () => {
-                listener(socket);
-            });
+            socket.addEventListener('close', () => { listener(); });
         },
         sendTextMessage(socket, text) {
             socket.send(text);
         },
-        onTextMessage(socket, listener) {
-            socket.addEventListener('message', (event) => {
-                listener(event.data);
-            });
+        onMessage(socket, listener) {
+            socket.addEventListener('message', (event) => { listener(event.data); });
         }
     };
 }
