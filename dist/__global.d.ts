@@ -15,12 +15,27 @@ export interface NodeSpaceType {
     app: AppImpl;
     extensionPoints: ExtensionPointImpl;
     term: TerminalImpl;
+    webSocket: WebSocketImpl;
     fs: FileSystemImpl;
     crypto: CryptoImpl;
     compress: CompressImpl;
     stream: StreamImpl;
     applyDefaults<T>(source: T | undefined, defaults: T): T;
     getErrorMessage(e: unknown): string;
+}
+export interface WebSocketImpl {
+    /**
+     * Is called when the socket is closed.
+     */
+    sendTextMessage(socket: WebSocket, text: string): void;
+    /**
+     * Send a text message through this webSocket.
+     */
+    onTextMessage(socket: WebSocket, listener: ((text: string) => void)): void;
+    /**
+     * Add a listener which is called when the socket receives a message.
+     */
+    onClosed(socket: WebSocket, listener: () => void): void;
 }
 export interface CompressImpl {
     gunzipSync(data: Uint8Array | string): Uint8Array;

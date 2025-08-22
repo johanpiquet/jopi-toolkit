@@ -8,6 +8,7 @@ import type {ServerType} from "./__global.ts";
 import {isBunJs, isNodeJs} from "./common.ts";
 import {patch_os} from "./_os_s.ts";
 import {patch_stream} from "./_stream_s.ts";
+import {patch_webSocket} from "./_webSocket_s.ts";
 
 let serverType: ServerType = "nodejs";
 if (isBunJs()) serverType = "bunjs";
@@ -28,6 +29,7 @@ patch_stream();
 patch_crypto();
 patch_compress();
 patch_os();
+patch_webSocket();
 
 NodeSpace.app.declareServerSideReady();
 process.on('exit', () => NodeSpace.app.declareAppExiting());

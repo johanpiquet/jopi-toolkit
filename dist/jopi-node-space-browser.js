@@ -5,6 +5,7 @@ import { init_nodeSpaceTimer } from "./_timer.js";
 import { init_nodeSpaceThread } from "./_thread.js";
 import { init_nodeSpaceExtensionPoints } from "./_extensionPoints.js";
 import { init_term } from "./_term.js";
+import { init_webSocket } from "./_webSocket.js";
 function applyDefaults(source, defaults) {
     if (!source)
         source = {};
@@ -25,6 +26,7 @@ function initBrowser() {
     init_nodeSpaceThread();
     init_nodeSpaceExtensionPoints();
     init_term();
+    init_webSocket();
     // Allow the ref to exist.
     //
     NodeSpace.fs = {};

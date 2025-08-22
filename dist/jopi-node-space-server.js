@@ -6,6 +6,7 @@ import { patch_compress } from "./_compress_s.js";
 import { isBunJs, isNodeJs } from "./common.js";
 import { patch_os } from "./_os_s.js";
 import { patch_stream } from "./_stream_s.js";
+import { patch_webSocket } from "./_webSocket_s.js";
 let serverType = "nodejs";
 if (isBunJs())
     serverType = "bunjs";
@@ -24,6 +25,7 @@ patch_stream();
 patch_crypto();
 patch_compress();
 patch_os();
+patch_webSocket();
 NodeSpace.app.declareServerSideReady();
 process.on('exit', () => NodeSpace.app.declareAppExiting());
 //# sourceMappingURL=jopi-node-space-server.js.map

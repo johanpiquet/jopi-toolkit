@@ -6,6 +6,7 @@ import {init_nodeSpaceThread} from "./_thread.ts";
 import {init_nodeSpaceExtensionPoints} from "./_extensionPoints.ts";
 import {init_term} from "./_term.ts";
 import type {CompressImpl, CryptoImpl, FileSystemImpl, OsImpl, StreamImpl} from "./__global.ts";
+import {init_webSocket} from "./_webSocket.ts";
 
 function applyDefaults<T>(source: T|undefined, defaults: T): T {
     if (!source) source = {} as T;
@@ -28,6 +29,7 @@ function initBrowser() {
     init_nodeSpaceThread();
     init_nodeSpaceExtensionPoints();
     init_term();
+    init_webSocket();
 
     // Allow the ref to exist.
     //
