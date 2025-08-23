@@ -45,7 +45,7 @@ export interface WebSocketImpl {
      * The url must be of the type "ws://host-name:optionalPort/optionalPath".
      * Ex: "ws://127.0.0.1:3000/my-end-point".
      */
-    openConnection(wsUrl: string, protocol?: string|string[]): WebSocket;
+    openConnection(wsUrl: string, protocol?: string|string[]): Promise<WebSocket>;
 
     /**
      * Is called when the socket is closed.
@@ -61,6 +61,11 @@ export interface WebSocketImpl {
      * Add a listener which is called when the socket receives a message.
      */
     onClosed(socket: WebSocket, listener: () => void): void;
+
+    /**
+     * Add a listener which is called when an error occurs.
+     */
+    onError(socket: WebSocket, listener: () => void): void;
 }
 
 export interface CompressImpl {

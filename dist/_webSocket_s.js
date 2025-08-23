@@ -3,7 +3,12 @@ import { WebSocket as WsWebSocket } from "ws";
 export function patch_webSocket() {
     if (isNodeJs()) {
         NodeSpace.webSocket.openConnection = (wsUrl, protocol) => {
-            return new WsWebSocket(wsUrl, protocol);
+            return new Promise((resolve, reject) => {
+                const ws = new WsWebSocket(wsUrl, protocol);
+                const ws2 = ws;
+                ws.onopen = () => { resolve(ws2); };
+                ws.onerror = () => { reject(); };
+            });
         };
     }
     else if (isBunJs()) {

@@ -1,7 +1,16 @@
 export function init_webSocket() {
     NodeSpace.webSocket = {
-        openConnection(wsUrl: string, protocol): WebSocket {
-            return new WebSocket(wsUrl, protocol);
+        openConnection(wsUrl: string, protocol): Promise<WebSocket> {
+            return new Promise<WebSocket>((resolve, reject) => {
+                const ws = new WebSocket(wsUrl, protocol);
+
+                ws.onopen = () => { resolve(ws) };
+                ws.onerror = () => { reject(); };
+            });
+        },
+
+        onError(socket, listener): void {
+            socket.onerror = listener;
         },
 
         onClosed(socket, listener): void {

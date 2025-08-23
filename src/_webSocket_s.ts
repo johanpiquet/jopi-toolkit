@@ -4,7 +4,13 @@ import {WebSocket as WsWebSocket} from "ws";
 export function patch_webSocket() {
     if (isNodeJs()) {
         NodeSpace.webSocket.openConnection = (wsUrl: string, protocol) => {
-            return new WsWebSocket(wsUrl, protocol) as unknown as WebSocket;
+            return new Promise<WebSocket>((resolve, reject) => {
+                const ws = new WsWebSocket(wsUrl, protocol);
+                const ws2 = ws as unknown as WebSocket;
+
+                ws.onopen = () => { resolve(ws2) };
+                ws.onerror = () => { reject(); };
+            });
         }
     } else if (isBunJs()) {
         NodeSpace.webSocket.onClosed = (socket, listener) => {
