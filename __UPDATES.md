@@ -1,3 +1,6 @@
+**2025-08-24**
+* Added 'chrono' to NodeSpace.timer.
+
 **2025-08-22**
 * Add websocket support.
 

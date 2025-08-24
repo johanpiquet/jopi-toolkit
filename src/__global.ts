@@ -117,6 +117,8 @@ export interface TimerImpl {
     tick: (delayMs: number) => Promise<void>;
     newInterval: (durationInMs: number, callback: TimerCallback) => void;
     deferred: (callback: ()=>void) => void;
+
+    chrono(mustSaveMeasures: boolean): Chrono;
 }
 
 export interface FileState {
@@ -258,4 +260,24 @@ export interface TerminalImpl {
 export interface CryptoImpl {
     fastHash(text: string): string;
     md5(text: string): string;
+}
+
+// ********************************
+
+export interface Chrono {
+    lastMeasure?: ChronoMeasure;
+    allMeasures: ChronoMeasure[];
+
+    start(label: string|undefined): void;
+    end(): void;
+
+    onMeasureDone(handler: null | ((measure: ChronoMeasure) => void)): void;
+}
+
+export interface ChronoMeasure {
+    label?: string;
+    startTime_ms: number;
+    endTime_ms: number;
+    elapsedTime_ms: number;
+    elapsedTime_sec: string;
 }

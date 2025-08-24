@@ -46,7 +46,41 @@ export function init_nodeSpaceTimer() {
         ONE_DAY,
         tick,
         newInterval,
-        deferred
+        deferred,
+        chrono: (mustSaveMeasures) => new ChronoImpl(mustSaveMeasures)
     };
+}
+class ChronoImpl {
+    constructor(mustSaveMeasures) {
+        this.mustSaveMeasures = mustSaveMeasures;
+        this.allMeasures = [];
+        this.currentStart = 0;
+        this.isStarted = false;
+        this._onMeasureDone = null;
+    }
+    start(label) {
+        if (this.isStarted)
+            this.end();
+        this.currentLabel = label;
+        this.currentStart = Date.now();
+    }
+    end() {
+        const thisTime = Date.now();
+        let measure = {
+            label: this.currentLabel,
+            startTime_ms: this.currentStart,
+            endTime_ms: thisTime,
+            elapsedTime_ms: thisTime - this.currentStart,
+            elapsedTime_sec: ((thisTime - this.currentStart) / 1000).toFixed(3)
+        };
+        this.lastMeasure = measure;
+        if (this.mustSaveMeasures)
+            this.allMeasures.push(measure);
+        if (this._onMeasureDone)
+            this._onMeasureDone(measure);
+    }
+    onMeasureDone(handler) {
+        this._onMeasureDone = handler;
+    }
 }
 //# sourceMappingURL=_timer.js.map
