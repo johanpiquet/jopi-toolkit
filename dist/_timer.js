@@ -59,12 +59,17 @@ function logAutoTrigger(m) {
     }
 }
 class ChronoImpl {
+    mustSaveMeasures;
+    lastMeasure;
+    allMeasures = [];
+    currentStart = 0;
+    currentLabel;
+    currentTitle;
+    currentLimit;
+    isStarted = false;
+    _onMeasureDone = null;
     constructor(mustSaveMeasures) {
         this.mustSaveMeasures = mustSaveMeasures;
-        this.allMeasures = [];
-        this.currentStart = 0;
-        this.isStarted = false;
-        this._onMeasureDone = null;
     }
     start_withLimit(limit, label, title) {
         this.start(label, title);
