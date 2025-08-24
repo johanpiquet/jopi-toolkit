@@ -214,7 +214,7 @@ export interface TerminalImpl {
     /**
      * Build a console.log function that uses the colors provided in params.
      */
-    buildLogger: (...colors: string[]) => ((...params: any[])=>void);
+    buildLogger: (...colors: string[]) => TermLogger;
 
     /**
      * Build a console.log function that uses the colors provided in params.
@@ -230,6 +230,15 @@ export interface TerminalImpl {
      * Write a temporary message, which are replaced each time by the next temp message.
      */
     consoleLogTemp: (isTemp: boolean, ...args: unknown[]) => void,
+
+    logRed: TermLogger,
+    logBgRed: TermLogger,
+
+    logGreen: TermLogger,
+    logBgGreen: TermLogger,
+
+    logBlue: TermLogger,
+    logBgBlue: TermLogger,
 
     T_RESET: string;
     T_BOLD: string;
@@ -264,11 +273,15 @@ export interface CryptoImpl {
 
 // ********************************
 
+export type TermLogger = (...args: any[]) => void;
+
 export interface Chrono {
     lastMeasure?: ChronoMeasure;
     allMeasures: ChronoMeasure[];
 
-    start(label: string|undefined): void;
+    start(label: string, printTitle?: string): void;
+    start_withLimit(limit_ms: number, label: string, printTitle?: string): void;
+
     end(): void;
 
     onMeasureDone(handler: null | ((measure: ChronoMeasure) => void)): void;
@@ -276,6 +289,9 @@ export interface Chrono {
 
 export interface ChronoMeasure {
     label?: string;
+    title?: string;
+    logIfMoreThan_ms?: number;
+
     startTime_ms: number;
     endTime_ms: number;
     elapsedTime_ms: number;

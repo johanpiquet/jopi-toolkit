@@ -54,6 +54,11 @@ function buildWriter(...colors: any[]) {
     return (...values: any[]) => before + values.join(" ") + T_RESET;
 }
 
+const buildLogger: (...colors: string[]) => ((...params: any[])=>void) = (...colors) => {
+    const writer = buildWriter(...colors);
+    return (...values) => console.log(writer(...values));
+};
+
 export function init_term() {
     NodeSpace.term = {
         cssText,
@@ -79,13 +84,19 @@ export function init_term() {
         },
         buildWriter: buildWriter,
 
-        buildLogger(...colors) {
-            const writer = buildWriter(...colors);
-            return (...values) => console.log(writer(...values));
-        },
+        buildLogger,
 
         indentText(spacer, text) {
             return spacer + text.replaceAll("\r", "").replaceAll("\n", spacer + "\n");
-        }
+        },
+
+        logRed: buildLogger(C_RED),
+        logBgRed: buildLogger(B_RED),
+
+        logBlue: buildLogger(C_BLUE),
+        logBgBlue: buildLogger(B_BLUE),
+
+        logGreen: buildLogger(C_GREEN),
+        logBgGreen: buildLogger(B_BLUE)
     }
 }

@@ -67,37 +67,65 @@ export function init_nodeSpaceTimer() {
     };
 }
 
+function logAutoTrigger(m: ChronoMeasure) {
+    if (m.logIfMoreThan_ms && (m.elapsedTime_ms > m.logIfMoreThan_ms)) {
+        if (m.title) NodeSpace.term.logRed("Chrono - " + m.title + ":", m.elapsedTime_sec);
+        else console.log("Chrono - " + m.label + ":", m.elapsedTime_sec);
+    }
+}
+
 class ChronoImpl implements Chrono {
     lastMeasure?: ChronoMeasure;
     allMeasures: ChronoMeasure[] = [];
 
     private currentStart: number = 0;
     private currentLabel: string|undefined;
+    private currentTitle: string|undefined;
+    private currentLimit: number|undefined;
+
     private isStarted = false;
     private _onMeasureDone: null | ((measure: ChronoMeasure) => void) = null;
 
     constructor(public mustSaveMeasures: boolean) {
     }
 
-    start(label: string | undefined) {
+    start_withLimit(limit: number, label: string, title?: string) {
+        this.start(label, title);
+        this.currentLimit = limit;
+    }
+
+    start(label: string, title?: string) {
         if (this.isStarted) this.end();
+        this.isStarted = true;
+
         this.currentLabel = label;
+        this.currentTitle = title;
         this.currentStart = Date.now();
+        this.currentLimit = undefined;
     }
 
     end() {
+        if (!this.isStarted) return;
+        this.isStarted = false;
+
         const thisTime = Date.now();
 
         let measure: ChronoMeasure = {
+            title: this.currentTitle,
             label: this.currentLabel,
+
+            logIfMoreThan_ms: this.currentLimit,
+
             startTime_ms: this.currentStart,
             endTime_ms: thisTime,
             elapsedTime_ms: thisTime - this.currentStart,
-            elapsedTime_sec: ((thisTime - this.currentStart) / 1000).toFixed(3)
+            elapsedTime_sec: ((thisTime - this.currentStart) / 1000).toFixed(3) + " sec"
         }
 
         this.lastMeasure = measure;
         if (this.mustSaveMeasures) this.allMeasures.push(measure);
+
+        logAutoTrigger(measure);
         if (this._onMeasureDone) this._onMeasureDone(measure);
     }
 

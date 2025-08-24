@@ -50,6 +50,14 @@ export function init_nodeSpaceTimer() {
         chrono: (mustSaveMeasures) => new ChronoImpl(mustSaveMeasures)
     };
 }
+function logAutoTrigger(m) {
+    if (m.logIfMoreThan_ms && (m.elapsedTime_ms > m.logIfMoreThan_ms)) {
+        if (m.title)
+            NodeSpace.term.logRed("Chrono - " + m.title + ":", m.elapsedTime_sec);
+        else
+            console.log("Chrono - " + m.label + ":", m.elapsedTime_sec);
+    }
+}
 class ChronoImpl {
     constructor(mustSaveMeasures) {
         this.mustSaveMeasures = mustSaveMeasures;
@@ -58,24 +66,37 @@ class ChronoImpl {
         this.isStarted = false;
         this._onMeasureDone = null;
     }
-    start(label) {
+    start_withLimit(limit, label, title) {
+        this.start(label, title);
+        this.currentLimit = limit;
+    }
+    start(label, title) {
         if (this.isStarted)
             this.end();
+        this.isStarted = true;
         this.currentLabel = label;
+        this.currentTitle = title;
         this.currentStart = Date.now();
+        this.currentLimit = undefined;
     }
     end() {
+        if (!this.isStarted)
+            return;
+        this.isStarted = false;
         const thisTime = Date.now();
         let measure = {
+            title: this.currentTitle,
             label: this.currentLabel,
+            logIfMoreThan_ms: this.currentLimit,
             startTime_ms: this.currentStart,
             endTime_ms: thisTime,
             elapsedTime_ms: thisTime - this.currentStart,
-            elapsedTime_sec: ((thisTime - this.currentStart) / 1000).toFixed(3)
+            elapsedTime_sec: ((thisTime - this.currentStart) / 1000).toFixed(3) + " sec"
         };
         this.lastMeasure = measure;
         if (this.mustSaveMeasures)
             this.allMeasures.push(measure);
+        logAutoTrigger(measure);
         if (this._onMeasureDone)
             this._onMeasureDone(measure);
     }
