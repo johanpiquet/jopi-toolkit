@@ -97,6 +97,6 @@ export function init_term() {
         logBgBlue: buildLogger(B_BLUE),
 
         logGreen: buildLogger(C_GREEN),
-        logBgGreen: buildLogger(B_BLUE)
+        logBgGreen: buildLogger(B_GREEN)
     }
 }
