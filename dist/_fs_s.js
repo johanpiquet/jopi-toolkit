@@ -10,7 +10,6 @@ import { merge } from "./internal.js";
 import path from "node:path";
 //region Node.js adapter
 class WebToNodeReadableStreamAdapter extends Readable {
-    webStreamReader;
     constructor(webStream) {
         super();
         this.webStreamReader = webStream.getReader();

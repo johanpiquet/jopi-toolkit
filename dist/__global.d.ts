@@ -6,7 +6,6 @@ export type ServerType = "nodejs" | "bunjs" | "browser";
 export type Listener = () => void | Promise<void>;
 export type EpCaller = (...values: unknown[]) => Promise<void>;
 export type EpListener = (...values: unknown[]) => void | Promise<void>;
-// ********************************************
 export interface NodeSpaceType {
     what: WhatInfos;
     thread: ThreadImpl;
@@ -17,16 +16,13 @@ export interface NodeSpaceType {
     extensionPoints: ExtensionPointImpl;
     term: TerminalImpl;
     webSocket: WebSocketImpl;
-    // >>> Server side only
     fs: FileSystemImpl;
     crypto: CryptoImpl;
     compress: CompressImpl;
     stream: StreamImpl;
-    // >>> Tools
     applyDefaults<T>(source: T | undefined, defaults: T): T;
     getErrorMessage(e: unknown): string;
 }
-// ********************************************
 export interface WebSocketImpl {
     /**
      * Open a connection to a server.
@@ -218,7 +214,6 @@ export interface CryptoImpl {
     fastHash(text: string): string;
     md5(text: string): string;
 }
-// ********************************
 export type TermLogger = (...args: any[]) => void;
 export interface Chrono {
     lastMeasure?: ChronoMeasure;
