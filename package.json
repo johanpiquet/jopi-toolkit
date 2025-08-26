@@ -1,5 +1,5 @@
 {
-  "version": "0.0.8",
+  "version": "1.1.0",
   "private": false,
   "name": "jopi-node-space",
   "license": "MIT",
@@ -17,7 +17,7 @@
   "scripts": {
     "build": "npx tsgo",
     "tsc": "tsc",
-    "bun-publish": "tsc; bun publish"
+    "bun-publish": "npx tsc && bun publish"
   },
   "devDependencies": {
     "@types/bun": "latest",
