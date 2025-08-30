@@ -6,3 +6,4 @@ temp
 __TODO.txt
 /.turbo/turbo-build.log
 dist
+/tsconfig.tsbuildinfo
