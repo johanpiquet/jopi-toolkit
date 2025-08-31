@@ -66,6 +66,9 @@ export function init_nodeSpaceApp() {
         },
 
         declareAppExiting: async () => {
+            if (gIsExiting) return;
+            gIsExiting = true;
+
             if (isUsingWorker()) {
                 // Wait 1 sec, which allows the worker to correctly initialize.
                 await NodeSpace.timer.tick(1000);
@@ -116,3 +119,5 @@ export function init_nodeSpaceApp() {
         }
     };
 }
+
+let gIsExiting = false;
