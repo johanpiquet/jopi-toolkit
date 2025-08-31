@@ -35,9 +35,6 @@ NodeSpace.app.declareServerSideReady();
 
 // When the program exits gracefully
 process.on('exit', () => NodeSpace.app.declareAppExiting());
+
 // When the user wants to terminate the program (CTRL+C)
 process.on('SIGINT', () => NodeSpace.app.declareAppExiting());
-// Signal for debugger
-process.on('SIGUSR1', () => NodeSpace.app.declareAppExiting());
-// Signal for debugger
-process.on('SIGUSR2', () => NodeSpace.app.declareAppExiting());

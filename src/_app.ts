@@ -10,7 +10,7 @@ export function init_nodeSpaceApp() {
     let isServerSideReady = !(isNodeJs() || isBunJs());
 
     let isHotReload = globalThis.jopiHotReload !== undefined;
-    let isAppStarted = false;
+    let gIsAppStarted = false;
 
     if (isHotReload) {
         execListeners(globalThis.jopiHotReload.onHotReload).then();
@@ -46,35 +46,36 @@ export function init_nodeSpaceApp() {
         },
 
         onAppStart: (listener: Listener) => {
-            if (isAppStarted) listener();
+            if (gIsAppStarted) listener();
             else onAppStart.push(listener);
         },
 
         onAppExiting: (listener: Listener) => {
-            if (!isAppStarted) listener();
+            if (gIsExited) listener();
             else onAppExiting.push(listener);
         },
 
         onAppExited: (listener: Listener) => {
-            if (!isAppStarted) listener();
+            if (gIsExited) listener();
             else onAppExited.push(listener);
         },
 
         declareAppStarted: async () => {
-            isAppStarted = true;
+            gIsAppStarted = true;
             await execListeners(onAppStart);
         },
 
         declareAppExiting: async () => {
-            if (gIsExiting) return;
-            gIsExiting = true;
+            if (gIsExited) return;
+            gIsExited = true;
 
             if (isUsingWorker()) {
                 // Wait 1 sec, which allows the worker to correctly initialize.
                 await NodeSpace.timer.tick(1000);
             }
 
-            isAppStarted = false;
+            gIsAppStarted = false;
+
             await execListeners(onAppExiting);
 
             if (isUsingWorker()) {
@@ -87,7 +88,6 @@ export function init_nodeSpaceApp() {
                 await NodeSpace.timer.tick(50);
             }
 
-            if (onAppExited.length) debugger;
             await execListeners(onAppExited);
         },
 
@@ -120,4 +120,4 @@ export function init_nodeSpaceApp() {
     };
 }
 
-let gIsExiting = false;
+let gIsExited = false;
