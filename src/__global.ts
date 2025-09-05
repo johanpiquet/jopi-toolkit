@@ -229,7 +229,7 @@ export interface TerminalImpl {
     /**
      * Write a temporary message, which are replaced each time by the next temp message.
      */
-    consoleLogTemp: (isTemp: boolean, ...args: unknown[]) => void,
+    consoleLogTemp: (isTemp: boolean, text: string) => void,
 
     logRed: TermLogger,
     logBgRed: TermLogger,

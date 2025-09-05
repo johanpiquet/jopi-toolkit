@@ -73,15 +73,18 @@ export function init_term() {
             return params.join("") + T_RESET;
         },
 
-        consoleLogTemp: (isTemp: boolean, ...args: unknown[]) => {
-            let first = args.shift();
-            if (first) first = "" + first;
+        consoleLogTemp: (isTemp: boolean, text: string) => {
+            const terminalWidth = process.stdout.columns || 80;
 
-            //console.log("\r\x1B[1F\x1B[1F\x1b[K" + first, ...args);
-            console.log(moveLeft(1000) + moveUp(1) + first, ...args);
+            const maxPadding = Math.min(200, terminalWidth - 1);
 
+            const truncatedText = text.length > maxPadding ? text.substring(0, maxPadding - 3) + '...' : text;
+            const paddedText = truncatedText.padEnd(maxPadding);
+
+            console.log(moveLeft(1000) + moveUp(1) + paddedText);
             if (!isTemp) console.log();
         },
+
         buildWriter: buildWriter,
 
         buildLogger,
