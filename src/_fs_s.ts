@@ -97,6 +97,15 @@ async function writeTextToFile(filePath: string, text: string, createDir: boolea
     await fs.writeFile(filePath, text, {encoding: 'utf8', flag: 'w'});
 }
 
+function writeTextSyncToFile(filePath: string, text: string, createDir: boolean = true): void {
+    if (createDir) {
+        try {
+            fss.mkdirSync(path.dirname(filePath), {recursive: true});
+        } catch {}
+    }
+    fss.writeFileSync(filePath, text, {encoding: 'utf8', flag: 'w'});
+}
+
 function readTextFromFile(filePath: string): Promise<string> {
     return fs.readFile(filePath, 'utf8');
 }
@@ -139,7 +148,8 @@ export function patch_fs() {
 
         nodeStreamToWebStream, webStreamToNodeStream,
 
-        writeTextToFile, readTextFromFile, readTextSyncFromFile,
+        writeTextToFile, writeTextSyncToFile,
+        readTextFromFile, readTextSyncFromFile,
         isFile, isDirectory
     };
 

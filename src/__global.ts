@@ -154,6 +154,8 @@ export interface FileSystemImpl {
     unlink(filePath: string): Promise<void>;
 
     writeTextToFile(filePath: string, text: string, createDir?: boolean): Promise<void>;
+    writeTextSyncToFile(filePath: string, text: string, createDir?: boolean): void;
+
     readTextFromFile(filePath: string): Promise<string>;
     readTextSyncFromFile(filePath: string): string;
 
@@ -255,6 +257,7 @@ export interface TerminalImpl {
     C_LIGHT_BLUE: string;
     C_GREY: string;
     C_ORANGE: string;
+    C_WHITE: string;
 
     B_BLACK: string;
     B_RED: string;
