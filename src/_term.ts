@@ -1,3 +1,5 @@
+import type {TermLogger} from "./__global";
+
 const T_RESET = "\x1b[0m";
 
 const T_BOLD = "\x1b[1m";
@@ -9,12 +11,14 @@ const T_REWRITE_LINE = "\r\x1B[1F\x1B[1F\x1b[K";
 const T_CLEAR_SCREEN = "\x1b[2J";
 const T_LINE_START = "\r";
 
+
 const C_RED = "\x1b[31m";
 const C_BLUE = "\x1b[34m";
 const C_LIGHT_BLUE = "\x1b[96m";
 const C_GREEN = "\x1b[32m";
 const C_GREY = "\x1b[90m";
 const C_ORANGE = "\x1b[38;5;208m";
+const C_WHITE = "\x1b[37m";
 
 const B_BLACK = "\x1b[40m";
 const B_RED = "\x1b[41m";
@@ -65,7 +69,7 @@ export function init_term() {
 
         moveUp, moveDown, moveLeft, moveRight, goAt,
 
-        C_RED, C_GREEN, C_BLUE, C_LIGHT_BLUE, C_GREY, C_ORANGE,
+        C_RED, C_GREEN, C_BLUE, C_LIGHT_BLUE, C_GREY, C_ORANGE, C_WHITE,
         B_BLACK, B_BLUE, B_CYAN, B_GREEN, B_MAGENTA, B_RED, B_WHITE, B_YELLOW,
         T_RESET, T_BOLD, T_CLEAR_SCREEN, T_UNDERLINE, T_REWRITE_LINE, T_CLEAR_LINE, T_CLEAR_LINE_END, T_LINE_START,
 
@@ -97,9 +101,21 @@ export function init_term() {
         logBgRed: buildLogger(B_RED),
 
         logBlue: buildLogger(C_BLUE),
-        logBgBlue: buildLogger(B_BLUE),
+        logBgBlue: buildLogger(B_BLUE, C_WHITE),
 
         logGreen: buildLogger(C_GREEN),
-        logBgGreen: buildLogger(B_GREEN)
+        logBgGreen: buildLogger(B_GREEN, C_WHITE),
+
+        logSuccess(...args: any[]) {
+            console.log(C_GREEN + "[SUCCESS] " + T_RESET, ...args);
+        },
+
+        logError(...args: any[]) {
+            console.log(C_RED + "[ERROR] " + T_RESET, ...args);
+        },
+
+        logWarn(...args: any[]) {
+            console.log(C_ORANGE + "[WARN] " + T_RESET, ...args);
+        }
     }
 }

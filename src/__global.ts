@@ -233,6 +233,10 @@ export interface TerminalImpl {
      */
     consoleLogTemp: (isTemp: boolean, text: string) => void,
 
+    logSuccess: TermLogger;
+    logError: TermLogger;
+    logWarn: TermLogger;
+
     logRed: TermLogger,
     logBgRed: TermLogger,
 
