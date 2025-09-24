@@ -1,5 +1,3 @@
-import type {TermLogger} from "./__global";
-
 const T_RESET = "\x1b[0m";
 
 const T_BOLD = "\x1b[1m";
@@ -10,7 +8,6 @@ const T_CLEAR_LINE_END = "\x1b[K";
 const T_REWRITE_LINE = "\r\x1B[1F\x1B[1F\x1b[K";
 const T_CLEAR_SCREEN = "\x1b[2J";
 const T_LINE_START = "\r";
-
 
 const C_RED = "\x1b[31m";
 const C_BLUE = "\x1b[34m";
@@ -87,6 +84,23 @@ export function init_term() {
 
             console.log(moveLeft(1000) + moveUp(1) + paddedText);
             if (!isTemp) console.log();
+        },
+
+        askYesNo: (message: string, defaultValue: boolean): Promise<boolean> => {
+            return new Promise((resolve) => {
+                const defaultText = defaultValue ? '[Y/n]' : '[y/N]';
+                process.stdout.write(`${message} ${defaultText} `);
+
+                process.stdin.once('data', (data) => {
+                    const input = data.toString().trim().toLowerCase();
+                    if (input === '') {
+                        resolve(defaultValue);
+                    } else {
+                        resolve(input === 'y');
+                    }
+                });
+            });
+
         },
 
         buildWriter: buildWriter,

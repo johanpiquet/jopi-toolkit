@@ -233,6 +233,11 @@ export interface TerminalImpl {
      */
     consoleLogTemp: (isTemp: boolean, text: string) => void,
 
+    /**
+     * Print a console message, where the user must respond by yes (y) or no (n).
+     */
+    askYesNo(message: string, defaultValue: boolean): Promise<boolean>;
+
     logSuccess: TermLogger;
     logError: TermLogger;
     logWarn: TermLogger;
