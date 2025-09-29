@@ -221,7 +221,9 @@ export interface AppImpl {
     setApplicationMainFile(applicationMainFile: string): void;
     getApplicationMainFile(): string|undefined;
 
-    getCompiledSourcesFor(sourceFilePath: string): string;
+    getCompiledFilePathFor(sourceFilePath: string): string;
+    getSourcesCodePathFor(compiledFilePath: string): string;
+    
     getSourceCodeDir(): string;
     getCompiledCodeDir(): string;
 

@@ -132,7 +132,8 @@ export function init_nodeSpaceApp() {
         findPackageJson,
         setApplicationMainFile,
         getApplicationMainFile,
-        getCompiledSourcesFor,
+        getCompiledFilePathFor,
+        getSourcesCodePathFor,
         getSourceCodeDir,
         getCompiledCodeDir,
         searchSourceOf, requireSourceOf
@@ -219,12 +220,12 @@ export function getCompiledCodeDir(): string {
     return rootDir;
 }
 
-export function getCompiledSourcesFor(sourceFilePath: string): string {
+export function getCompiledFilePathFor(sourceFilePath: string): string {
     const compiledCodeDir = getCompiledCodeDir();
     const sourceCodeDir = getSourceCodeDir();
 
     if (!sourceFilePath.startsWith(sourceCodeDir)) {
-        throw new Error("jopi-loader - The source file must be in the source code directory: " + sourceCodeDir);
+        throw new Error("jopi-loader - The source file must be in the source code directory: " + sourceFilePath);
     }
 
     let filePath = sourceFilePath.substring(sourceCodeDir.length);
@@ -235,6 +236,30 @@ export function getCompiledSourcesFor(sourceFilePath: string): string {
     }
 
     return NodeSpace.fs.join(compiledCodeDir, filePath);
+}
+
+export function getSourcesCodePathFor(compiledFilePath: string): string {
+    const compiledCodeDir = getCompiledCodeDir();
+    const sourceCodeDir = getSourceCodeDir();
+
+    if (!compiledFilePath.startsWith(compiledCodeDir)) {
+        throw new Error("jopi-loader - The compiled file must be in the compiled code directory: " + compiledFilePath);
+    }
+
+    let filePath =  NodeSpace.fs.join(sourceCodeDir, compiledFilePath.substring(compiledCodeDir.length));
+
+    let idx = filePath.lastIndexOf(".");
+    if (idx !== -1) filePath = filePath.substring(0, idx);
+
+    if (NodeSpace.fs.isFileSync(filePath + ".tsx")) {
+        return filePath + ".tsx";
+    }
+
+    if (NodeSpace.fs.isFileSync(filePath + ".ts")) {
+        return filePath + ".ts";
+    }
+
+    return filePath + ".js";
 }
 
 function requireSourceOf(scriptPath: string): string {
