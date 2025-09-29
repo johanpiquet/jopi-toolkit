@@ -1,12 +1,12 @@
 import fs from "node:fs/promises";
-import fss from "node:fs";
+import fss, {stat} from "node:fs";
 import {fileURLToPath} from "url";
 import {isBunJs} from "./common.ts";
 import {pathToFileURL} from "node:url";
 import { lookup } from "mime-types";
 import {Readable} from "node:stream";
 import {createReadStream} from "node:fs";
-import type {FileState, FileSystemImpl} from "./__global.ts";
+import type {DirItem, FileState, FileSystemImpl} from "./__global.ts";
 import {merge} from "./internal.ts";
 import path from "node:path";
 import {getInstance} from "./instance.ts";
@@ -160,6 +160,30 @@ function getRelativePath(absolutePath: string, fromPath: string = process.cwd())
     return path.relative(fromPath, absolutePath);
 }
 
+async function listDir(dirPath: string): Promise<DirItem[]> {
+    const ditItems = await fs.readdir(dirPath);
+    const result: DirItem[] = [];
+
+    for (const dirItem of ditItems) {
+        let toAdd: DirItem = {name: dirItem, fullPath: path.join(dirPath, dirItem)};
+        const stats = await fs.stat(toAdd.fullPath);
+
+        if (stats.isFile()) {
+            toAdd.isFile = true;
+        } else if (stats.isDirectory()) {
+            toAdd.isDirectory = true;
+        } else if (stats.isSymbolicLink()) {
+            toAdd.isSymbolicLink = true;
+        } else {
+            continue;
+        }
+
+        result.push(toAdd);
+    }
+
+    return result;
+}
+
 export function patch_fs() {
     const myFS: FileSystemImpl = {
         mkDir: mkDirRec,
@@ -184,6 +208,7 @@ export function patch_fs() {
         isDirectory, isDirectorySync,
 
         getRelativePath,
+        listDir,
 
         join: path.join,
         resolve: path.resolve,
