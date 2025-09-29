@@ -1,5 +1,8 @@
 import type {ProcessImpl} from "./__global.ts";
 import {merge} from "./internal.ts";
+import {getInstance} from "./instance.ts";
+
+const NodeSpace = getInstance();
 
 export function patch_process() {
     const myProcess: ProcessImpl = {

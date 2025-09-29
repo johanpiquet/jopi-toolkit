@@ -2,6 +2,9 @@ import {isMainThread, parentPort, workerData} from "node:worker_threads";
 import {declareUsingWorker, merge} from "./internal.ts";
 import {Worker as NodeWorker} from "node:worker_threads";
 import type {ThreadImpl} from "./__global.ts";
+import {getInstance} from "./instance.ts";
+
+const NodeSpace = getInstance();
 
 export function patch_thread() {
     const myThread: ThreadImpl = {

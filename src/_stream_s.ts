@@ -1,6 +1,9 @@
 import {isBunJs} from "./common.ts";
 import type {StreamImpl} from "./__global.ts";
 import {merge} from "./internal.ts";
+import {getInstance} from "./instance.ts";
+
+const NodeSpace = getInstance();
 
 async function teeResponse(response: Response): Promise<[ReadableStream, Response]> {
     // Actually response.body.tee is ko with node.js, we can't use it.

@@ -2,6 +2,9 @@ import type {CompressImpl} from "./__global.ts";
 import {isBunJs} from "./common.ts";
 import {merge} from "./internal.ts";
 import {gunzipSync, gzipSync} from "node:zlib";
+import {getInstance} from "./instance.ts";
+
+const NodeSpace = getInstance();
 
 export function patch_compress() {
     const myCompress: CompressImpl = {

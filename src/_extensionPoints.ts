@@ -1,4 +1,7 @@
 import {type EpCaller, type EpListener} from "./__global.ts";
+import {getInstance} from "./instance.ts";
+
+const NodeSpace = getInstance();
 
 interface ExtensionPoint {
     listeners: EpListener[];

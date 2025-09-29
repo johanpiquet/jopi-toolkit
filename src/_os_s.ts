@@ -6,6 +6,9 @@ import * as path from "node:path";
 import * as fs from "node:fs/promises";
 import {isBunJs} from "./common.ts";
 import fss from "node:fs";
+import {getInstance} from "./instance.ts";
+
+const NodeSpace = getInstance();
 
 async function which(command: string, ifNotFound?: string): Promise<string|null> {
     const pathArray = (env.PATH || '').split(process.platform === 'win32' ? ';' : ':');

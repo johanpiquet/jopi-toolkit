@@ -1,6 +1,9 @@
 import {execListeners, isBunJs, isNodeJs} from "./common.ts";
 import {isUsingWorker} from "./internal.ts";
 import type {Listener} from "./__global.ts";
+import {getInstance} from "./instance.ts";
+
+const NodeSpace = getInstance();
 
 export function init_nodeSpaceApp() {
     const onServerSideReady: Listener[] = [];
@@ -24,9 +27,7 @@ export function init_nodeSpaceApp() {
     const onHotReload = globalThis.jopiHotReload.onHotReload;
     const memory = globalThis.jopiHotReload.memory;
 
-    console.warn("nodeSpaceFile:", import.meta.filename);
-
-    NodeSpace.app = {
+    getInstance().app = {
         onServerSideReady: (listener) => {
             if (isServerSideReady) listener();
             else onServerSideReady.push(listener);
@@ -208,7 +209,7 @@ export function getCompiledCodeDir(): string {
 
     let rootDir = NodeSpace.fs.dirname(pkgJsonPath);
 
-    for (let toTest in ["dist", "build", "out"]) {
+    for (let toTest of ["dist", "build", "out"]) {
         if (NodeSpace.fs.isDirectorySync(NodeSpace.fs.join(rootDir, toTest))) {
             return gCompiledSourcesDir = NodeSpace.fs.join(rootDir, toTest);
         }

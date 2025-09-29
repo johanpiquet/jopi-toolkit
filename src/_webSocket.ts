@@ -1,3 +1,7 @@
+import {getInstance} from "./instance.ts";
+
+const NodeSpace = getInstance();
+
 export function init_webSocket() {
     NodeSpace.webSocket = {
         openConnection(wsUrl: string, protocol): Promise<WebSocket> {

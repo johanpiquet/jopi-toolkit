@@ -1,5 +1,8 @@
 import {isBunJs, isNodeJs} from "./common.ts";
 import {WebSocket as WsWebSocket} from "ws";
+import {getInstance} from "./instance.ts";
+
+const NodeSpace = getInstance();
 
 export function patch_webSocket() {
     if (isNodeJs()) {

@@ -2,6 +2,9 @@ import {merge} from "./internal.ts";
 import crypto from "node:crypto";
 import type {CryptoImpl} from "./__global.ts";
 import {isBunJs} from "./common.ts";
+import {getInstance} from "./instance.ts";
+
+const NodeSpace = getInstance();
 
 export function patch_crypto() {
     const myCrypto: CryptoImpl = {

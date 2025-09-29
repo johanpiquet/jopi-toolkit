@@ -7,6 +7,9 @@ import {init_nodeSpaceExtensionPoints} from "./_extensionPoints.ts";
 import {init_term} from "./_term.ts";
 import type {CompressImpl, CryptoImpl, FileSystemImpl, OsImpl, StreamImpl} from "./__global.ts";
 import {init_webSocket} from "./_webSocket.ts";
+import {getInstance} from "./instance.ts";
+
+const NodeSpace = getInstance();
 
 function applyDefaults<T>(source: T|undefined, defaults: T): T {
     if (!source) source = {} as T;

@@ -1,3 +1,7 @@
+import {getInstance} from "./instance.ts";
+
+const NodeSpace = getInstance();
+
 const T_RESET = "\x1b[0m";
 
 const T_BOLD = "\x1b[1m";

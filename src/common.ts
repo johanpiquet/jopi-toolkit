@@ -1,4 +1,7 @@
 import type {Listener} from "./__global.ts";
+import {getInstance} from "./instance.ts";
+
+const NodeSpace = getInstance();
 
 let _isBunJs: boolean|undefined = undefined;
 let _isNodeJs: boolean|undefined = undefined;

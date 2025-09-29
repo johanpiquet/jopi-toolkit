@@ -12,9 +12,12 @@ import {patch_webSocket} from "./_webSocket_s.ts";
 
 let serverType: ServerType = "nodejs";
 if (isBunJs()) serverType = "bunjs";
-const nodeSpace = globalThis.NodeSpace;
 
-nodeSpace.what = {
+import {getInstance} from "./instance.ts";
+
+const NodeSpace = getInstance();
+
+NodeSpace.what = {
     isNodeJS: isNodeJs(),
     isBunJs: isBunJs(),
     isBrowser: false,

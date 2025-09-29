@@ -1,4 +1,7 @@
 import type {Chrono, ChronoMeasure, TimerCallback} from "./__global.ts";
+import {getInstance} from "./instance.ts";
+
+const NodeSpace = getInstance();
 
 export const ONE_SECOND = 1000;
 export const ONE_MINUTE = ONE_SECOND * 60;

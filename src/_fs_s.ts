@@ -9,6 +9,9 @@ import {createReadStream} from "node:fs";
 import type {FileState, FileSystemImpl} from "./__global.ts";
 import {merge} from "./internal.ts";
 import path from "node:path";
+import {getInstance} from "./instance.ts";
+
+const NodeSpace = getInstance();
 
 //region Node.js adapter
 

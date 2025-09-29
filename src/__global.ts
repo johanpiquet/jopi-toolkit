@@ -1,9 +1,8 @@
 declare global {
-    var NodeSpace: NodeSpaceType;
     var jopiHotReload: HotReloadType;
 }
 
-globalThis.NodeSpace = {} as NodeSpaceType;
+//globalThis.NodeSpace = {} as NodeSpaceType;
 
 export type ServerType = "nodejs"|"bunjs"|"browser";
 export type Listener = ()=>void|Promise<void>;
@@ -14,6 +13,9 @@ export type EpListener = (...values:  unknown[]) => void|Promise<void>;
 // ********************************************
 
 export interface NodeSpaceType {
+    nodeSpaceVersion: string,
+    nodeLibPath: string,
+
     what: WhatInfos;
     thread: ThreadImpl;
     process: ProcessImpl;
