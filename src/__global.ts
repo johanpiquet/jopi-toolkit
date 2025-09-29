@@ -103,7 +103,8 @@ export interface ProcessImpl {
 
 export interface OsImpl {
     exec(command: string): Promise<void>;
-    which(toolName: string): Promise<string|null>;
+    which(toolName: string, ifNotFound?:string): Promise<string|null>;
+    whichSync(toolName: string, ifNotFound?:string): string|null;
 }
 
 export type TimerCallback = () => void|boolean|Promise<void|boolean>;
@@ -160,12 +161,30 @@ export interface FileSystemImpl {
     readTextSyncFromFile(filePath: string): string;
 
     isFile(filePath: string): Promise<boolean>;
+    isFileSync(filePath: string): boolean;
+
     isDirectory(dirPath: string): Promise<boolean>;
+    isDirectorySync(dirPath: string): boolean;
 
     readFileToBytes(filePath: string): Promise<Uint8Array>;
 
     nodeStreamToWebStream(nodeStream: NodeJS.ReadableStream): ReadableStream;
-    webStreamToNodeStream(webStream: ReadableStream): NodeJS.ReadableStream
+    webStreamToNodeStream(webStream: ReadableStream): NodeJS.ReadableStream;
+
+    /**
+     * Transform an absolute path to a relative path.
+     */
+    getRelativePath(absolutePath: string, fromPath?: string): string;
+
+    // >>>> node:path
+
+    sep: string;
+    join(...paths: string[]): string;
+    resolve(...paths: string[]): string;
+    dirname(path: string): string;
+    extname(path: string): string;
+    isAbsolute(path: string): boolean;
+    normalize(path: string): string;
 }
 
 export interface AppImpl {
@@ -183,6 +202,27 @@ export interface AppImpl {
     onHotReload(listener: Listener): void;
     keepOnHotReload<T>(key: string, provider: ()=>T): T;
     clearHotReloadKey: (key: string) => void;
+
+    getTempDir(): string;
+
+    /**
+     * Search the package.json file for the currently executing script.
+     * Use the current working dir and search in parent directories.
+     *
+     * @return - Returns the full path of the file 'package.json'.
+     * Throw an exception if not found.
+     */
+    findPackageJson(searchFromDir?: string): string;
+
+    setApplicationMainFile(applicationMainFile: string): void;
+    getApplicationMainFile(): string|undefined;
+
+    getCompiledSourcesFor(sourceFilePath: string): string;
+    getSourceCodeDir(): string;
+    getCompiledCodeDir(): string;
+
+    searchSourceOf(scriptPath: string): string|undefined;
+    requireSourceOf(scriptPath: string): string;
 }
 
 export interface ExtensionPointImpl {

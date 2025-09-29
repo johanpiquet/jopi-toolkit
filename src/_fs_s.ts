@@ -126,9 +126,35 @@ async function isDirectory(filePath: string): Promise<boolean> {
     return stats.isDirectory();
 }
 
+function isDirectorySync(dirPath: string) {
+    try {
+        const stats = fss.statSync(dirPath);
+        return stats.isDirectory();
+    }
+    catch {
+    }
+
+    return false;
+}
+
+function isFileSync(dirPath: string) {
+    try {
+        const stats = fss.statSync(dirPath);
+        return stats.isFile();
+    }
+    catch {
+    }
+
+    return false;
+}
+
 async function readFileToBytes(filePath: string): Promise<Uint8Array> {
     const buffer = await fs.readFile(filePath);
     return new Uint8Array(buffer);
+}
+
+function getRelativePath(absolutePath: string, fromPath: string = process.cwd()) {
+    return path.relative(fromPath, absolutePath);
 }
 
 export function patch_fs() {
@@ -150,7 +176,20 @@ export function patch_fs() {
 
         writeTextToFile, writeTextSyncToFile,
         readTextFromFile, readTextSyncFromFile,
-        isFile, isDirectory
+
+        isFile, isFileSync,
+        isDirectory, isDirectorySync,
+
+        getRelativePath,
+
+        join: path.join,
+        resolve: path.resolve,
+        dirname: path.dirname,
+        extname: path.extname,
+
+        sep: path.sep,
+        isAbsolute: path.isAbsolute,
+        normalize: path.normalize
     };
 
     if (isBunJs()) {
