@@ -192,7 +192,14 @@ export function patch_fs() {
 
         sep: path.sep,
         isAbsolute: path.isAbsolute,
-        normalize: path.normalize
+        normalize: path.normalize,
+
+        /**
+         * Convert a simple win32 path to a linux path.
+         */
+        win32ToLinuxPath(filePath) {
+            return filePath.replace(/\\/g, '/');
+        }
     };
 
     if (isBunJs()) {

@@ -187,6 +187,8 @@ export interface FileSystemImpl {
     extname(path: string): string;
     isAbsolute(path: string): boolean;
     normalize(path: string): string;
+
+    win32ToLinuxPath(filePath: string): string;
 }
 
 export interface AppImpl {
