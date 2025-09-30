@@ -218,6 +218,7 @@ export function patch_fs() {
         sep: path.sep,
         isAbsolute: path.isAbsolute,
         normalize: path.normalize,
+        basename: path.basename,
 
         /**
          * Convert a simple win32 path to a linux path.

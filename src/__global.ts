@@ -179,6 +179,7 @@ export interface FileSystemImpl {
     getRelativePath(absolutePath: string, fromPath?: string): string;
 
     listDir(dirPath: string): Promise<DirItem[]>;
+    win32ToLinuxPath(filePath: string): string;
 
     // >>>> node:path
 
@@ -189,8 +190,7 @@ export interface FileSystemImpl {
     extname(path: string): string;
     isAbsolute(path: string): boolean;
     normalize(path: string): string;
-
-    win32ToLinuxPath(filePath: string): string;
+    basename(path: string, suffix?: string): string;
 }
 
 export interface DirItem {
