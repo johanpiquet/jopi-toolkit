@@ -230,7 +230,7 @@ export function getCompiledFilePathFor(sourceFilePath: string): string {
 
     let filePath = sourceFilePath.substring(sourceCodeDir.length);
 
-    if (!filePath.endsWith(".js")) {
+    if (isNodeJs() && !filePath.endsWith(".js")) {
         let idx = filePath.lastIndexOf(".");
         if (idx !== -1) filePath = filePath.substring(0, idx) + ".js";
     }
