@@ -278,17 +278,17 @@ export interface TranslationRequest {
     /**
      * The default value for the translation.
      */
-    default: string;
+    default?: string;
 
     /**
      * The parameters to use for values with parameters
      */
-    params: any;
+    params?: any;
 
     /**
      * If 'count' is more than one, then use plural form.
      */
-    count: number;
+    count?: number;
 }
 
 /**
