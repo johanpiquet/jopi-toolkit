@@ -5,14 +5,22 @@ const NodeSpace = getInstance();
 
 export function init_nodeSpaceEvents() {
     NodeSpace.events = {
-        sendEvent, addListener
+        sendEvent, addListener,
+
+        enableEventSpying(spy) {
+            gSpy = spy;
+        }
     }
 }
+
+let gSpy: undefined | ((eventName: string, data?: any) => void);
 
 type EventListener = (e?: any|undefined) => Promise<void>;
 const gEvents: Record<string, PriorityArray<EventListener>> = {};
 
 async function sendEvent(eventName: string, e?: any|undefined): Promise<void> {
+    if (gSpy) gSpy(eventName, e);
+
     const events = gEvents[eventName];
     if (!events) return;
     const values = events.value;
