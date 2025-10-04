@@ -1,5 +1,5 @@
 import {getInstance} from "./instance.ts";
-import { type TranslateImpl } from "./__global.ts";
+import {type TranslateImpl, type TranslationRequest} from "./__global.ts";
 
 const NodeSpace = getInstance();
 
@@ -11,45 +11,45 @@ const translateImpl: TranslateImpl = {
         gCurrentLanguage = languageName;
     },
 
-    translate(key: string, params?: {[key: string]: string|number|boolean}, n?: number): string {
-        return this.translateTo(gCurrentLanguage, key, params, n);
+    translate(key: string, p: TranslationRequest): string {
+        return this.translateTo(gCurrentLanguage, key, p);
     },
 
-    translateTo(language: string, key: string, params?: {[key: string]: string|number|boolean}, n?: number): string {
+    translateTo(language: string, key: string, p: TranslationRequest): string {
         // Does it exist?
         if (!gTranslations[language]) {
             gTranslations[language] = {};
         }
 
+        let translation: string|undefined;
+
         // Must use plural?
         //
         let translationKey = key;
-        let isPlural = false;
         //
-        if (n !== undefined && n > 1) {
-            isPlural = true;
+        if ((p.count !== undefined) && (p.count > 1)) {
             const pluralKey = `${key}_plural`;
-
-            if (gTranslations[language][pluralKey]) {
-                translationKey = pluralKey;
-            }
+            translation = gTranslations[language][pluralKey]
         }
 
         // Get the translation.
-        let translation = gTranslations[language][translationKey];
+        if (!translation) {
+            translation = gTranslations[language][translationKey];
+        }
 
         // Not found?
         if (!translation) {
-            if (isPlural) {
-                return translateImpl.translateTo(language, key, params);
+            if (p.default) {
+                gTranslations[language][translationKey] = p.default;
+                return p.default;
             }
 
             translation = `[trNotFound:${key}]`;
         }
 
         // Replace the parameters in the translation.
-        if (params && translation.includes("$")) {
-            for (const [paramKey, paramValue] of Object.entries(params)) {
+        if (p.params && translation.includes("$")) {
+            for (const [paramKey, paramValue] of Object.entries(p.params)) {
                 const placeholder = "$" + paramKey;
                 translation = translation.replace(placeholder, String(paramValue));
             }

@@ -274,6 +274,23 @@ export interface EventsImpl {
     addListener<T = any>(eventName: string, priority: EventPriority, listener: (e: T|undefined) => Promise<void>): void;
 }
 
+export interface TranslationRequest {
+    /**
+     * The default value for the translation.
+     */
+    default: string;
+
+    /**
+     * The parameters to use for values with parameters
+     */
+    params: any;
+
+    /**
+     * If 'count' is more than one, then use plural form.
+     */
+    count: number;
+}
+
 /**
  * Allow managing text translation.
  */
@@ -286,16 +303,13 @@ export interface TranslateImpl {
 
     /**
      * Returns the traduction for the key.
-     * @param key the name of the translation.
-     * @param params Allows replacing named parts (ex: $paramName1)
-     * @param n If more than one, then use the pural form.
      */
-    translate(key: string, params?: {[key: string]: string|number|boolean}, n?: number): string;
+    translate(key: string, p: TranslationRequest): string;
 
     /**
      * Is the same as `translate` but define explicitly the language to use.
      */
-    translateTo(language: string, key: string, params?: {[key: string]: string|number|boolean}, n?: number): string;
+    translateTo(language: string, key: string, p: TranslationRequest): string;
 
     addTranslation(language: string, key: string, value: string): void;
     addTranslations(language: string, translations: {[key: string]: string}): void;

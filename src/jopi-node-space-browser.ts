@@ -9,7 +9,7 @@ import type {CompressImpl, CryptoImpl, FileSystemImpl, OsImpl, StreamImpl} from 
 import {init_webSocket} from "./_webSocket.ts";
 import {getInstance} from "./instance.ts";
 import {init_nodeSpaceEvents} from "./_events.ts";
-import {init_nodeSpaceTranslate} from "./_translate";
+import {init_nodeSpaceTranslate} from "./_translate.ts";
 
 const NodeSpace = getInstance();
 
