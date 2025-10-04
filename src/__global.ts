@@ -26,6 +26,8 @@ export interface NodeSpaceType {
     term: TerminalImpl;
     webSocket: WebSocketImpl;
 
+    events: EventsImpl;
+
     // >>> Server side only
 
     fs: FileSystemImpl;
@@ -257,6 +259,19 @@ export interface ExtensionPointImpl {
      * Add a function which is called when the extension point is called.
      */
     on(epName: string, importMetaUrl: string, fct: EpListener): void;
+}
+
+export enum EventPriority {
+    VeryLow = -200,
+    Low = -100,
+    Default = 0,
+    High = 100,
+    VeryHigh = 200
+}
+
+export interface EventsImpl {
+    sendEvent<T = any>(eventName: string, e?: T|undefined): Promise<void>;
+    addListener<T = any>(eventName: string, priority: EventPriority, listener: (e: T|undefined) => Promise<void>): void;
 }
 
 export interface TerminalImpl {
