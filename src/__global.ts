@@ -2,8 +2,6 @@ declare global {
     var jopiHotReload: HotReloadType;
 }
 
-//globalThis.NodeSpace = {} as NodeSpaceType;
-
 export type ServerType = "nodejs"|"bunjs"|"browser";
 export type Listener = ()=>void|Promise<void>;
 
@@ -27,6 +25,7 @@ export interface NodeSpaceType {
     webSocket: WebSocketImpl;
 
     events: EventsImpl;
+    translate: TranslateImpl;
 
     // >>> Server side only
 
@@ -273,6 +272,33 @@ export interface EventsImpl {
     enableEventSpying(spy: (eventName: string, data?: any) => void): void;
     sendEvent<T = any>(eventName: string, e?: T|undefined): Promise<void>;
     addListener<T = any>(eventName: string, priority: EventPriority, listener: (e: T|undefined) => Promise<void>): void;
+}
+
+/**
+ * Allow managing text translation.
+ */
+export interface TranslateImpl {
+    /**
+     * Define the default language to use.
+     * @param languageName
+     */
+    setLanguage(languageName: string): void;
+
+    /**
+     * Returns the traduction for the key.
+     * @param key the name of the translation.
+     * @param params Allows replacing named parts (ex: $paramName1)
+     * @param n If more than one, then use the pural form.
+     */
+    translate(key: string, params?: {[key: string]: string|number|boolean}, n?: number): string;
+
+    /**
+     * Is the same as `translate` but define explicitly the language to use.
+     */
+    translateTo(language: string, key: string, params?: {[key: string]: string|number|boolean}, n?: number): string;
+
+    addTranslation(language: string, key: string, value: string): void;
+    addTranslations(language: string, translations: {[key: string]: string}): void;
 }
 
 export interface TerminalImpl {
