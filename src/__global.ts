@@ -271,6 +271,8 @@ export enum EventPriority {
 export interface EventsImpl {
     enableEventSpying(spy: (eventName: string, data?: any) => void): void;
     sendEvent<T = any>(eventName: string, e?: T|undefined): Promise<void>;
+
+    addListener<T = any>(eventName: string, listener: (e: T|undefined) => Promise<void>): void;
     addListener<T = any>(eventName: string, priority: EventPriority, listener: (e: T|undefined) => Promise<void>): void;
 }
 

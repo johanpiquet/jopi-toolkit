@@ -30,10 +30,26 @@ async function sendEvent(eventName: string, e?: any|undefined): Promise<void> {
     }
 }
 
-function addListener(eventName: string, priority: EventPriority, listener: EventListener): void {
+function addListener(eventName: string, listener: EventListener): void;
+function addListener(eventName: string, priority: EventPriority, listener: EventListener): void;
+//
+function addListener(eventName: string, priorityOrListener: EventPriority | EventListener, listener?: EventListener): void {
+    let priority: EventPriority;
+    let actualListener: EventListener;
+
+    if (typeof priorityOrListener === 'function') {
+        // Cas où priority n'est pas fournie, priorityOrListener est le listener
+        priority = EventPriority.Default;
+        actualListener = priorityOrListener;
+    } else {
+        // Cas où priority est fournie
+        priority = priorityOrListener;
+        actualListener = listener!;
+    }
+
     let events = gEvents[eventName];
     if (!events) gEvents[eventName] = events = new PriorityArray<EventListener>();
-    events.add(priority, listener);
+    events.add(priority, actualListener);
 }
 
 //region PriorityArray
