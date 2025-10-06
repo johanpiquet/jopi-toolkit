@@ -15,10 +15,10 @@ export function init_nodeSpaceEvents() {
 
 let gSpy: undefined | ((eventName: string, data?: any) => void);
 
-type EventListener = (e?: any|undefined) => Promise<void>;
+type EventListener = (e?: any|undefined) => void;
 const gEvents: Record<string, PriorityArray<EventListener>> = {};
 
-async function sendEvent(eventName: string, e?: any|undefined): Promise<void> {
+function sendEvent(eventName: string, e?: any|undefined): void {
     if (gSpy) gSpy(eventName, e);
 
     const events = gEvents[eventName];
@@ -26,7 +26,7 @@ async function sendEvent(eventName: string, e?: any|undefined): Promise<void> {
     const values = events.value;
 
     for (const listener of values) {
-        await listener(e);
+        listener(e);
     }
 }
 
