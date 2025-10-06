@@ -12,4 +12,15 @@ import "./jopi-node-space-server.ts";
 NodeSpace.nodeSpaceVersion = "0.0.1";
 NodeSpace.nodeLibPath = import.meta.url;
 
+export const nEvents = NodeSpace.events;
+export const nFs = NodeSpace.fs;
+export const nCrypto = NodeSpace.crypto;
+export const nCompress = NodeSpace.compress;
+export const nOs = NodeSpace.os;
+export const nStream = NodeSpace.stream;
+export const nTranslate = NodeSpace.translate;
+export const nThread = NodeSpace.thread;
+export const nWebSocket = NodeSpace.webSocket;
+export const nWhat = NodeSpace.what;
+
 export default getInstance();
