@@ -1,15 +1,12 @@
 import {getInstance} from "./instance.ts";
-import {EventPriority} from "./__global.ts";
+import {EventPriority, type Listener} from "./__global.ts";
 
 const NodeSpace = getInstance();
 
 export function init_nodeSpaceEvents() {
     NodeSpace.events = {
-        sendEvent, addListener,
-
-        enableEventSpying(spy) {
-            gSpy = spy;
-        }
+        sendEvent, addListener, removeListener,
+        enableEventSpying(spy) { gSpy = spy; }
     }
 }
 
@@ -17,6 +14,11 @@ let gSpy: undefined | ((eventName: string, data?: any) => void);
 
 type EventListener = (e?: any|undefined) => void;
 const gEvents: Record<string, PriorityArray<EventListener>> = {};
+
+function removeListener(eventName: string, listener: Listener): void {
+    const events = gEvents[eventName];
+    if (events) events.remove(listener);
+}
 
 function sendEvent(eventName: string, e?: any|undefined): void {
     if (gSpy) gSpy(eventName, e);
@@ -64,6 +66,11 @@ class PriorityArray<T> {
     add(priority: EventPriority, value: T) {
         this.build = undefined;
         this.entries.push({priority, value});
+    }
+
+    remove(value: T) {
+        this.build = undefined;
+        this.entries = this.entries.filter(e => e.value !== value);
     }
 
     get value(): T[] {
