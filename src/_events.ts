@@ -21,7 +21,7 @@ class EventGroup implements EventsImpl {
         this.gSpy = spy;
     }
 
-    removeListener(eventName: string, listener: Listener): void {
+    removeListener(eventName: string, listener: any): void {
         const events = this.gEvents[eventName];
         if (events) events.remove(listener);
     }

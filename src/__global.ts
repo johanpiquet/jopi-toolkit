@@ -276,7 +276,7 @@ export interface EventsImpl {
     enableEventSpying(spy: (eventName: string, data?: any) => void): void;
     sendEvent<T = any>(eventName: string, e?: T|undefined): void;
 
-    removeListener(eventName: string, listener: Listener): void;
+    removeListener(eventName: string, listener: any): void;
 
     addListener<T = any>(eventName: string, listener: (e: T|undefined) => void|Promise<void>): void;
     addListener<T = any>(eventName: string, priority: EventPriority, listener: (e: T|undefined) => void|Promise<void>): void;
