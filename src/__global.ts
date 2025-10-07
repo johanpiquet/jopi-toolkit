@@ -268,7 +268,11 @@ export enum EventPriority {
     VeryHigh = 200
 }
 
+export type EventListener<T> = (e: T|undefined) => void|Promise<void>;
+
 export interface EventsImpl {
+    newEventGroup(): EventsImpl;
+
     enableEventSpying(spy: (eventName: string, data?: any) => void): void;
     sendEvent<T = any>(eventName: string, e?: T|undefined): void;
 

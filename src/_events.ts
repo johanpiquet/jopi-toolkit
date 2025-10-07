@@ -1,57 +1,64 @@
 import {getInstance} from "./instance.ts";
-import {EventPriority, type Listener} from "./__global.ts";
+import {EventPriority, type EventsImpl, type Listener} from "./__global.ts";
 
 const NodeSpace = getInstance();
 
 export function init_nodeSpaceEvents() {
-    NodeSpace.events = {
-        sendEvent, addListener, removeListener,
-        enableEventSpying(spy) { gSpy = spy; }
-    }
+    NodeSpace.events = new EventGroup();
 }
-
-let gSpy: undefined | ((eventName: string, data?: any) => void);
 
 type EventListener = (e?: any|undefined) => void;
-const gEvents: Record<string, PriorityArray<EventListener>> = {};
 
-function removeListener(eventName: string, listener: Listener): void {
-    const events = gEvents[eventName];
-    if (events) events.remove(listener);
-}
+class EventGroup implements EventsImpl {
+    private readonly gEvents: Record<string, PriorityArray<EventListener>> = {};
+    private gSpy: undefined | ((eventName: string, data?: any) => void);
 
-function sendEvent(eventName: string, e?: any|undefined): void {
-    if (gSpy) gSpy(eventName, e);
-
-    const events = gEvents[eventName];
-    if (!events) return;
-    const values = events.value;
-
-    for (const listener of values) {
-        listener(e);
-    }
-}
-
-function addListener(eventName: string, listener: EventListener): void;
-function addListener(eventName: string, priority: EventPriority, listener: EventListener): void;
-//
-function addListener(eventName: string, priorityOrListener: EventPriority | EventListener, listener?: EventListener): void {
-    let priority: EventPriority;
-    let actualListener: EventListener;
-
-    if (typeof priorityOrListener === 'function') {
-        // Cas où priority n'est pas fournie, priorityOrListener est le listener
-        priority = EventPriority.Default;
-        actualListener = priorityOrListener;
-    } else {
-        // Cas où priority est fournie
-        priority = priorityOrListener;
-        actualListener = listener!;
+    newEventGroup(): EventsImpl {
+        return new EventGroup();
     }
 
-    let events = gEvents[eventName];
-    if (!events) gEvents[eventName] = events = new PriorityArray<EventListener>();
-    events.add(priority, actualListener);
+    enableEventSpying(spy: (eventName: string, data?: any) => void) {
+        this.gSpy = spy;
+    }
+
+    removeListener(eventName: string, listener: Listener): void {
+        const events = this.gEvents[eventName];
+        if (events) events.remove(listener);
+    }
+
+    sendEvent(eventName: string, e?: any|undefined): void {
+        if (this.gSpy) this.gSpy(eventName, e);
+
+        const events = this.gEvents[eventName];
+        if (!events) return;
+        const values = events.value;
+
+        for (const listener of values) {
+            listener(e);
+        }
+    }
+
+    addListener(eventName: string, listener: EventListener): void;
+    addListener(eventName: string, priority: EventPriority, listener: EventListener): void;
+    //
+    addListener(eventName: string, priorityOrListener: EventPriority | EventListener, listener?: EventListener): void {
+        let priority: EventPriority;
+        let actualListener: EventListener;
+
+        if (typeof priorityOrListener === 'function') {
+            // Cas où priority n'est pas fournie, priorityOrListener est le listener
+            priority = EventPriority.Default;
+            actualListener = priorityOrListener;
+        } else {
+            // Cas où priority est fournie
+            priority = priorityOrListener;
+            actualListener = listener!;
+        }
+
+        let events = this.gEvents[eventName];
+        if (!events) this.gEvents[eventName] = events = new PriorityArray<EventListener>();
+        events.add(priority, actualListener);
+    }
 }
 
 //region PriorityArray
