@@ -20,7 +20,6 @@ export interface NodeSpaceType {
     os: OsImpl;
     timer: TimerImpl;
     app: AppImpl;
-    extensionPoints: ExtensionPointImpl;
     term: TerminalImpl;
     webSocket: WebSocketImpl;
 
@@ -240,24 +239,6 @@ export interface AppImpl {
 
     searchSourceOf(scriptPath: string): string|undefined;
     requireSourceOf(scriptPath: string): string;
-}
-
-export interface ExtensionPointImpl {
-    /**
-     * Register an extension point.
-     * Allow knowing who is using it as an host.
-     */
-    newHost(epName: string, importMetaUrl: string): EpCaller;
-
-    /**
-     * Get a caller, allowing to call the extension point.
-     */
-    getCaller(epName: string, importMetaUrl: string): EpCaller;
-
-    /**
-     * Add a function which is called when the extension point is called.
-     */
-    on(epName: string, importMetaUrl: string, fct: EpListener): void;
 }
 
 export enum EventPriority {
