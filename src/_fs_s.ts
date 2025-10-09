@@ -45,12 +45,30 @@ async function writeResponseToFile(response: Response, filePath: string, createD
     await fs.writeFile(filePath, bufferNode);
 }
 
-function nodeStreamToWebStream(nodeStream: Readable): ReadableStream {
+function nodeStreamToWebStream(nodeStream: Readable, debugInfos?: string): ReadableStream {
         return new ReadableStream({
             start(controller) {
-                nodeStream.on('data', (chunk: Buffer) => { controller.enqueue(chunk) });
-                nodeStream.on('end', () => { controller.close() });
-                nodeStream.on('error', (err) => { controller.error(err) });
+                nodeStream.on('data', (chunk: Buffer) => {
+                    try { controller.enqueue(chunk); }
+                    catch(e) {
+                        if (debugInfos) {
+                            console.log("nodeStreamToWebStream - unexpected stream closed for " + debugInfos, e);
+                        }
+                    }
+                });
+
+                nodeStream.on('end', () => {
+                    try {controller.close();}
+                    catch(e) {
+                        if (debugInfos) {
+                            console.log("nodeStreamToWebStream - unexpected stream closed for " + debugInfos, e);
+                        }
+                    }
+                });
+
+                nodeStream.on('error', (err) => {
+                    controller.error(err);
+                });
             }
         });
 }
@@ -61,7 +79,7 @@ function webStreamToNodeStream(webStream: ReadableStream): Readable {
 
 function createResponseFromFile(filePath: string, status: number = 200, headers?: {[key: string]: string}|Headers): Response {
     const nodeReadStream = createReadStream(filePath);
-    const webReadableStream = nodeStreamToWebStream(nodeReadStream);
+    const webReadableStream = nodeStreamToWebStream(nodeReadStream, filePath);
     return new Response(webReadableStream, {status: status, headers: headers});
 }
 
