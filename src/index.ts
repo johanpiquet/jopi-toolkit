@@ -4,7 +4,7 @@ import {getInstance} from "./instance.ts";
 
 const NodeSpace = getInstance();
 
-// Will be removed by the vite-js plugin.
+// Will be removed by a bundler plugin (ex: ViteJS).
 // See test-browser/vite.config.ts
 //
 import "./jopi-node-space-server.ts";
