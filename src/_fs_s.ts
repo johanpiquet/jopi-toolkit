@@ -101,16 +101,24 @@ function getMimeTypeFromName(fileName: string) {
     return found;
 }
 
-async function mkDirRec(dirPath: string): Promise<void> {
+async function mkDirRec(dirPath: string): Promise<boolean> {
     try {
         await fs.mkdir(dirPath, {recursive: true});
+        return true;
     }
-    catch {}
+    catch {
+        return false;
+    }
 }
 
-async function rmDirRec(dirPath: string): Promise<void> {
-    try { await fs.rm(dirPath, {recursive: true, force: true}); }
-    catch {}
+async function rmDirRec(dirPath: string): Promise<boolean> {
+    try {
+        await fs.rm(dirPath, {recursive: true, force: true});
+        return true;
+    }
+    catch {
+        return false;
+    }
 }
 
 async function writeTextToFile(filePath: string, text: string, createDir: boolean = true): Promise<void> {
