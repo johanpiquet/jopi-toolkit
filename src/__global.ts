@@ -259,8 +259,8 @@ export interface EventsImpl {
 
     removeListener(eventName: string, listener: any): void;
 
-    addListener<T = any>(eventName: string, listener: (e: T|undefined) => void|Promise<void>): void;
-    addListener<T = any>(eventName: string, priority: EventPriority, listener: (e: T|undefined) => void|Promise<void>): void;
+    addListener<T = any|undefined>(eventName: string, listener: (e: T) => void): void;
+    addListener<T = any|undefined>(eventName: string, priority: EventPriority, listener: (e: T) => void): void;
 }
 
 export interface TranslationRequest {

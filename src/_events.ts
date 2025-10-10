@@ -7,7 +7,7 @@ export function init_nodeSpaceEvents() {
     NodeSpace.events = new EventGroup();
 }
 
-type EventListener = (e?: any|undefined) => void;
+type EventListener = (e?: any) => void;
 
 class EventGroup implements EventsImpl {
     private readonly gEvents: Record<string, PriorityArray<EventListener>> = {};
