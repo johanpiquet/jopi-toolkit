@@ -208,7 +208,11 @@ export function patch_fs() {
         rmDir: rmDirRec,
         fileURLToPath: (url) => fileURLToPath(url),
         pathToFileURL: (fsPath) => pathToFileURL(fsPath),
-        unlink: (filePath) => fs.unlink(filePath),
+
+        unlink: async (filePath) => {
+            try { await fs.unlink(filePath); return true; }
+            catch { return false; }
+        },
 
         getFileSize,
         getMimeTypeFromName,

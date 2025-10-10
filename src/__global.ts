@@ -154,7 +154,7 @@ export interface FileSystemImpl {
     writeResponseToFile: (response: Response, filePath: string, createDir?: boolean) => Promise<void>;
     createResponseFromFile: (filePath: string, status?: number, headers?: {[key: string]: string}|Headers) => Response;
 
-    unlink(filePath: string): Promise<void>;
+    unlink(filePath: string): Promise<boolean>;
 
     writeTextToFile(filePath: string, text: string, createDir?: boolean): Promise<void>;
     writeTextSyncToFile(filePath: string, text: string, createDir?: boolean): void;
