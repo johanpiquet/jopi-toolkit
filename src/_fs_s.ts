@@ -1,5 +1,5 @@
 import fs from "node:fs/promises";
-import fss, {stat} from "node:fs";
+import fss from "node:fs";
 import {fileURLToPath} from "url";
 import {isBunJs} from "./common.ts";
 import {pathToFileURL} from "node:url";
