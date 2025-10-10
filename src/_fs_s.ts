@@ -1,11 +1,10 @@
 import fs from "node:fs/promises";
-import fss from "node:fs";
+import fss, {createReadStream} from "node:fs";
 import {fileURLToPath} from "url";
 import {isBunJs} from "./common.ts";
 import {pathToFileURL} from "node:url";
-import { lookup } from "mime-types";
+import {lookup} from "mime-types";
 import {Readable} from "node:stream";
-import {createReadStream} from "node:fs";
 import type {DirItem, FileState, FileSystemImpl} from "./__global.ts";
 import {merge} from "./internal.ts";
 import path from "node:path";
@@ -45,7 +44,7 @@ async function writeResponseToFile(response: Response, filePath: string, createD
     await fs.writeFile(filePath, bufferNode);
 }
 
-function nodeStreamToWebStream(nodeStream: Readable, debugInfos?: string): ReadableStream {
+function nodeStreamToWebStream__old(nodeStream: Readable, debugInfos?: string): ReadableStream {
         return new ReadableStream({
             start(controller) {
                 nodeStream.on('data', (chunk: Buffer) => {
@@ -71,6 +70,65 @@ function nodeStreamToWebStream(nodeStream: Readable, debugInfos?: string): Reada
                 });
             }
         });
+}
+
+function nodeStreamToWebStream(nodeStream: Readable, debugInfos?: string): ReadableStream {
+    let dataListener: (chunk: Buffer) => void;
+    let endListener: () => void;
+    let errorListener: (err: Error) => void;
+
+    return new ReadableStream({
+        start(controller) {
+            dataListener = (chunk: Buffer) => {
+                try {
+                    controller.enqueue(chunk);
+                } catch (e) {
+                    if (debugInfos) {
+                        console.log("nodeStreamToWebStream - enqueue failed for " + debugInfos, e);
+                    }
+
+                    nodeStream.destroy(new Error("WebStream controller closed unexpectedly"));
+                    nodeStream.off('data', dataListener);
+                    nodeStream.off('end', endListener);
+                    nodeStream.off('error', errorListener);
+                }
+            };
+
+            endListener = () => {
+                try {
+                    controller.close();
+                } catch (e) {
+                    if (debugInfos) {
+                        console.log("nodeStreamToWebStream - close failed for " + debugInfos, e);
+                    }
+                }
+            };
+
+            errorListener = (err: Error) => {
+                controller.error(err);
+                nodeStream.off('data', dataListener);
+                nodeStream.off('end', endListener);
+            };
+
+            nodeStream.on('data', dataListener);
+            nodeStream.on('end', endListener);
+            nodeStream.on('error', errorListener);
+        },
+
+        cancel(reason) {
+            if (debugInfos) {
+                console.log(`nodeStreamToWebStream - stream cancelled for ${debugInfos}. Reason: ${reason || 'Client disconnected'}`,);
+            }
+
+            if (dataListener) nodeStream.off('data', dataListener);
+            if (endListener) nodeStream.off('end', endListener);
+            if (errorListener) nodeStream.off('error', errorListener);
+
+            if (typeof nodeStream.destroy === 'function') {
+                nodeStream.destroy();
+            }
+        }
+    });
 }
 
 function webStreamToNodeStream(webStream: ReadableStream): Readable {
