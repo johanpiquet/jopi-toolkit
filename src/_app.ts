@@ -147,12 +147,12 @@ let gIsExited = false;
 let gTempDir: string|undefined;
 
 function findNodePackageDir(packageName: string, useLinuxPathFormat: boolean = true): string|undefined {
-    let currentDir = process.cwd();
+    let currentDir = NodeSpace.fs.dirname(findPackageJson());
 
     while (true) {
         const packagePath = NodeSpace.fs.join(currentDir, 'node_modules', packageName);
 
-        if (NodeSpace.fs.isFileSync(packagePath)) {
+        if (NodeSpace.fs.isDirectorySync(packagePath)) {
             if (useLinuxPathFormat) return NodeSpace.fs.win32ToLinuxPath(packagePath);
             return packagePath;
         }
