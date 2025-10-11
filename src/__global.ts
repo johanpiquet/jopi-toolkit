@@ -228,6 +228,9 @@ export interface AppImpl {
      */
     findPackageJson(searchFromDir?: string): string;
 
+    findNodePackageDir(packageName: string, useLinuxPathFormat?: boolean): string|undefined;
+    requireNodePackageDir(packageName: string, useLinuxPathFormat?: boolean): string;
+
     setApplicationMainFile(applicationMainFile: string): void;
     getApplicationMainFile(): string|undefined;
 

@@ -130,6 +130,9 @@ export function init_nodeSpaceApp() {
         },
 
         findPackageJson,
+        findNodePackageDir,
+        requireNodePackageDir,
+
         setApplicationMainFile,
         getApplicationMainFile,
         getCompiledFilePathFor,
@@ -142,6 +145,36 @@ export function init_nodeSpaceApp() {
 
 let gIsExited = false;
 let gTempDir: string|undefined;
+
+function findNodePackageDir(packageName: string, useLinuxPathFormat: boolean = true): string|undefined {
+    let currentDir = process.cwd();
+
+    while (true) {
+        const packagePath = NodeSpace.fs.join(currentDir, 'node_modules', packageName);
+
+        if (NodeSpace.fs.isFileSync(packagePath)) {
+            if (useLinuxPathFormat) return NodeSpace.fs.win32ToLinuxPath(packagePath);
+            return packagePath;
+        }
+
+        const parentDir = NodeSpace.fs.dirname(currentDir);
+
+        // Reached root directory
+        if (parentDir === currentDir) {
+            break;
+        }
+
+        currentDir = parentDir;
+    }
+
+    return undefined;
+}
+
+function requireNodePackageDir(packageName: string, useLinuxPathFormat: boolean = true): string {
+    let pkgDir = findNodePackageDir(packageName, useLinuxPathFormat);
+    if (!pkgDir) throw new Error("Package '" + packageName + "' not found");
+    return pkgDir;
+}
 
 export function findPackageJson(searchFromDir = getCodeSourceDirHint()): string {
     if (gPackageJsonPath!==undefined) return gPackageJsonPath;
