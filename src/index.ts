@@ -12,7 +12,7 @@ import "./jopi-node-space-server.ts";
 NodeSpace.nodeSpaceVersion = "0.0.1";
 NodeSpace.nodeLibPath = import.meta.url;
 
-export const nWhat = NodeSpace.what;
+//export const nWhat = NodeSpace.what;
 export const nThread = NodeSpace.thread;
 export const nTimer = NodeSpace.timer;
 export const nApp = NodeSpace.app;
