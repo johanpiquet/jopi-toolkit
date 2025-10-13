@@ -41,6 +41,10 @@
   "exports": {
     ".": "./dist/index.js",
     "./ns_schema": "./dist/ns_schemas.js",
-    "./ns_tools": "./dist/ns_tools.js"
+    "./ns_tools": "./dist/ns_tools.js",
+    "./ns_translate": "./dist/ns_translate/index.js",
+    "./ns_process": "./dist/ns_process/index.js",
+    "./ns_what": "./dist/ns_what/index.js",
+    "./ns_os": "./dist/ns_os/index.js"
   }
 }

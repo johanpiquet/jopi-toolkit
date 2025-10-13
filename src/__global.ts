@@ -16,15 +16,12 @@ export interface NodeSpaceType {
 
     what: WhatInfos;
     thread: ThreadImpl;
-    process: ProcessImpl;
-    os: OsImpl;
     timer: TimerImpl;
     app: AppImpl;
     term: TerminalImpl;
     webSocket: WebSocketImpl;
 
     events: EventsImpl;
-    translate: TranslateImpl;
 
     // >>> Server side only
 
@@ -95,18 +92,6 @@ export interface ThreadImpl {
     getCurrentWorkerData: ()=>any;
     unrefThisWorker(worker: Worker): void;
     closeCurrentThread(): void;
-}
-
-export interface ProcessImpl {
-    argv: string[];
-    env: { [key: string]: string };
-    isProduction: boolean;
-}
-
-export interface OsImpl {
-    exec(command: string): Promise<void>;
-    which(toolName: string, ifNotFound?:string): Promise<string|null>;
-    whichSync(toolName: string, ifNotFound?:string): string|null;
 }
 
 export type TimerCallback = () => void|boolean|Promise<void|boolean>;
@@ -281,30 +266,6 @@ export interface TranslationRequest {
      * If 'count' is more than one, then use plural form.
      */
     count?: number;
-}
-
-/**
- * Allow managing text translation.
- */
-export interface TranslateImpl {
-    /**
-     * Define the default language to use.
-     * @param languageName
-     */
-    setLanguage(languageName: string): void;
-
-    /**
-     * Returns the traduction for the key.
-     */
-    translate(key: string, p: TranslationRequest): string;
-
-    /**
-     * Is the same as `translate` but define explicitly the language to use.
-     */
-    translateTo(language: string, key: string, p: TranslationRequest): string;
-
-    addTranslation(language: string, key: string, value: string): void;
-    addTranslations(language: string, translations: {[key: string]: string}): void;
 }
 
 export interface TerminalImpl {

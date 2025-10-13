@@ -1,14 +1,12 @@
 import {init_nodeSpaceWhat} from "./_what.ts";
 import {init_nodeSpaceApp} from "./_app.ts";
-import {init_nodeSpaceProcess} from "./_process.ts";
 import {init_nodeSpaceTimer} from "./_timer.ts";
 import {init_nodeSpaceThread} from "./_thread.ts";
 import {init_term} from "./_term.ts";
-import type {CompressImpl, CryptoImpl, FileSystemImpl, OsImpl, StreamImpl} from "./__global.ts";
+import type {CompressImpl, CryptoImpl, FileSystemImpl, StreamImpl} from "./__global.ts";
 import {init_webSocket} from "./_webSocket.ts";
 import {getInstance} from "./instance.ts";
 import {init_nodeSpaceEvents} from "./_events.ts";
-import {init_nodeSpaceTranslate} from "./_translate.ts";
 
 const NodeSpace = getInstance();
 
@@ -27,10 +25,8 @@ function initBrowser() {
     NodeSpace.getErrorMessage = getErrorMessage;
 
     init_nodeSpaceWhat();
-    init_nodeSpaceTranslate();
     init_nodeSpaceEvents();
     init_nodeSpaceApp();
-    init_nodeSpaceProcess();
     init_nodeSpaceTimer();
     init_nodeSpaceThread();
     init_term();
@@ -41,7 +37,6 @@ function initBrowser() {
     NodeSpace.fs = {} as FileSystemImpl;
     NodeSpace.crypto = {} as CryptoImpl;
     NodeSpace.compress = {} as CompressImpl;
-    NodeSpace.os = {} as OsImpl;
     NodeSpace.stream = {} as StreamImpl;
 }
 

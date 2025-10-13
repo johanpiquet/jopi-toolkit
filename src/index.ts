@@ -14,14 +14,12 @@ NodeSpace.nodeLibPath = import.meta.url;
 
 export const nWhat = NodeSpace.what;
 export const nThread = NodeSpace.thread;
-export const nProcess = NodeSpace.process;
-export const nOS = NodeSpace.os;
+//export const nProcess = NodeSpace.process;
 export const nTimer = NodeSpace.timer;
 export const nApp = NodeSpace.app;
 export const nTerm = NodeSpace.term;
 export const nWebSocket = NodeSpace.webSocket;
 export const nEvents = NodeSpace.events;
-export const nTranslate = NodeSpace.translate;
 
 export const nFS = NodeSpace.fs;
 export const nCrypto = NodeSpace.crypto;

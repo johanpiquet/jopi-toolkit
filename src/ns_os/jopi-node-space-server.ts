@@ -1,14 +1,8 @@
-import type {OsImpl} from "./__global.ts";
-import {merge} from "./internal.ts";
-import {exec} from "node:child_process";
+import {exec as nodeExec} from "node:child_process";
 import {env} from "node:process";
 import * as path from "node:path";
 import * as fs from "node:fs/promises";
-import {isBunJs} from "./common.ts";
 import fss from "node:fs";
-import {getInstance} from "./instance.ts";
-
-const NodeSpace = getInstance();
 
 async function which(command: string, ifNotFound?: string): Promise<string|null> {
     const pathArray = (env.PATH || '').split(process.platform === 'win32' ? ';' : ':');
@@ -59,22 +53,11 @@ export function whichSync(cmd: string, ifNotFound?: string): string|null {
     return null;
 }
 
-function doExec(command: string) {
+export function exec(command: string): Promise<void> {
     return new Promise<void>((resolve, reject) => {
-        exec(command, (error) => { if (error) reject(error); else resolve() });
+        nodeExec(command, (error) => {
+            if (error) reject(error);
+            else resolve();
+        });
     });
-}
-
-export function patch_os() {
-    const myImpl: OsImpl = {
-        exec: doExec,
-        which, whichSync
-    };
-
-    if (isBunJs()) {
-        //TODO: Bun is sync, can be a problem?
-        myImpl.which = (toolName) => Promise.resolve(Bun.which(toolName));
-    }
-
-    merge(NodeSpace.os, myImpl);
 }
