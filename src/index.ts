@@ -16,7 +16,6 @@ export const nTimer = NodeSpace.timer;
 export const nApp = NodeSpace.app;
 export const nTerm = NodeSpace.term;
 export const nWebSocket = NodeSpace.webSocket;
-export const nEvents = NodeSpace.events;
 
 export const nFS = NodeSpace.fs;
 export const nCompress = NodeSpace.compress;

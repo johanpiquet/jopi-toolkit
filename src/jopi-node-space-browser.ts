@@ -5,7 +5,6 @@ import {init_term} from "./_term.ts";
 import type {CompressImpl, FileSystemImpl, StreamImpl} from "./__global.ts";
 import {init_webSocket} from "./_webSocket.ts";
 import {getInstance} from "./instance.ts";
-import {init_nodeSpaceEvents} from "./_events.ts";
 
 const NodeSpace = getInstance();
 
@@ -24,7 +23,6 @@ function initBrowser() {
     NodeSpace.getErrorMessage = getErrorMessage;
 
     init_nodeSpaceWhat();
-    init_nodeSpaceEvents();
     init_nodeSpaceApp();
     init_nodeSpaceTimer();
     init_term();

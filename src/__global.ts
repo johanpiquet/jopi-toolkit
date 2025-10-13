@@ -20,8 +20,6 @@ export interface NodeSpaceType {
     term: TerminalImpl;
     webSocket: WebSocketImpl;
 
-    events: EventsImpl;
-
     // >>> Server side only
 
     fs: FileSystemImpl;
@@ -216,45 +214,6 @@ export interface AppImpl {
 
     searchSourceOf(scriptPath: string): string|undefined;
     requireSourceOf(scriptPath: string): string;
-}
-
-export enum EventPriority {
-    VeryLow = -200,
-    Low = -100,
-    Default = 0,
-    High = 100,
-    VeryHigh = 200
-}
-
-export type EventListener<T> = (e: T|undefined) => void|Promise<void>;
-
-export interface EventsImpl {
-    newEventGroup(): EventsImpl;
-
-    enableEventSpying(spy: (eventName: string, data?: any) => void): void;
-    sendEvent<T = any>(eventName: string, e?: T|undefined): void;
-
-    removeListener(eventName: string, listener: any): void;
-
-    addListener<T = any|undefined>(eventName: string, listener: (e: T) => void): void;
-    addListener<T = any|undefined>(eventName: string, priority: EventPriority, listener: (e: T) => void): void;
-}
-
-export interface TranslationRequest {
-    /**
-     * The default value for the translation.
-     */
-    default?: string;
-
-    /**
-     * The parameters to use for values with parameters
-     */
-    params?: any;
-
-    /**
-     * If 'count' is more than one, then use plural form.
-     */
-    count?: number;
 }
 
 export interface TerminalImpl {

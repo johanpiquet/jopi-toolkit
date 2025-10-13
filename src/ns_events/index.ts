@@ -1,19 +1,18 @@
-import {getInstance} from "./instance.ts";
-import {EventPriority, type EventsImpl, type Listener} from "./__global.ts";
-
-const NodeSpace = getInstance();
-
-export function init_nodeSpaceEvents() {
-    NodeSpace.events = new EventGroup();
+export enum EventPriority {
+    VeryLow = -200,
+    Low = -100,
+    Default = 0,
+    High = 100,
+    VeryHigh = 200
 }
 
-type EventListener = (e?: any) => void;
+export type EventListener<T = any> = (e: T) => void;
 
-class EventGroup implements EventsImpl {
+class EventGroup {
     private readonly gEvents: Record<string, PriorityArray<EventListener>> = {};
     private gSpy: undefined | ((eventName: string, data?: any) => void);
 
-    newEventGroup(): EventsImpl {
+    newEventGroup(): EventGroup {
         return new EventGroup();
     }
 
@@ -38,10 +37,10 @@ class EventGroup implements EventsImpl {
         }
     }
 
-    addListener(eventName: string, listener: EventListener): void;
-    addListener(eventName: string, priority: EventPriority, listener: EventListener): void;
+    addListener<T = any|undefined>(eventName: string, listener: EventListener<T>): void;
+    addListener<T = any|undefined>(eventName: string, priority: EventPriority, listener: EventListener<T>): void;
     //
-    addListener(eventName: string, priorityOrListener: EventPriority | EventListener, listener?: EventListener): void {
+    addListener<T = any|undefined>(eventName: string, priorityOrListener: EventPriority | EventListener<T>, listener?: EventListener<T>): void {
         let priority: EventPriority;
         let actualListener: EventListener;
 
@@ -97,3 +96,6 @@ interface PriorityArrayEntry<T> {
 }
 
 //endregion
+
+const defaultEvents = new EventGroup();
+export default defaultEvents;
