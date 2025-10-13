@@ -26,7 +26,6 @@ export interface NodeSpaceType {
     // >>> Server side only
 
     fs: FileSystemImpl;
-    crypto: CryptoImpl;
     compress: CompressImpl;
     stream: StreamImpl;
 
@@ -341,11 +340,6 @@ export interface TerminalImpl {
     B_MAGENTA: string;
     B_CYAN: string;
     B_WHITE: string;
-}
-
-export interface CryptoImpl {
-    fastHash(text: string): string;
-    md5(text: string): string;
 }
 
 // ********************************
