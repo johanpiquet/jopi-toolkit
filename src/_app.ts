@@ -2,6 +2,7 @@ import {execListeners, isBunJs, isNodeJs} from "./common.ts";
 import {isUsingWorker} from "./internal.ts";
 import type {Listener} from "./__global.ts";
 import {getInstance} from "./instance.ts";
+import * as ns_thread from "jopi-node-space/ns_thread";
 
 const NodeSpace = getInstance();
 
@@ -86,7 +87,7 @@ export function init_nodeSpaceApp() {
                 await NodeSpace.timer.tick(100);
             }
 
-            if (!NodeSpace.thread.isMainThread) {
+            if (!ns_thread.isMainThread) {
                 // Allows to worker to correctly stop their activity.
                 await NodeSpace.timer.tick(50);
             }

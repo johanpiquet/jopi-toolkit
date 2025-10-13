@@ -15,7 +15,6 @@ export interface NodeSpaceType {
     nodeLibPath: string,
 
     what: WhatInfos;
-    thread: ThreadImpl;
     timer: TimerImpl;
     app: AppImpl;
     term: TerminalImpl;
@@ -82,15 +81,6 @@ export interface WhatInfos {
     isBrowser: boolean;
     isServerSide: boolean;
     serverType: ServerType;
-}
-
-export interface ThreadImpl {
-    isMainThread: boolean;
-    currentWorker: Worker | null;
-    newWorker: (fileName: string | URL, data?: any) => Worker;
-    getCurrentWorkerData: ()=>any;
-    unrefThisWorker(worker: Worker): void;
-    closeCurrentThread(): void;
 }
 
 export type TimerCallback = () => void|boolean|Promise<void|boolean>;

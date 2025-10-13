@@ -1,4 +1,3 @@
-import {patch_thread} from "./_thread_s.ts";
 import {patch_fs} from "./_fs_s.ts";
 import {patch_compress} from "./_compress_s.ts";
 
@@ -22,7 +21,6 @@ NodeSpace.what = {
     serverType: serverType,
 }
 
-patch_thread();
 patch_fs();
 patch_stream();
 patch_compress();

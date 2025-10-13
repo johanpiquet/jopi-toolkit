@@ -45,6 +45,7 @@
     "./ns_process": "./dist/ns_process/index.js",
     "./ns_what": "./dist/ns_what/index.js",
     "./ns_os": "./dist/ns_os/index.js",
-    "./ns_crypto": "./dist/ns_crypto/index.js"
+    "./ns_crypto": "./dist/ns_crypto/index.js",
+    "./ns_thread": "./dist/ns_thread/index.js"
   }
 }
