@@ -15,7 +15,6 @@ export interface NodeSpaceType {
     nodeLibPath: string,
 
     what: WhatInfos;
-    timer: TimerImpl;
     app: AppImpl;
     term: TerminalImpl;
     webSocket: WebSocketImpl;
@@ -80,20 +79,6 @@ export interface WhatInfos {
     serverType: ServerType;
 }
 
-export type TimerCallback = () => void|boolean|Promise<void|boolean>;
-
-export interface TimerImpl {
-    ONE_SECOND: number,
-    ONE_MINUTE: number,
-    ONE_HOUR: number,
-    ONE_DAY: number,
-
-    tick: (delayMs: number) => Promise<void>;
-    newInterval: (durationInMs: number, callback: TimerCallback) => void;
-    deferred: (callback: ()=>void) => void;
-
-    chrono(mustSaveMeasures: boolean): Chrono;
-}
 
 export interface StreamImpl {
     teeResponse(response: Response): Promise<[ReadableStream, Response]>;
@@ -221,25 +206,3 @@ export interface TerminalImpl {
 
 export type TermLogger = (...args: any[]) => void;
 
-export interface Chrono {
-    lastMeasure?: ChronoMeasure;
-    allMeasures: ChronoMeasure[];
-
-    start(label: string, printTitle?: string): void;
-    start_withLimit(limit_ms: number, label: string, printTitle?: string): void;
-
-    end(): void;
-
-    onMeasureDone(handler: null | ((measure: ChronoMeasure) => void)): void;
-}
-
-export interface ChronoMeasure {
-    label?: string;
-    title?: string;
-    logIfMoreThan_ms?: number;
-
-    startTime_ms: number;
-    endTime_ms: number;
-    elapsedTime_ms: number;
-    elapsedTime_sec: string;
-}

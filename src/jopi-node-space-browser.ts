@@ -1,6 +1,5 @@
 import {init_nodeSpaceWhat} from "./_what.ts";
 import {init_nodeSpaceApp} from "./_app.ts";
-import {init_nodeSpaceTimer} from "./_timer.ts";
 import {init_term} from "./_term.ts";
 import type {CompressImpl, StreamImpl} from "./__global.ts";
 import {init_webSocket} from "./_webSocket.ts";
@@ -24,7 +23,6 @@ function initBrowser() {
 
     init_nodeSpaceWhat();
     init_nodeSpaceApp();
-    init_nodeSpaceTimer();
     init_term();
     init_webSocket();
 

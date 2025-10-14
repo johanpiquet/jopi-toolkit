@@ -1,7 +1,29 @@
-import type {Chrono, ChronoMeasure, TimerCallback} from "./__global.ts";
-import {getInstance} from "./instance.ts";
+import {nTerm as ns_term, nApp as ns_app} from "jopi-node-space";
 
-const NodeSpace = getInstance();
+export type TimerCallback = () => void|boolean|Promise<void|boolean>;
+
+export interface Chrono {
+    lastMeasure?: ChronoMeasure;
+    allMeasures: ChronoMeasure[];
+
+    start(label: string, printTitle?: string): void;
+    start_withLimit(limit_ms: number, label: string, printTitle?: string): void;
+
+    end(): void;
+
+    onMeasureDone(handler: null | ((measure: ChronoMeasure) => void)): void;
+}
+
+export interface ChronoMeasure {
+    label?: string;
+    title?: string;
+    logIfMoreThan_ms?: number;
+
+    startTime_ms: number;
+    endTime_ms: number;
+    elapsedTime_ms: number;
+    elapsedTime_sec: string;
+}
 
 export const ONE_SECOND = 1000;
 export const ONE_MINUTE = ONE_SECOND * 60;
@@ -41,7 +63,7 @@ export function newInterval(durationInMs: number, callback: TimerCallback) {
 
     }, durationInMs);
 
-    NodeSpace.app.onHotReload(() => {
+    ns_app.onHotReload(() => {
         clearInterval(timerId);
         entry.splice(0);
     });
@@ -55,24 +77,13 @@ export function tick(timeInMs: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, timeInMs));
 }
 
-export function init_nodeSpaceTimer() {
-    NodeSpace.timer = {
-        ONE_SECOND,
-        ONE_MINUTE,
-        ONE_HOUR,
-        ONE_DAY,
-
-        tick,
-        newInterval,
-        deferred,
-
-        chrono: (mustSaveMeasures: boolean) => new ChronoImpl(mustSaveMeasures)
-    };
+export function chrono(mustSaveMeasures: boolean): Chrono {
+    return new ChronoImpl(mustSaveMeasures)
 }
 
 function logAutoTrigger(m: ChronoMeasure) {
     if (m.logIfMoreThan_ms && (m.elapsedTime_ms > m.logIfMoreThan_ms)) {
-        if (m.title) NodeSpace.term.logRed("Chrono - " + m.title + ":", m.elapsedTime_sec);
+        if (m.title) ns_term.logRed("Chrono - " + m.title + ":", m.elapsedTime_sec);
         else console.log("Chrono - " + m.label + ":", m.elapsedTime_sec);
     }
 }

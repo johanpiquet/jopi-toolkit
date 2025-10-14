@@ -4,6 +4,7 @@ import type {Listener} from "./__global.ts";
 import {getInstance} from "./instance.ts";
 import * as ns_thread from "jopi-node-space/ns_thread";
 import * as ns_fs from "jopi-node-space/ns_fs";
+import * as ns_timer from "jopi-node-space/ns_timer";
 
 const NodeSpace = getInstance();
 
@@ -76,7 +77,7 @@ export function init_nodeSpaceApp() {
 
             if (isUsingWorker()) {
                 // Wait 1 sec, which allows the worker to correctly initialize.
-                await NodeSpace.timer.tick(1000);
+                await ns_timer.tick(1000);
             }
 
             gIsAppStarted = false;
@@ -85,12 +86,12 @@ export function init_nodeSpaceApp() {
 
             if (isUsingWorker()) {
                 // Allows to worker to correctly stop their activity.
-                await NodeSpace.timer.tick(100);
+                await ns_timer.tick(100);
             }
 
             if (!ns_thread.isMainThread) {
                 // Allows to worker to correctly stop their activity.
-                await NodeSpace.timer.tick(50);
+                await ns_timer.tick(50);
             }
 
             await execListeners(onAppExited);

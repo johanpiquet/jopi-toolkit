@@ -1,5 +1,5 @@
 **2025-08-24**
-* Added 'chrono' to NodeSpace.timer.
+* Added 'chrono' to ns_timer.
 
 **2025-08-22**
 * Add websocket support.
