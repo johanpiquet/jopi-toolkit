@@ -1,5 +1,5 @@
 import { z } from "zod";
-import {generateUUIDv4} from "./ns_tools.ts";
+import {generateUUIDv4} from "jopi-node-space/ns_tools";
 
 export type ErrorMessage = string;
 
