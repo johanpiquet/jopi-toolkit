@@ -1,4 +1,3 @@
-import {init_nodeSpaceApp} from "./_app.ts";
 import type {CompressImpl, StreamImpl} from "./__global.ts";
 import {init_webSocket} from "./_webSocket.ts";
 import {getInstance} from "./instance.ts";
@@ -19,7 +18,6 @@ function initBrowser() {
     NodeSpace.applyDefaults = applyDefaults;
     NodeSpace.getErrorMessage = getErrorMessage;
 
-    init_nodeSpaceApp();
     init_webSocket();
 
     // Allow the ref to exist.

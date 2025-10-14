@@ -1,156 +1,154 @@
-import {execListeners} from "./common.ts";
-import {isUsingWorker} from "./internal.ts";
-import type {Listener} from "./__global.ts";
-import {getInstance} from "./instance.ts";
+// noinspection JSUnusedGlobalSymbols
+
 import * as ns_thread from "jopi-node-space/ns_thread";
 import * as ns_fs from "jopi-node-space/ns_fs";
 import * as ns_timer from "jopi-node-space/ns_timer";
 import {isBunJS, isNodeJS} from "jopi-node-space/ns_what";
+import {isUsingWorker} from "jopi-node-space/ns_thread";
 
-const NodeSpace = getInstance();
+export type Listener = ()=>void|Promise<void>;
 
-export function init_nodeSpaceApp() {
-    const onServerSideReady: Listener[] = [];
-    const onAppExiting: Listener[] = [];
-    const onAppExited: Listener[] = [];
-    const onAppStart: Listener[] = [];
-    let isServerSideReady = !(isNodeJS || isBunJS);
+async function execListeners(listeners: Listener[]) {
+    const list = [...listeners];
+    listeners.splice(0);
 
-    let isHotReload = globalThis.jopiHotReload !== undefined;
-    let gIsAppStarted = false;
-
-    if (isHotReload) {
-        execListeners(globalThis.jopiHotReload.onHotReload).then();
-    } else {
-        globalThis.jopiHotReload = {
-            onHotReload: [],
-            memory: {}
+    for (const listener of list) {
+        try {
+            const res = listener();
+            if (res instanceof Promise) await res;
+        }
+        catch (e) {
+            console.error(e);
         }
     }
+}
 
-    const onHotReload = globalThis.jopiHotReload.onHotReload;
-    const memory = globalThis.jopiHotReload.memory;
+const gOnServerSideReady: Listener[] = [];
+const gOnAppExiting: Listener[] = [];
+const gOnAppExited: Listener[] = [];
+const gOnAppStart: Listener[] = [];
+let gIsServerSideReady = !(isNodeJS || isBunJS);
 
-    getInstance().app = {
-        onServerSideReady: (listener) => {
-            if (isServerSideReady) listener();
-            else onServerSideReady.push(listener);
-        },
+let gIsHotReload = globalThis.jopiHotReload !== undefined;
+let gIsAppStarted = false;
 
-        waitServerSideReady: () => {
-            if (isServerSideReady) {
-                return Promise.resolve();
-            }
+if (gIsHotReload) {
+    execListeners(globalThis.jopiHotReload.onHotReload).then();
+} else {
+    globalThis.jopiHotReload = {
+        onHotReload: [],
+        memory: {}
+    }
+}
 
-            return new Promise<void>(r => {
-                NodeSpace.app.onServerSideReady(r);
-            })
-        },
+const gOnHotReload = globalThis.jopiHotReload.onHotReload;
+const gMemory = globalThis.jopiHotReload.memory;
 
-        declareServerSideReady: async () => {
-            isServerSideReady = true;
-            await execListeners(onServerSideReady);
-        },
+export function onServerSideReady(listener: Listener) {
+    if (gIsServerSideReady) listener();
+    else gOnServerSideReady.push(listener);
+}
 
-        onAppStart: (listener: Listener) => {
-            if (gIsAppStarted) listener();
-            else onAppStart.push(listener);
-        },
+export function waitServerSideReady() {
+    if (gIsServerSideReady) {
+        return Promise.resolve();
+    }
 
-        onAppExiting: (listener: Listener) => {
-            if (gIsExited) listener();
-            else onAppExiting.push(listener);
-        },
+    return new Promise<void>(r => {
+        onServerSideReady(r);
+    });
+}
 
-        onAppExited: (listener: Listener) => {
-            if (gIsExited) listener();
-            else onAppExited.push(listener);
-        },
+export async function declareServerSideReady() {
+    gIsServerSideReady = true;
+    await execListeners(gOnServerSideReady);
+}
 
-        declareAppStarted: async () => {
-            gIsAppStarted = true;
-            await execListeners(onAppStart);
-        },
+export function onAppStart(listener: Listener) {
+    if (gIsAppStarted) listener();
+    else gOnAppStart.push(listener);
+}
 
-        declareAppExiting: async () => {
-            if (gIsExited) return;
-            gIsExited = true;
+export function onAppExiting(listener: Listener) {
+    if (gIsExited) listener();
+    else gOnAppExiting.push(listener);
+}
 
-            if (isUsingWorker()) {
-                // Wait 1 sec, which allows the worker to correctly initialize.
-                await ns_timer.tick(1000);
-            }
+export function onAppExited(listener: Listener) {
+    if (gIsExited) listener();
+    else gOnAppExited.push(listener);
+}
 
-            gIsAppStarted = false;
+export async function declareAppStarted() {
+    gIsAppStarted = true;
+    await execListeners(gOnAppStart);
+}
 
-            await execListeners(onAppExiting);
+export async function declareAppExiting() {
+    if (gIsExited) return;
+    gIsExited = true;
 
-            if (isUsingWorker()) {
-                // Allows to worker to correctly stop their activity.
-                await ns_timer.tick(100);
-            }
+    if (isUsingWorker()) {
+        // Wait 1 sec, which allows the worker to correctly initialize.
+        await ns_timer.tick(1000);
+    }
 
-            if (!ns_thread.isMainThread) {
-                // Allows to worker to correctly stop their activity.
-                await ns_timer.tick(50);
-            }
+    gIsAppStarted = false;
 
-            await execListeners(onAppExited);
-        },
+    await execListeners(gOnAppExiting);
 
-        executeApp: async (app) => {
-            await NodeSpace.app.waitServerSideReady();
-            NodeSpace.app.declareAppStarted();
+    if (isUsingWorker()) {
+        // Allows to worker to correctly stop their activity.
+        await ns_timer.tick(100);
+    }
 
-            try {
-                const res = app();
-                if (res instanceof Promise) await res;
-            }
-            finally {
-                NodeSpace.app.declareAppExiting();
-            }
-        },
+    if (!ns_thread.isMainThread) {
+        // Allows to worker to correctly stop their activity.
+        await ns_timer.tick(50);
+    }
 
-        onHotReload(listener: Listener) {
-            onHotReload.push(listener);
-        },
+    await execListeners(gOnAppExited);
+}
 
-        keepOnHotReload: (key, provider) => {
-            let current = memory[key];
-            if (current!==undefined) return current;
-            return memory[key] = provider();
-        },
+export async function executeApp(app: Listener) {
+    await waitServerSideReady();
+    declareAppStarted();
 
-        clearHotReloadKey: (key) => {
-            delete(memory[key]);
-        },
+    try {
+        const res = app();
+        if (res instanceof Promise) await res;
+    }
+    finally {
+        declareAppExiting();
+    }
+}
 
-        getTempDir() {
-            if (!gTempDir) {
-                gTempDir = ns_fs.resolve(process.cwd(), "temp")!;
-            }
+export function onHotReload(listener: Listener) {
+    gOnHotReload.push(listener);
+}
 
-            return gTempDir;
-        },
+export function keepOnHotReload<T>(key: string, provider: ()=>T): T {
+    let current = gMemory[key];
+    if (current!==undefined) return current;
+    return gMemory[key] = provider();
+}
 
-        findPackageJson,
-        findNodePackageDir,
-        requireNodePackageDir,
+export function clearHotReloadKey(key: string) {
+    delete(gMemory[key]);
+}
 
-        setApplicationMainFile,
-        getApplicationMainFile,
-        getCompiledFilePathFor,
-        getSourcesCodePathFor,
-        getSourceCodeDir,
-        getCompiledCodeDir,
-        searchSourceOf, requireSourceOf
-    };
+export function getTempDir(): string {
+    if (!gTempDir) {
+        gTempDir = ns_fs.resolve(process.cwd(), "temp")!;
+    }
+
+    return gTempDir;
 }
 
 let gIsExited = false;
 let gTempDir: string|undefined;
 
-function findNodePackageDir(packageName: string, useLinuxPathFormat: boolean = true): string|undefined {
+export function findNodePackageDir(packageName: string, useLinuxPathFormat: boolean = true): string|undefined {
     let currentDir = ns_fs.dirname(findPackageJson());
 
     while (true) {
@@ -174,7 +172,7 @@ function findNodePackageDir(packageName: string, useLinuxPathFormat: boolean = t
     return undefined;
 }
 
-function requireNodePackageDir(packageName: string, useLinuxPathFormat: boolean = true): string {
+export function requireNodePackageDir(packageName: string, useLinuxPathFormat: boolean = true): string {
     let pkgDir = findNodePackageDir(packageName, useLinuxPathFormat);
     if (!pkgDir) throw new Error("Package '" + packageName + "' not found");
     return pkgDir;
@@ -299,7 +297,7 @@ export function getSourcesCodePathFor(compiledFilePath: string): string {
     return filePath + ".js";
 }
 
-function requireSourceOf(scriptPath: string): string {
+export function requireSourceOf(scriptPath: string): string {
     let src = searchSourceOf(scriptPath);
     if (!src) throw new Error("Cannot find source of " + scriptPath);
     return src;
@@ -309,7 +307,7 @@ function requireSourceOf(scriptPath: string): string {
  * Search the source of the component if it's a JavaScript and not a TypeScript.
  * Why? Because EsBuild doesn't work well on already transpiled code.
  */
-function searchSourceOf(scriptPath: string): string|undefined {
+export function searchSourceOf(scriptPath: string): string|undefined {
     function tryResolve(filePath: string, outDir: string) {
         let out = ns_fs.sep + outDir + ns_fs.sep;
         let idx = filePath.lastIndexOf(out);
