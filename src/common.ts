@@ -1,10 +1,4 @@
 import type {Listener} from "./__global.ts";
-import {getInstance} from "./instance.ts";
-
-const NodeSpace = getInstance();
-
-let _isBunJs: boolean|undefined = undefined;
-let _isNodeJs: boolean|undefined = undefined;
 
 export async function execListeners(listeners: Listener[]) {
     const list = [...listeners];
@@ -19,28 +13,4 @@ export async function execListeners(listeners: Listener[]) {
             console.error(e);
         }
     }
-}
-
-export function isServerSide(): boolean {
-    return isBunJs() || isNodeJs();
-}
-
-export function isBunJs(): boolean {
-    if (_isBunJs!==undefined) return _isBunJs;
-    _isBunJs = typeof(Bun)!=="undefined"
-
-    if (_isBunJs) {
-        if (Bun.env["JOPI_FORCE_NODE_JS"]) {
-            console.log("JopiNodeSpace: Forcing NodeJs compatibility.");
-            _isBunJs = false;
-            _isNodeJs = true;
-        }
-    }
-
-    return _isBunJs;
-}
-
-export function isNodeJs(): boolean {
-    if (_isNodeJs!==undefined) return _isNodeJs;
-    return _isNodeJs = typeof(self)==="undefined";
 }

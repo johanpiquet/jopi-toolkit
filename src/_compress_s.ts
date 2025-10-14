@@ -1,8 +1,8 @@
 import type {CompressImpl} from "./__global.ts";
-import {isBunJs} from "./common.ts";
 import {merge} from "./internal.ts";
 import {gunzipSync, gzipSync} from "node:zlib";
 import {getInstance} from "./instance.ts";
+import {isBunJs} from "jopi-node-space/ns_what";
 
 const NodeSpace = getInstance();
 
@@ -12,7 +12,7 @@ export function patch_compress() {
         gzipSync: data => gzipSync(Buffer.from(data))
     };
 
-    if (isBunJs()) {
+    if (isBunJs) {
         //@ts-ignore Accepting function signature
         myCompress.gunzipSync = Bun.gunzipSync;
         //@ts-ignore Accepting function signature

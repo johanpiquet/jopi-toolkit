@@ -1,10 +1,11 @@
-import {execListeners, isBunJs, isNodeJs} from "./common.ts";
+import {execListeners} from "./common.ts";
 import {isUsingWorker} from "./internal.ts";
 import type {Listener} from "./__global.ts";
 import {getInstance} from "./instance.ts";
 import * as ns_thread from "jopi-node-space/ns_thread";
 import * as ns_fs from "jopi-node-space/ns_fs";
 import * as ns_timer from "jopi-node-space/ns_timer";
+import {isBunJs, isNodeJS} from "jopi-node-space/ns_what";
 
 const NodeSpace = getInstance();
 
@@ -13,7 +14,7 @@ export function init_nodeSpaceApp() {
     const onAppExiting: Listener[] = [];
     const onAppExited: Listener[] = [];
     const onAppStart: Listener[] = [];
-    let isServerSideReady = !(isNodeJs() || isBunJs());
+    let isServerSideReady = !(isNodeJS || isBunJs);
 
     let isHotReload = globalThis.jopiHotReload !== undefined;
     let gIsAppStarted = false;
@@ -238,7 +239,7 @@ export function getCompiledCodeDir(): string {
     }
 
     // This means that it's Bun.js, and it directly uses the TypeScript version.
-    if (gApplicationMainFile && NodeSpace.what.isBunJs && gApplicationMainFile.startsWith(sourceCodeDir)) {
+    if (gApplicationMainFile && isBunJs && gApplicationMainFile.startsWith(sourceCodeDir)) {
         return gCompiledSourcesDir = sourceCodeDir;
     }
 
@@ -266,7 +267,7 @@ export function getCompiledFilePathFor(sourceFilePath: string): string {
 
     let filePath = sourceFilePath.substring(sourceCodeDir.length);
 
-    if (isNodeJs() && !filePath.endsWith(".js")) {
+    if (isNodeJS && !filePath.endsWith(".js")) {
         let idx = filePath.lastIndexOf(".");
         if (idx !== -1) filePath = filePath.substring(0, idx) + ".js";
     }

@@ -1,4 +1,3 @@
-import {init_nodeSpaceWhat} from "./_what.ts";
 import {init_nodeSpaceApp} from "./_app.ts";
 import {init_term} from "./_term.ts";
 import type {CompressImpl, StreamImpl} from "./__global.ts";
@@ -21,7 +20,6 @@ function initBrowser() {
     NodeSpace.applyDefaults = applyDefaults;
     NodeSpace.getErrorMessage = getErrorMessage;
 
-    init_nodeSpaceWhat();
     init_nodeSpaceApp();
     init_term();
     init_webSocket();

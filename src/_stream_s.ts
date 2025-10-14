@@ -1,4 +1,4 @@
-import {isBunJs} from "./common.ts";
+import {isBunJs} from "jopi-node-space/ns_what";
 import type {StreamImpl} from "./__global.ts";
 import {merge} from "./internal.ts";
 import {getInstance} from "./instance.ts";
@@ -28,7 +28,7 @@ export function patch_stream() {
         teeResponse
     };
 
-    if (isBunJs()) {
+    if (isBunJs) {
         myStream.teeResponse = r => {
             const [b1, b2] = r.body!.tee();
 

@@ -5,16 +5,12 @@ declare global {
 export type ServerType = "nodejs"|"bunjs"|"browser";
 export type Listener = ()=>void|Promise<void>;
 
-export type EpCaller = (...values:  unknown[]) => Promise<void>;
-export type EpListener = (...values:  unknown[]) => void|Promise<void>;
-
 // ********************************************
 
 export interface NodeSpaceType {
     nodeSpaceVersion: string,
     nodeLibPath: string,
 
-    what: WhatInfos;
     app: AppImpl;
     term: TerminalImpl;
     webSocket: WebSocketImpl;
@@ -70,15 +66,6 @@ export interface HotReloadType {
     onHotReload: Listener[];
     memory: { [key: string]: any };
 }
-
-export interface WhatInfos {
-    isNodeJS: boolean;
-    isBunJs: boolean;
-    isBrowser: boolean;
-    isServerSide: boolean;
-    serverType: ServerType;
-}
-
 
 export interface StreamImpl {
     teeResponse(response: Response): Promise<[ReadableStream, Response]>;
