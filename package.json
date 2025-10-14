@@ -18,7 +18,9 @@
     "src"
   ],
   "scripts": {
-    "build": "npx tsc",
+    "build:priority:1": "npx tsc",
+    "clean": "rm -rf ./dist .turbo tsconfig.tsbuildinfo",
+
     "tsc": "tsc",
     "bun-publish": "npx tsc && bun publish",
     "untrack": "git rm -r --cached -- ./dist/**;"

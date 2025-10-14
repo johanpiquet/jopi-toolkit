@@ -187,8 +187,13 @@ export function requireNodePackageDir(packageName: string, useLinuxPathFormat: b
     return pkgDir;
 }
 
+export function findPackageJsonDir(searchFromDir = getCodeSourceDirHint()): string {
+    let pkgJsonPath = findPackageJson(searchFromDir);
+    return ns_fs.dirname(pkgJsonPath);
+}
+
 export function findPackageJson(searchFromDir = getCodeSourceDirHint()): string {
-    if (gPackageJsonPath!==undefined) return gPackageJsonPath;
+    if (!searchFromDir && (gPackageJsonPath!==undefined)) return gPackageJsonPath;
 
     let currentDir = searchFromDir;
 
