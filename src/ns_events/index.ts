@@ -1,3 +1,5 @@
+// noinspection JSUnusedGlobalSymbols
+
 export enum EventPriority {
     VeryLow = -200,
     Low = -100,
@@ -37,9 +39,6 @@ class EventGroup {
         }
     }
 
-    addListener<T = any|undefined>(eventName: string, listener: EventListener<T>): void;
-    addListener<T = any|undefined>(eventName: string, priority: EventPriority, listener: EventListener<T>): void;
-    //
     addListener<T = any|undefined>(eventName: string, priorityOrListener: EventPriority | EventListener<T>, listener?: EventListener<T>): void {
         let priority: EventPriority;
         let actualListener: EventListener;
@@ -97,5 +96,16 @@ interface PriorityArrayEntry<T> {
 
 //endregion
 
-const defaultEvents = new EventGroup();
-export default defaultEvents;
+const gDefaultEvents = new EventGroup();
+
+export function newEventGroup(): EventGroup {
+    return new EventGroup();
+}
+
+export const enableEventSpying = gDefaultEvents.enableEventSpying.bind(gDefaultEvents);
+export const removeListener = gDefaultEvents.removeListener.bind(gDefaultEvents);
+export const sendEvent = gDefaultEvents.sendEvent.bind(gDefaultEvents);
+
+export function addListener<T = any|undefined>(eventName: string, priorityOrListener: EventPriority | EventListener<T>, listener?: EventListener<T>): void {
+    gDefaultEvents.addListener(eventName, priorityOrListener as EventPriority, listener as EventListener<T>);
+}

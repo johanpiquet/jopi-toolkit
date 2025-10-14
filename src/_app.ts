@@ -5,7 +5,7 @@ import {getInstance} from "./instance.ts";
 import * as ns_thread from "jopi-node-space/ns_thread";
 import * as ns_fs from "jopi-node-space/ns_fs";
 import * as ns_timer from "jopi-node-space/ns_timer";
-import {isBunJs, isNodeJS} from "jopi-node-space/ns_what";
+import {isBunJS, isNodeJS} from "jopi-node-space/ns_what";
 
 const NodeSpace = getInstance();
 
@@ -14,7 +14,7 @@ export function init_nodeSpaceApp() {
     const onAppExiting: Listener[] = [];
     const onAppExited: Listener[] = [];
     const onAppStart: Listener[] = [];
-    let isServerSideReady = !(isNodeJS || isBunJs);
+    let isServerSideReady = !(isNodeJS || isBunJS);
 
     let isHotReload = globalThis.jopiHotReload !== undefined;
     let gIsAppStarted = false;
@@ -239,7 +239,7 @@ export function getCompiledCodeDir(): string {
     }
 
     // This means that it's Bun.js, and it directly uses the TypeScript version.
-    if (gApplicationMainFile && isBunJs && gApplicationMainFile.startsWith(sourceCodeDir)) {
+    if (gApplicationMainFile && isBunJS && gApplicationMainFile.startsWith(sourceCodeDir)) {
         return gCompiledSourcesDir = sourceCodeDir;
     }
 

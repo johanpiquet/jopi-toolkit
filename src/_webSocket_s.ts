@@ -1,4 +1,4 @@
-import {isBunJs, isNodeJS} from "jopi-node-space/ns_what";
+import {isBunJS, isNodeJS} from "jopi-node-space/ns_what";
 import {WebSocket as WsWebSocket} from "ws";
 import {getInstance} from "./instance.ts";
 
@@ -15,7 +15,7 @@ export function patch_webSocket() {
                 ws.onerror = () => { reject(); };
             });
         }
-    } else if (isBunJs) {
+    } else if (isBunJS) {
         NodeSpace.webSocket.onClosed = (socket, listener) => {
             const data = ((socket as any).data) as any;
             data.onClosed = listener;

@@ -6,7 +6,7 @@ import {fileURLToPath as n_fileURLToPath, pathToFileURL as n_pathToFileURL } fro
 import {lookup} from "mime-types";
 import {Readable} from "node:stream";
 import path from "node:path";
-import {isBunJs} from "jopi-node-space/ns_what";
+import {isBunJS} from "jopi-node-space/ns_what";
 import type {DirItem, FileState} from "./common.ts";
 
 class WebToNodeReadableStreamAdapter extends Readable {
@@ -39,7 +39,7 @@ async function writeResponseToFile_node(response: Response, filePath: string, cr
     await fs.writeFile(filePath, bufferNode);
 }
 
-export const writeResponseToFile = isBunJs
+export const writeResponseToFile = isBunJS
     ? async (r: Response, p: string) => { await Bun.file(p).write(r); }
     : writeResponseToFile_node;
 
@@ -112,7 +112,7 @@ function createResponseFromFile_node(filePath: string, status: number = 200, hea
     return new Response(webReadableStream, {status: status, headers: headers});
 }
 
-export const createResponseFromFile = isBunJs
+export const createResponseFromFile = isBunJS
     ? (filePath: string, status: number = 200, headers?: {[key: string]: string}|Headers) => new Response(Bun.file(filePath), {status, headers})
     : createResponseFromFile_node;
 
@@ -152,11 +152,11 @@ export async function rmDir(dirPath: string): Promise<boolean> {
     }
 }
 
-export const fileURLToPath = isBunJs
+export const fileURLToPath = isBunJS
     ? (url: string) => Bun.fileURLToPath(url)
     : n_fileURLToPath;
 
-export const pathToFileURL = isBunJs
+export const pathToFileURL = isBunJS
     ? (fsPath: string) => Bun.pathToFileURL(fsPath)
     : n_pathToFileURL;
 
@@ -226,7 +226,7 @@ async function readFileToBytes_node(filePath: string): Promise<Uint8Array> {
     return new Uint8Array(buffer);
 }
 
-export const readFileToBytes = isBunJs
+export const readFileToBytes = isBunJS
     ? async (filePath: string) => Bun.file(filePath).bytes()
     : readFileToBytes_node
 
