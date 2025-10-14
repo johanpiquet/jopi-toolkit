@@ -12,7 +12,6 @@ export interface NodeSpaceType {
     nodeLibPath: string,
 
     app: AppImpl;
-    term: TerminalImpl;
     webSocket: WebSocketImpl;
 
     // >>> Server side only
@@ -112,81 +111,6 @@ export interface AppImpl {
 
     searchSourceOf(scriptPath: string): string|undefined;
     requireSourceOf(scriptPath: string): string;
-}
-
-export interface TerminalImpl {
-    colorize: (...params: string[]) => string;
-    cssText: (text: string, css: string) => void;
-
-    moveUp: (n: number) => string;
-    moveDown: (n: number) => string;
-    moveLeft: (n: number) => string;
-    moveRight: (n: number) => string;
-    goAt: (x: number, y: number) => string;
-
-    /**
-     * Build a console.log function that uses the colors provided in params.
-     */
-    buildLogger: (...colors: string[]) => TermLogger;
-
-    /**
-     * Build a console.log function that uses the colors provided in params.
-     */
-    buildWriter: (...colors: string[]) => ((...params: any[])=>string);
-
-    /**
-     * Indent a multiline text.
-     */
-    indentText: (space: string, text: string) => string;
-
-    /**
-     * Write a temporary message, which are replaced each time by the next temp message.
-     */
-    consoleLogTemp: (isTemp: boolean, text: string) => void,
-
-    /**
-     * Print a console message, where the user must respond by yes (y) or no (n).
-     */
-    askYesNo(message: string, defaultValue: boolean): Promise<boolean>;
-
-    logSuccess: TermLogger;
-    logError: TermLogger;
-    logWarn: TermLogger;
-
-    logRed: TermLogger,
-    logBgRed: TermLogger,
-
-    logGreen: TermLogger,
-    logBgGreen: TermLogger,
-
-    logBlue: TermLogger,
-    logBgBlue: TermLogger,
-
-    T_RESET: string;
-    T_BOLD: string;
-    T_UNDERLINE: string;
-    T_REWRITE_LINE: string;
-    T_CLEAR_LINE: string;
-    T_CLEAR_LINE_END: string;
-    T_CLEAR_SCREEN: string;
-    T_LINE_START: string;
-
-    C_RED: string;
-    C_GREEN: string;
-    C_BLUE: string;
-    C_LIGHT_BLUE: string;
-    C_GREY: string;
-    C_ORANGE: string;
-    C_WHITE: string;
-
-    B_BLACK: string;
-    B_RED: string;
-    B_GREEN: string;
-    B_YELLOW: string;
-    B_BLUE: string;
-    B_MAGENTA: string;
-    B_CYAN: string;
-    B_WHITE: string;
 }
 
 // ********************************

@@ -1,4 +1,5 @@
-import {nTerm as ns_term, nApp as ns_app} from "jopi-node-space";
+import {nApp as ns_app} from "jopi-node-space";
+import * as ns_term from "jopi-node-space/ns_term";
 
 export type TimerCallback = () => void|boolean|Promise<void|boolean>;
 

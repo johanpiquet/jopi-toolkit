@@ -49,6 +49,7 @@
     "./ns_thread": "./dist/ns_thread/index.js",
     "./ns_events": "./dist/ns_events/index.js",
     "./ns_fs": "./dist/ns_fs/index.js",
-    "./ns_timer": "./dist/ns_timer/index.js"
+    "./ns_timer": "./dist/ns_timer/index.js",
+    "./ns_term": "./dist/ns_term/index.js"
   }
 }
