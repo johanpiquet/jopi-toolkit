@@ -32,6 +32,15 @@ let gIsServerSideReady = !(isNodeJS || isBunJS);
 let gIsHotReload = globalThis.jopiHotReload !== undefined;
 let gIsAppStarted = false;
 
+declare global {
+    var jopiHotReload: HotReloadType;
+}
+
+export interface HotReloadType {
+    onHotReload: Listener[];
+    memory: { [key: string]: any };
+}
+
 if (gIsHotReload) {
     execListeners(globalThis.jopiHotReload.onHotReload).then();
 } else {

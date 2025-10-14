@@ -9,3 +9,13 @@ export function generateUUIDv4(): string {
         return v.toString(16);
     });
 }
+
+export function getErrorMessage(e: unknown): string {
+    if (e instanceof Error) return e.message;
+    return "" + e;
+}
+
+export function applyDefaults<T>(source: T|undefined, defaults: T): T {
+    if (!source) source = {} as T;
+    return {...defaults, ...source};
+}

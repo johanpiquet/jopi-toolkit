@@ -38,7 +38,6 @@
   "publicPublishedDate": "9/25/2025",
 
   "exports": {
-    ".": "./dist/index.js",
     "./ns_schema": "./dist/ns_schemas/index.js",
     "./ns_tools": "./dist/ns_tools/index.js",
     "./ns_translate": "./dist/ns_translate/index.js",
@@ -51,6 +50,8 @@
     "./ns_fs": "./dist/ns_fs/index.js",
     "./ns_timer": "./dist/ns_timer/index.js",
     "./ns_term": "./dist/ns_term/index.js",
-    "./ns_app": "./dist/ns_app/index.js"
+    "./ns_app": "./dist/ns_app/index.js",
+    "./ns_compress": "./dist/ns_compress/index.js",
+    "./ns_webSocket": "./dist/ns_webSocket/index.js"
   }
 }

@@ -28,6 +28,8 @@ export const B_MAGENTA = "\x1b[45m";
 export const B_CYAN = "\x1b[46m";
 export const B_WHITE = "\x1b[47m";
 
+export type TermLogger = (...args: any[]) => void;
+
 export function cssText(text: string, css: string) {
     console.log("%c" + text, css)
 }
