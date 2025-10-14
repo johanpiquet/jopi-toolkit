@@ -1,4 +1,3 @@
-import {patch_fs} from "./_fs_s.ts";
 import {patch_compress} from "./_compress_s.ts";
 
 import type {ServerType} from "./__global.ts";
@@ -21,7 +20,6 @@ NodeSpace.what = {
     serverType: serverType,
 }
 
-patch_fs();
 patch_stream();
 patch_compress();
 patch_webSocket();

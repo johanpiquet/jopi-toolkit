@@ -22,7 +22,6 @@ export interface NodeSpaceType {
 
     // >>> Server side only
 
-    fs: FileSystemImpl;
     compress: CompressImpl;
     stream: StreamImpl;
 
@@ -96,81 +95,8 @@ export interface TimerImpl {
     chrono(mustSaveMeasures: boolean): Chrono;
 }
 
-export interface FileState {
-    size: number,
-
-    mtimeMs: number,
-    ctimeMs: number,
-    birthtimeMs: number,
-
-    isDirectory: () => boolean,
-    isFile: () => boolean,
-    isSymbolicLink: () => boolean,
-}
-
 export interface StreamImpl {
     teeResponse(response: Response): Promise<[ReadableStream, Response]>;
-}
-
-export interface FileSystemImpl {
-    mkDir: (dirPath: string) => Promise<boolean>;
-    rmDir: (dirPath: string) => Promise<boolean>;
-
-    fileURLToPath: (url: string) => string;
-    pathToFileURL: (fsPath: string) => URL;
-
-    getMimeTypeFromName: (fileName: string) => string;
-    getFileSize: (filePath: string) => Promise<number>;
-    getFileStat: (filePath: string) => Promise<FileState|undefined>;
-
-    writeResponseToFile: (response: Response, filePath: string, createDir?: boolean) => Promise<void>;
-    createResponseFromFile: (filePath: string, status?: number, headers?: {[key: string]: string}|Headers) => Response;
-
-    unlink(filePath: string): Promise<boolean>;
-
-    writeTextToFile(filePath: string, text: string, createDir?: boolean): Promise<void>;
-    writeTextSyncToFile(filePath: string, text: string, createDir?: boolean): void;
-
-    readTextFromFile(filePath: string): Promise<string>;
-    readTextSyncFromFile(filePath: string): string;
-
-    isFile(filePath: string): Promise<boolean>;
-    isFileSync(filePath: string): boolean;
-
-    isDirectory(dirPath: string): Promise<boolean>;
-    isDirectorySync(dirPath: string): boolean;
-
-    readFileToBytes(filePath: string): Promise<Uint8Array>;
-
-    nodeStreamToWebStream(nodeStream: NodeJS.ReadableStream): ReadableStream;
-    webStreamToNodeStream(webStream: ReadableStream): NodeJS.ReadableStream;
-
-    /**
-     * Transform an absolute path to a relative path.
-     */
-    getRelativePath(absolutePath: string, fromPath?: string): string;
-
-    listDir(dirPath: string): Promise<DirItem[]>;
-    win32ToLinuxPath(filePath: string): string;
-
-    // >>>> node:path
-
-    sep: string;
-    join(...paths: string[]): string;
-    resolve(...paths: string[]): string;
-    dirname(path: string): string;
-    extname(path: string): string;
-    isAbsolute(path: string): boolean;
-    normalize(path: string): string;
-    basename(path: string, suffix?: string): string;
-}
-
-export interface DirItem {
-    name: string;
-    fullPath: string;
-    isFile?: boolean;
-    isDirectory?: boolean;
-    isSymbolicLink?: boolean;
 }
 
 export interface AppImpl {

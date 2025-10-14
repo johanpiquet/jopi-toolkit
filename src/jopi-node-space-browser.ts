@@ -2,7 +2,7 @@ import {init_nodeSpaceWhat} from "./_what.ts";
 import {init_nodeSpaceApp} from "./_app.ts";
 import {init_nodeSpaceTimer} from "./_timer.ts";
 import {init_term} from "./_term.ts";
-import type {CompressImpl, FileSystemImpl, StreamImpl} from "./__global.ts";
+import type {CompressImpl, StreamImpl} from "./__global.ts";
 import {init_webSocket} from "./_webSocket.ts";
 import {getInstance} from "./instance.ts";
 
@@ -30,7 +30,6 @@ function initBrowser() {
 
     // Allow the ref to exist.
     //
-    NodeSpace.fs = {} as FileSystemImpl;
     NodeSpace.compress = {} as CompressImpl;
     NodeSpace.stream = {} as StreamImpl;
 }

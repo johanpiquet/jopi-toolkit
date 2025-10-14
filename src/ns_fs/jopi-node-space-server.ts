@@ -1,18 +1,13 @@
+// noinspection JSUnusedGlobalSymbols
+
 import fs from "node:fs/promises";
 import fss, {createReadStream} from "node:fs";
-import {fileURLToPath} from "url";
-import {isBunJs} from "./common.ts";
-import {pathToFileURL} from "node:url";
+import {fileURLToPath as n_fileURLToPath, pathToFileURL as n_pathToFileURL } from "node:url";
 import {lookup} from "mime-types";
 import {Readable} from "node:stream";
-import type {DirItem, FileState, FileSystemImpl} from "./__global.ts";
-import {merge} from "./internal.ts";
 import path from "node:path";
-import {getInstance} from "./instance.ts";
-
-const NodeSpace = getInstance();
-
-//region Node.js adapter
+import {isBunJs} from "jopi-node-space/ns_what";
+import type {DirItem, FileState} from "./common.ts";
 
 class WebToNodeReadableStreamAdapter extends Readable {
     private webStreamReader: ReadableStreamDefaultReader<any>;
@@ -37,42 +32,18 @@ class WebToNodeReadableStreamAdapter extends Readable {
     }
 }
 
-async function writeResponseToFile(response: Response, filePath: string, createDir: boolean = true) {
-    if (createDir) await mkDirRec(path.dirname(filePath));
+async function writeResponseToFile_node(response: Response, filePath: string, createDir: boolean = true) {
+    if (createDir) await mkDir(path.dirname(filePath));
     const bufferDonnees = await response.arrayBuffer();
     const bufferNode = Buffer.from(bufferDonnees);
     await fs.writeFile(filePath, bufferNode);
 }
 
-function nodeStreamToWebStream__old(nodeStream: Readable, debugInfos?: string): ReadableStream {
-        return new ReadableStream({
-            start(controller) {
-                nodeStream.on('data', (chunk: Buffer) => {
-                    try { controller.enqueue(chunk); }
-                    catch(e) {
-                        if (debugInfos) {
-                            console.log("nodeStreamToWebStream - unexpected stream closed for " + debugInfos, e);
-                        }
-                    }
-                });
+export const writeResponseToFile = isBunJs
+    ? async (r: Response, p: string) => { await Bun.file(p).write(r); }
+    : writeResponseToFile_node;
 
-                nodeStream.on('end', () => {
-                    try {controller.close();}
-                    catch(e) {
-                        if (debugInfos) {
-                            console.log("nodeStreamToWebStream - unexpected stream closed for " + debugInfos, e);
-                        }
-                    }
-                });
-
-                nodeStream.on('error', (err) => {
-                    controller.error(err);
-                });
-            }
-        });
-}
-
-function nodeStreamToWebStream(nodeStream: Readable, debugInfos?: string): ReadableStream {
+export function nodeStreamToWebStream(nodeStream: Readable, debugInfos?: string): ReadableStream {
     let dataListener: (chunk: Buffer) => void;
     let endListener: () => void;
     let errorListener: (err: Error) => void;
@@ -131,35 +102,37 @@ function nodeStreamToWebStream(nodeStream: Readable, debugInfos?: string): Reada
     });
 }
 
-function webStreamToNodeStream(webStream: ReadableStream): Readable {
+export function webStreamToNodeStream(webStream: ReadableStream): Readable {
     return new WebToNodeReadableStreamAdapter(webStream);
 }
 
-function createResponseFromFile(filePath: string, status: number = 200, headers?: {[key: string]: string}|Headers): Response {
+function createResponseFromFile_node(filePath: string, status: number = 200, headers?: {[key: string]: string}|Headers): Response {
     const nodeReadStream = createReadStream(filePath);
     const webReadableStream = nodeStreamToWebStream(nodeReadStream, filePath);
     return new Response(webReadableStream, {status: status, headers: headers});
 }
 
-async function getFileSize(filePath: string): Promise<number> {
+export const createResponseFromFile = isBunJs
+    ? (filePath: string, status: number = 200, headers?: {[key: string]: string}|Headers) => new Response(Bun.file(filePath), {status, headers})
+    : createResponseFromFile_node;
+
+export async function getFileSize(filePath: string): Promise<number> {
     try { return (await fs.stat(filePath)).size; }
     catch { return 0; }
 }
 
-async function getFileStat(filePath: string): Promise<FileState|undefined> {
+export async function getFileStat(filePath: string): Promise<FileState|undefined> {
     try { return await fs.stat(filePath); }
     catch { return undefined; }
 }
 
-//endregion
-
-function getMimeTypeFromName(fileName: string) {
+export function getMimeTypeFromName(fileName: string) {
     const found = lookup(fileName);
     if (found===false) return "";
     return found;
 }
 
-async function mkDirRec(dirPath: string): Promise<boolean> {
+export async function mkDir(dirPath: string): Promise<boolean> {
     try {
         await fs.mkdir(dirPath, {recursive: true});
         return true;
@@ -169,7 +142,7 @@ async function mkDirRec(dirPath: string): Promise<boolean> {
     }
 }
 
-async function rmDirRec(dirPath: string): Promise<boolean> {
+export async function rmDir(dirPath: string): Promise<boolean> {
     try {
         await fs.rm(dirPath, {recursive: true, force: true});
         return true;
@@ -179,12 +152,25 @@ async function rmDirRec(dirPath: string): Promise<boolean> {
     }
 }
 
-async function writeTextToFile(filePath: string, text: string, createDir: boolean = true): Promise<void> {
-    if (createDir) await mkDirRec(path.dirname(filePath));
+export const fileURLToPath = isBunJs
+    ? (url: string) => Bun.fileURLToPath(url)
+    : n_fileURLToPath;
+
+export const pathToFileURL = isBunJs
+    ? (fsPath: string) => Bun.pathToFileURL(fsPath)
+    : n_pathToFileURL;
+
+export async function unlink(filePath: string): Promise<boolean> {
+    try { await fs.unlink(filePath); return true; }
+    catch { return false; }
+}
+
+export async function writeTextToFile(filePath: string, text: string, createDir: boolean = true): Promise<void> {
+    if (createDir) await mkDir(path.dirname(filePath));
     await fs.writeFile(filePath, text, {encoding: 'utf8', flag: 'w'});
 }
 
-function writeTextSyncToFile(filePath: string, text: string, createDir: boolean = true): void {
+export function writeTextSyncToFile(filePath: string, text: string, createDir: boolean = true): void {
     if (createDir) {
         try {
             fss.mkdirSync(path.dirname(filePath), {recursive: true});
@@ -193,27 +179,27 @@ function writeTextSyncToFile(filePath: string, text: string, createDir: boolean 
     fss.writeFileSync(filePath, text, {encoding: 'utf8', flag: 'w'});
 }
 
-function readTextFromFile(filePath: string): Promise<string> {
+export function readTextFromFile(filePath: string): Promise<string> {
     return fs.readFile(filePath, 'utf8');
 }
 
-function readTextSyncFromFile(filePath: string): string {
+export function readTextSyncFromFile(filePath: string): string {
     return fss.readFileSync(filePath, 'utf8');
 }
 
-async function isFile(filePath: string): Promise<boolean> {
+export async function isFile(filePath: string): Promise<boolean> {
     const stats = await getFileStat(filePath);
     if (!stats) return false;
     return stats.isFile();
 }
 
-async function isDirectory(filePath: string): Promise<boolean> {
+export async function isDirectory(filePath: string): Promise<boolean> {
     const stats = await getFileStat(filePath);
     if (!stats) return false;
     return stats.isDirectory();
 }
 
-function isDirectorySync(dirPath: string) {
+export function isDirectorySync(dirPath: string) {
     try {
         const stats = fss.statSync(dirPath);
         return stats.isDirectory();
@@ -224,7 +210,7 @@ function isDirectorySync(dirPath: string) {
     return false;
 }
 
-function isFileSync(dirPath: string) {
+export function isFileSync(dirPath: string) {
     try {
         const stats = fss.statSync(dirPath);
         return stats.isFile();
@@ -235,16 +221,20 @@ function isFileSync(dirPath: string) {
     return false;
 }
 
-async function readFileToBytes(filePath: string): Promise<Uint8Array> {
+async function readFileToBytes_node(filePath: string): Promise<Uint8Array> {
     const buffer = await fs.readFile(filePath);
     return new Uint8Array(buffer);
 }
 
-function getRelativePath(absolutePath: string, fromPath: string = process.cwd()) {
+export const readFileToBytes = isBunJs
+    ? async (filePath: string) => Bun.file(filePath).bytes()
+    : readFileToBytes_node
+
+export function getRelativePath(absolutePath: string, fromPath: string = process.cwd()) {
     return path.relative(fromPath, absolutePath);
 }
 
-async function listDir(dirPath: string): Promise<DirItem[]> {
+export async function listDir(dirPath: string): Promise<DirItem[]> {
     const ditItems = await fs.readdir(dirPath);
     const result: DirItem[] = [];
 
@@ -268,61 +258,19 @@ async function listDir(dirPath: string): Promise<DirItem[]> {
     return result;
 }
 
-export function patch_fs() {
-    const myFS: FileSystemImpl = {
-        mkDir: mkDirRec,
-        rmDir: rmDirRec,
-        fileURLToPath: (url) => fileURLToPath(url),
-        pathToFileURL: (fsPath) => pathToFileURL(fsPath),
-
-        unlink: async (filePath) => {
-            try { await fs.unlink(filePath); return true; }
-            catch { return false; }
-        },
-
-        getFileSize,
-        getMimeTypeFromName,
-        writeResponseToFile,
-        createResponseFromFile,
-        getFileStat,
-        readFileToBytes,
-
-        nodeStreamToWebStream, webStreamToNodeStream,
-
-        writeTextToFile, writeTextSyncToFile,
-        readTextFromFile, readTextSyncFromFile,
-
-        isFile, isFileSync,
-        isDirectory, isDirectorySync,
-
-        getRelativePath,
-        listDir,
-
-        join: path.join,
-        resolve: path.resolve,
-        dirname: path.dirname,
-        extname: path.extname,
-
-        sep: path.sep,
-        isAbsolute: path.isAbsolute,
-        normalize: path.normalize,
-        basename: path.basename,
-
-        /**
-         * Convert a simple win32 path to a linux path.
-         */
-        win32ToLinuxPath(filePath) {
-            return filePath.replace(/\\/g, '/');
-        }
-    };
-
-    if (isBunJs()) {
-        myFS.fileURLToPath = (url) => Bun.fileURLToPath(url);
-        myFS.pathToFileURL = (fsPath) => Bun.pathToFileURL(fsPath);
-        myFS.writeResponseToFile = async (r: Response, p: string) => { await Bun.file(p).write(r); }
-        myFS.createResponseFromFile = (filePath, status, headers) => new Response(Bun.file(filePath), {status, headers});
-        myFS.readFileToBytes = async (filePath) => Bun.file(filePath).bytes();
-    }
-    
-    merge(NodeSpace.fs, myFS);
+/**
+ * Convert a simple win32 path to a linux path.
+ */
+export function win32ToLinuxPath(filePath: string): string {
+    return filePath.replace(/\\/g, '/');
 }
+
+export const join = path.join;
+export const resolve = path.resolve;
+export const dirname = path.dirname;
+export const extname = path.extname;
+
+export const sep = path.sep;
+export const isAbsolute = path.isAbsolute;
+export const normalize = path.normalize;
+export const basename = path.basename;
