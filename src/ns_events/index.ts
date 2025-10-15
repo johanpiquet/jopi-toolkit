@@ -10,7 +10,7 @@ export enum EventPriority {
 
 export type EventListener<T = any> = (e: T) => void;
 
-class EventGroup {
+export class EventGroup {
     private readonly gEvents: Record<string, PriorityArray<EventListener>> = {};
     private gSpy: undefined | ((eventName: string, data?: any) => void);
 
@@ -96,16 +96,16 @@ interface PriorityArrayEntry<T> {
 
 //endregion
 
-const gDefaultEvents = new EventGroup();
+export const defaultEventGroup = new EventGroup();
 
 export function newEventGroup(): EventGroup {
     return new EventGroup();
 }
 
-export const enableEventSpying = gDefaultEvents.enableEventSpying.bind(gDefaultEvents);
-export const removeListener = gDefaultEvents.removeListener.bind(gDefaultEvents);
-export const sendEvent = gDefaultEvents.sendEvent.bind(gDefaultEvents);
+export const enableEventSpying = defaultEventGroup.enableEventSpying.bind(defaultEventGroup);
+export const removeListener = defaultEventGroup.removeListener.bind(defaultEventGroup);
+export const sendEvent = defaultEventGroup.sendEvent.bind(defaultEventGroup);
 
 export function addListener<T = any|undefined>(eventName: string, priorityOrListener: EventPriority | EventListener<T>, listener?: EventListener<T>): void {
-    gDefaultEvents.addListener(eventName, priorityOrListener as EventPriority, listener as EventListener<T>);
+    defaultEventGroup.addListener(eventName, priorityOrListener as EventPriority, listener as EventListener<T>);
 }
