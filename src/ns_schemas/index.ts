@@ -1,3 +1,5 @@
+// noinspection JSUnusedGlobalSymbols
+
 import {generateUUIDv4} from "jopi-node-space/ns_tools";
 
 //region Validation
@@ -7,14 +9,41 @@ import {generateUUIDv4} from "jopi-node-space/ns_tools";
  * when validating an object.
  */
 class SchemaError extends Error {
+    constructor(message: string, public readonly errorCode?: string) {
+        super(message);
+    }
 }
 
 /**
  * Declare an error when validating a schema.
  * Must be called when validating or normalizing.
  */
-export function declareError(message: string) {
-    throw new SchemaError(message);
+export function declareError(message: string, errorCode?: string) {
+    throw new SchemaError(message, errorCode);
+}
+
+interface FieldError {
+    fieldName: string;
+    message: string;
+    code?: string;
+}
+
+interface ValidationErrors {
+    /**
+     * An error about the whole schema.
+     */
+    globalError?: string;
+    globalErrorCode?: string;
+
+    /**
+     * An error per field.
+     */
+    fields?: Record<string, FieldError>;
+}
+
+export function validateSchema(value: any, schema: Schema): ValidationErrors|undefined {
+    //TODO
+    return undefined;
 }
 
 //endregion
@@ -62,8 +91,19 @@ const gRegistry: Record<string, RegistryEntry> = {};
 
 //region Schema
 
-export interface Schema {
+export function schema<T extends SchemaDescriptor>(descriptor: T): T {
+    return descriptor;
+}
+
+export interface SchemaDescriptor  {
     [field: string]: ScField<any, any>;
+}
+
+export interface Schema extends SchemaDescriptor {
+}
+
+export function toJson(schema: Schema): SchemaDescriptor {
+    return schema;
 }
 
 /**
@@ -82,6 +122,8 @@ export type SchemaToType<S extends Schema> =
 
 export interface ScField<T, Opt extends boolean> {
     title: string;
+    type: string;
+
     description?: string;
     default?: T;
     optional?: Opt;
@@ -96,7 +138,9 @@ export interface ScField<T, Opt extends boolean> {
     metas?: Record<string, string>;
 }
 
-type WithoutTitleOptional<T> = Omit<Omit<T, "title">, "optional">;
+export type SchemaFieldInfos = ScField<any, any>;
+
+type OnlyInfos<T> = Omit<Omit<Omit<T, "title">, "optional">, "type">;
 
 //endregion
 
@@ -112,8 +156,8 @@ export interface ScString<Opt extends boolean> extends ScField<string, Opt> {
     errorMessage_maxLength?: string;
 }
 
-export function string<Opt extends boolean>(title: string, optional: Opt, infos?: WithoutTitleOptional<ScString<Opt>>): ScString<Opt> {
-    return {...infos, title, optional};
+export function string<Opt extends boolean>(title: string, optional: Opt, infos?: OnlyInfos<ScString<Opt>>): ScString<Opt> {
+    return {...infos, title, optional, type: "string"};
 }
 
 //endregion
@@ -123,8 +167,8 @@ export function string<Opt extends boolean>(title: string, optional: Opt, infos?
 export interface ScBoolean<Opt extends boolean> extends ScField<boolean, Opt> {
 }
 
-export function boolean<Opt extends boolean>(title: string, optional: Opt, infos?: WithoutTitleOptional<ScBoolean<Opt>>): ScBoolean<Opt> {
-    return {...infos, title, optional};
+export function boolean<Opt extends boolean>(title: string, optional: Opt, infos?: OnlyInfos<ScBoolean<Opt>>): ScBoolean<Opt> {
+    return {...infos, title, optional, type: "boolean"};
 }
 
 //endregion
@@ -134,20 +178,30 @@ export function boolean<Opt extends boolean>(title: string, optional: Opt, infos
 export interface ScNumber<Opt extends boolean> extends ScField<number, Opt> {
 }
 
-export function number<Opt extends boolean>(title: string, optional: Opt, infos?: WithoutTitleOptional<ScNumber<Opt>>): ScNumber<Opt> {
-    return {...infos, title, optional};
+export function number<Opt extends boolean>(title: string, optional: Opt, infos?: OnlyInfos<ScNumber<Opt>>): ScNumber<Opt> {
+    return {...infos, title, optional, type: "number"};
 }
 
 //endregion
 
 //endregion
 
-const UserSchema = {
+/*const UserSchema1 = {
     name: string("The name", false),
-    test: string("Test", true),
-    yesTrue: boolean("Accept", true),
-    age: number("Age", true),
+    test: string("Test", false),
+    yesTrue: boolean("Accept", false),
+    age: number("Age", false),
 };
 
-type UserDataType = SchemaToType<typeof UserSchema>;
-let ud: UserDataType = {name:"ok", test: "5"};
+const UserSchema2 = schema({
+    name: string("The name", false),
+    test: string("Test", false),
+    yesTrue: boolean("Accept", false),
+    age: number("Age", false),
+});
+
+type UserDataType1 = SchemaToType<typeof UserSchema1>;
+let ud1: UserDataType1 = {name:"ok"};
+
+type UserDataType2 = SchemaToType<typeof UserSchema2>;
+let ud2: UserDataType2 = {name:"ok"};*/
