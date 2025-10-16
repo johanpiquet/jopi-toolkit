@@ -43,8 +43,6 @@ interface ValidationErrors {
 
 const byTypeValidator: Record<string, (v: any, fieldInfos: SchemaFieldInfos) => void> = {
     "string": (v, f) => {
-        debugger;
-
         if (typeof v !== "string") {
             declareError(f.errorMessage_theValueIsInvalid || `Value must be a string`, "INVALID_TYPE");
             return;
@@ -85,6 +83,20 @@ const byTypeValidator: Record<string, (v: any, fieldInfos: SchemaFieldInfos) => 
         if (typeof v !== "boolean") {
             declareError(f.errorMessage_theValueIsInvalid || `Value must be a boolean`, "INVALID_TYPE");
         }
+
+        let sf = f as ScBoolean<any>;
+        
+        if (sf.requireTrue) {
+            debugger;
+
+            if (v!==true) {
+                declareError(sf.errorMessage_requireTrue || `Value must be true`, "INVALID_VALUE");
+            }
+        } else if (sf.requireFalse) {
+            if (v!==false) {
+                declareError(sf.errorMessage_requireFalse || `Value must be false`, "INVALID_VALUE");
+            }
+        }
     }
 }
 
@@ -123,11 +135,11 @@ export function validateSchema(data: any, schema: Schema): ValidationErrors|unde
             if (!field.optional) {
                 if (value === undefined) {
                     if (field.errorMessage_isRequired) {
-                        declareError(field.errorMessage_isRequired, "FIELD_REQUIRED");
+                        declareError(field.errorMessage_isRequired, "VALUE_REQUIRED");
                     } else if (field.errorMessage_theValueIsInvalid) {
-                        declareError(field.errorMessage_theValueIsInvalid, "FIELD_REQUIRED");
+                        declareError(field.errorMessage_theValueIsInvalid, "VALUE_REQUIRED");
                     } else {
-                        declareError(`Field ${fieldName} is required`, "FIELD_REQUIRED");
+                        declareError(`Field ${fieldName} is required`, "VALUE_REQUIRED");
                     }
                 }
             }
@@ -328,6 +340,11 @@ export function string<Opt extends boolean>(title: string, optional: Opt, infos?
 //region Boolean
 
 export interface ScBoolean<Opt extends boolean> extends ScField<boolean, Opt> {
+    requireTrue?: boolean;
+    errorMessage_requireTrue?: string;
+    
+    requireFalse?: boolean;
+    errorMessage_requireFalse?: string;
 }
 
 export function boolean<Opt extends boolean>(title: string, optional: Opt, infos?: OnlyInfos<ScBoolean<Opt>>): ScBoolean<Opt> {
