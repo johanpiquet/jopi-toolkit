@@ -22,13 +22,13 @@ export function declareError(message?: string, errorCode?: string) {
     throw new SchemaError(message, errorCode);
 }
 
-interface FieldError {
+export interface FieldError {
     fieldName: string;
     message: string;
     code?: string;
 }
 
-interface ValidationErrors {
+export interface ValidationErrors {
     /**
      * An error about the whole schema.
      */
