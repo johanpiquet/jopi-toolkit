@@ -68,12 +68,12 @@ const byTypeValidator: Record<string, (v: any, fieldInfos: SchemaFieldInfos) => 
 
         let sf = f as ScNumber<any>;
 
-        if ((sf.minValue!==undefined) && (v.length < sf.minValue)) {
+        if ((sf.minValue!==undefined) && (v < sf.minValue)) {
             declareError(sf.errorMessage_minValue || `Value must be at least ${sf.minValue}`, "INVALID_LENGTH");
             return;
         }
 
-        if ((sf.maxValue!==undefined) && (v.length > sf.maxValue)) {
+        if ((sf.maxValue!==undefined) && (v > sf.maxValue)) {
             declareError(sf.errorMessage_maxValue || `Value must be less than ${sf.maxValue}`, "INVALID_LENGTH");
             return;
         }
@@ -87,8 +87,6 @@ const byTypeValidator: Record<string, (v: any, fieldInfos: SchemaFieldInfos) => 
         let sf = f as ScBoolean<any>;
         
         if (sf.requireTrue) {
-            debugger;
-
             if (v!==true) {
                 declareError(sf.errorMessage_requireTrue || `Value must be true`, "INVALID_VALUE");
             }
@@ -362,6 +360,12 @@ export interface ScNumber<Opt extends boolean> extends ScField<number, Opt> {
     maxValue?: number;
     errorMessage_maxValue?: string;
 
+    // TODO: allowDecimal
+    allowDecimal?: boolean;
+    roundMethod?: "round" | "floor" | "ceil";
+    errorMessage_dontAllowDecimal?: string;
+
+    incrStep?: number;
     placeholder?: string;
 }
 

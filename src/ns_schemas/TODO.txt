@@ -1,0 +1,3 @@
+[ ] Number: check allowDecimal
+[ ] Allows array of values (with type generation)
+[ ] Allows field of type Object (take an Schema as value)
