@@ -9,8 +9,8 @@ import {generateUUIDv4} from "jopi-node-space/ns_tools";
  * when validating an object.
  */
 class SchemaError extends Error {
-    constructor(message: string, public readonly errorCode?: string) {
-        super(message);
+    constructor(public readonly errorMessage?: string, public readonly errorCode?: string) {
+        super("");
     }
 }
 
@@ -18,7 +18,7 @@ class SchemaError extends Error {
  * Declare an error when validating a schema.
  * Must be called when validating or normalizing.
  */
-export function declareError(message: string, errorCode?: string) {
+export function declareError(message?: string, errorCode?: string) {
     throw new SchemaError(message, errorCode);
 }
 
@@ -41,9 +41,143 @@ interface ValidationErrors {
     fields?: Record<string, FieldError>;
 }
 
-export function validateSchema(value: any, schema: Schema): ValidationErrors|undefined {
-    //TODO
-    return undefined;
+const byTypeValidator: Record<string, (v: any, fieldInfos: SchemaFieldInfos) => void> = {
+    "string": (v, f) => {
+        debugger;
+
+        if (typeof v !== "string") {
+            declareError(f.errorMessage_theValueIsInvalid || `Value must be a string`, "INVALID_TYPE");
+            return;
+        }
+
+        let sf = f as ScString<any>;
+
+        if ((sf.minLength!==undefined) && (v.length < sf.minLength)) {
+            declareError(sf.errorMessage_minLength || `Value must be at least ${sf.minLength} characters long`, "INVALID_LENGTH");
+            return;
+        }
+
+        if ((sf.maxLength!==undefined) && (v.length > sf.maxLength)) {
+            declareError(sf.errorMessage_maxLength || `Value must be less than ${sf.maxLength} characters long`, "INVALID_LENGTH");
+            return;
+        }
+    },
+
+    "number": (v, f) => {
+        if (typeof v !== "number") {
+            declareError(f.errorMessage_theValueIsInvalid || `Value must be a number`, "INVALID_TYPE");
+        }
+
+        let sf = f as ScNumber<any>;
+
+        if ((sf.minValue!==undefined) && (v.length < sf.minValue)) {
+            declareError(sf.errorMessage_minValue || `Value must be at least ${sf.minValue}`, "INVALID_LENGTH");
+            return;
+        }
+
+        if ((sf.maxValue!==undefined) && (v.length > sf.maxValue)) {
+            declareError(sf.errorMessage_maxValue || `Value must be less than ${sf.maxValue}`, "INVALID_LENGTH");
+            return;
+        }
+    },
+
+    "boolean": (v, f) => {
+        if (typeof v !== "boolean") {
+            declareError(f.errorMessage_theValueIsInvalid || `Value must be a boolean`, "INVALID_TYPE");
+        }
+    }
+}
+
+export function validateSchema(data: any, schema: Schema): ValidationErrors|undefined {
+    if (schema.schemaMeta.normalize) {
+        try {
+            schema.schemaMeta.normalize(data);
+        }
+        catch (e: any) {
+            if (e instanceof SchemaError) {
+                return {
+                    globalError: e.errorMessage || `Schema validation failed`,
+                    globalErrorCode: e.errorCode || "SCHEMA_VALIDATION_FAILED"
+                };
+            }
+            else {
+                throw e;
+            }
+        }
+    }
+
+    let fieldErrors: Record<string, FieldError>|undefined;
+
+    for (let fieldName in schema.desc) {
+        let defaultErrorMessage: string|undefined;
+
+        try {
+            const field = schema.desc[fieldName];
+            const value = data[fieldName];
+
+            if (field.normalize) {
+                defaultErrorMessage = field.errorMessage_theValueIsInvalid;
+                field.normalize(value, data);
+            }
+
+            if (!field.optional) {
+                if (value === undefined) {
+                    if (field.errorMessage_isRequired) {
+                        declareError(field.errorMessage_isRequired, "FIELD_REQUIRED");
+                    } else if (field.errorMessage_theValueIsInvalid) {
+                        declareError(field.errorMessage_theValueIsInvalid, "FIELD_REQUIRED");
+                    } else {
+                        declareError(`Field ${fieldName} is required`, "FIELD_REQUIRED");
+                    }
+                }
+            }
+
+            let typeValidator = byTypeValidator[field.type];
+
+            if (typeValidator) {
+                typeValidator(value, field);
+            }
+
+            if (field.validator) {
+                defaultErrorMessage = field.errorMessage_theValueIsInvalid;
+                field.validator(value, data);
+            }
+        }
+        catch (e: any) {
+            if (e instanceof SchemaError) {
+                if (!fieldErrors) fieldErrors = {};
+
+                fieldErrors[fieldName] = {
+                    fieldName,
+                    message: e.errorMessage || defaultErrorMessage || `Field ${fieldName} is invalid`,
+                    code: e.errorCode || "FIELD_VALIDATION_FAILED"
+                };
+            } else {
+                throw e;
+            }
+        }
+    }
+
+    if (schema.schemaMeta.validate) {
+        try {
+            schema.schemaMeta.validate(data);
+        }
+        catch (e: any) {
+            if (e instanceof SchemaError) {
+                return {
+                    globalError: e.errorMessage || `Schema validation failed`,
+                    globalErrorCode: e.errorCode || "SCHEMA_VALIDATION_FAILED",
+                    fields: fieldErrors
+                };
+            }
+            else {
+                throw e;
+            }
+        }
+    }
+
+    if (!fieldErrors) return undefined;
+    return {fields: fieldErrors};
 }
 
 //endregion
@@ -91,18 +225,32 @@ const gRegistry: Record<string, RegistryEntry> = {};
 
 //region Schema
 
-export function schema<T extends SchemaDescriptor>(descriptor: T): T {
-    return descriptor;
+export function schema<T extends SchemaDescriptor>(descriptor: T, meta?: SchemaMeta): Schema & { desc: T } {
+    return { desc: descriptor, schemaMeta: meta || {} };
 }
 
 export interface SchemaDescriptor  {
     [field: string]: ScField<any, any>;
 }
 
-export interface Schema extends SchemaDescriptor {
+export interface SchemaMeta {
+    title?: string;
+    description?: string;
+    [key: string]: any;
+    
+    normalize?: (allValues: any) => void;
+    validate?: (allValues: any) => void;
 }
 
-export function toJson(schema: Schema): SchemaDescriptor {
+export interface SchemaInfo {
+    desc: SchemaDescriptor,
+    schemaMeta: SchemaMeta
+}
+
+export interface Schema extends SchemaInfo {
+}
+
+export function toJson(schema: Schema): SchemaInfo {
     return schema;
 }
 
@@ -117,8 +265,16 @@ export function toJson(schema: Schema): SchemaDescriptor {
  * ```
  */
 export type SchemaToType<S extends Schema> =
-    { [K in keyof S as S[K] extends ScField<any, false> ? K : never]: S[K] extends ScField<infer T, any> ? T : never }
-    & { [K in keyof S as S[K] extends ScField<any, true> ? K : never] ?: S[K] extends ScField<infer T, any> ? T : never };
+// 1. On accède au descripteur de schéma S['desc']
+// 2. On itère sur ses clés K
+// 3. On filtre les champs obligatoires (Opt = false)
+    { [K in keyof S['desc'] as S['desc'][K] extends ScField<any, false> ? K : never]:
+        // 4. On infère le type T du champ
+        S['desc'][K] extends ScField<infer T, any> ? T : never }
+
+    // 5. On fusionne avec les champs optionnels (Opt = true)
+    & { [K in keyof S['desc'] as S['desc'][K] extends ScField<any, true> ? K : never] ?:
+    S['desc'][K] extends ScField<infer T, any> ? T : never };
 
 export interface ScField<T, Opt extends boolean> {
     title: string;
@@ -132,8 +288,8 @@ export interface ScField<T, Opt extends boolean> {
     errorMessage_theDataTypeIsInvalid?: string;
     errorMessage_theValueIsInvalid?: string;
 
-    normalize?: (value: T) => T;
-    validator?: (value: T) => void;
+    normalize?: (value: T, allValues: any) => void;
+    validator?: (value: T, allValues: any) => void;
 
     metas?: Record<string, string>;
 }
@@ -176,6 +332,11 @@ export function boolean<Opt extends boolean>(title: string, optional: Opt, infos
 //region Number
 
 export interface ScNumber<Opt extends boolean> extends ScField<number, Opt> {
+    minValue?: number;
+    errorMessage_minValue?: string;
+
+    maxValue?: number;
+    errorMessage_maxValue?: string;
 }
 
 export function number<Opt extends boolean>(title: string, optional: Opt, infos?: OnlyInfos<ScNumber<Opt>>): ScNumber<Opt> {
@@ -186,22 +347,12 @@ export function number<Opt extends boolean>(title: string, optional: Opt, infos?
 
 //endregion
 
-/*const UserSchema1 = {
+/*const UserSchema1 = schema({
     name: string("The name", false),
-    test: string("Test", false),
     yesTrue: boolean("Accept", false),
     age: number("Age", false),
-};
-
-const UserSchema2 = schema({
-    name: string("The name", false),
-    test: string("Test", false),
-    yesTrue: boolean("Accept", false),
-    age: number("Age", false),
+    test: string("Test", true)
 });
 
 type UserDataType1 = SchemaToType<typeof UserSchema1>;
-let ud1: UserDataType1 = {name:"ok"};
-
-type UserDataType2 = SchemaToType<typeof UserSchema2>;
-let ud2: UserDataType2 = {name:"ok"};*/
+let ud1: UserDataType1 = {name:"ok", yesTrue: true, _age: 5};*/
