@@ -310,9 +310,16 @@ export interface ScString<Opt extends boolean> extends ScField<string, Opt> {
 
     maxLength?: number;
     errorMessage_maxLength?: string;
+
+    placeholder?: string;
 }
 
 export function string<Opt extends boolean>(title: string, optional: Opt, infos?: OnlyInfos<ScString<Opt>>): ScString<Opt> {
+    if (!optional) {
+        if (!infos) infos = {};
+        if (infos.minLength===undefined) infos.minLength = 1;
+    }
+
     return {...infos, title, optional, type: "string"};
 }
 
@@ -337,6 +344,8 @@ export interface ScNumber<Opt extends boolean> extends ScField<number, Opt> {
 
     maxValue?: number;
     errorMessage_maxValue?: string;
+
+    placeholder?: string;
 }
 
 export function number<Opt extends boolean>(title: string, optional: Opt, infos?: OnlyInfos<ScNumber<Opt>>): ScNumber<Opt> {
