@@ -375,14 +375,35 @@ export function number<Opt extends boolean>(title: string, optional: Opt, infos?
 
 //endregion
 
+//region File
+
+export interface File {
+    name: string;
+    size: number;
+    type: string;
+}
+
+export interface ScFile<Opt extends boolean> extends ScField<File, Opt> {
+
+}
+
+export function file<Opt extends boolean>(title: string, optional: Opt, infos?: OnlyInfos<ScFile<Opt>>): ScFile<Opt> {
+    return {...infos, title, optional, type: "number"};
+}
+
 //endregion
 
-/*const UserSchema1 = schema({
-    name: string("The name", false),
-    yesTrue: boolean("Accept", false),
-    age: number("Age", false),
-    test: string("Test", true)
-});
+//endregion
+
+/*const MAKE_OPTIONAL = true;
+//
+const UserSchema1 = schema({
+    testOptional: string("testOptional", true),
+    testString: string("testString", MAKE_OPTIONAL),
+    testBool: boolean("testBool", MAKE_OPTIONAL),
+    testNumber: number("testNumber", MAKE_OPTIONAL),
+    testFile: file("testFile", MAKE_OPTIONAL)
+})
 
 type UserDataType1 = SchemaToType<typeof UserSchema1>;
-let ud1: UserDataType1 = {name:"ok", yesTrue: true, _age: 5};*/
+let ud1: UserDataType1 = {};*/
