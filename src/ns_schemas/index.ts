@@ -384,6 +384,14 @@ export interface File extends Blob {
 }
 
 export interface ScFile<Opt extends boolean> extends ScField<File[], Opt> {
+    maxFileCount?: number;
+    errorMessage_maxFileCount?: string;
+
+    acceptFileType?: string;
+    errorMessage_invalidFileType?: string;
+
+    maxFileSize?: number;
+    errorMessage_maxFileSize?: string;
 }
 
 export function file<Opt extends boolean>(title: string, optional: Opt, infos?: OnlyInfos<ScFile<Opt>>): ScFile<Opt> {

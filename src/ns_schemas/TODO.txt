@@ -1,3 +1,7 @@
 [ ] Number: check allowDecimal
 [ ] Allows array of values (with type generation)
 [ ] Allows field of type Object (take an Schema as value)
+
+
+[ ] Allow deserializing a FormData to a valid object.
+    Include to correctly transform unitary value to an array.
