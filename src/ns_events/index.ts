@@ -39,6 +39,23 @@ export class EventGroup {
         }
     }
 
+    async sendAsyncEvent(eventName: string, e?: any|undefined): Promise<void> {
+        if (!e) e = {promises: []};
+        this.sendEvent(eventName, e);
+
+        if (e.promise) {
+            try {
+                // This allows having the stack trace.
+                throw new Error("You must use the 'promises' array instead of 'promise' for async events.")
+            }
+            catch (e) {
+                console.error(e);
+            }
+        }
+
+        if (e.promises.length) await Promise.all(e.promises);
+    }
+
     addListener<T = any|undefined>(eventName: string, priorityOrListener: EventPriority | EventListener<T>, listener?: EventListener<T>): void {
         let priority: EventPriority;
         let actualListener: EventListener;
@@ -105,6 +122,7 @@ export function newEventGroup(): EventGroup {
 export const enableEventSpying = defaultEventGroup.enableEventSpying.bind(defaultEventGroup);
 export const removeListener = defaultEventGroup.removeListener.bind(defaultEventGroup);
 export const sendEvent = defaultEventGroup.sendEvent.bind(defaultEventGroup);
+export const sendAsyncEvent = defaultEventGroup.sendAsyncEvent.bind(defaultEventGroup);
 
 export function addListener<T = any|undefined>(eventName: string, priorityOrListener: EventPriority | EventListener<T>, listener?: EventListener<T>): void {
     defaultEventGroup.addListener(eventName, priorityOrListener as EventPriority, listener as EventListener<T>);
