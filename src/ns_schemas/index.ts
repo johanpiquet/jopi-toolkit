@@ -383,44 +383,7 @@ export interface File extends Blob {
     readonly webkitRelativePath: string;
 }
 
-export interface FileList {
-    readonly length: number;
-    item(index: number): (File | null);
-    [p: number]: File;
-}
-
-export class FileListContainer implements FileList {
-    private readonly files: File[];
-
-    constructor(files: File[]) {
-        this.files = files;
-
-        for (let i = 0; i < files.length; i++) {
-            (this as any)[i] = files[i];
-        }
-    }
-
-    [p: number]: File;
-
-    get length(): number {
-        return this.files.length;
-    }
-
-    item(index: number): File | null {
-        if (index < 0 || index >= this.files.length) {
-            return null;
-        }
-        return this.files[index];
-    }
-
-    setItem(index: number, file: File): void {
-        if (index < 0 || index >= this.files.length) this.files.push(file);
-        else this.files[index] = file;
-        (this as any)[index] = file;
-    }
-}
-
-export interface ScFile<Opt extends boolean> extends ScField<FileList, Opt> {
+export interface ScFile<Opt extends boolean> extends ScField<File[], Opt> {
 }
 
 export function file<Opt extends boolean>(title: string, optional: Opt, infos?: OnlyInfos<ScFile<Opt>>): ScFile<Opt> {
