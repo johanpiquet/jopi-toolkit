@@ -97,13 +97,22 @@ export function askYesNo(message: string, defaultValue: boolean): Promise<boolea
 }
 
 export const logRed = buildLogger(C_RED);
+export const textRed = buildWriter(C_RED);
+
 export const logBgRed = buildLogger(B_RED);
+export const textBgRed = buildWriter(B_RED);
 
 export const logBlue = buildLogger(C_BLUE);
+export const textBlue = buildWriter(C_BLUE);
+
 export const logBgBlue = buildLogger(B_BLUE, C_WHITE);
+export const textBgBlue = buildWriter(B_BLUE, C_WHITE);
 
 export const logGreen = buildLogger(C_GREEN);
+export const textGreen = buildWriter(C_GREEN);
+
 export const logBgGreen = buildLogger(B_GREEN, C_WHITE);
+export const textBgGreen = buildWriter(B_GREEN, C_WHITE);
 
 export function indentText(spacer: string, text: string): string {
     return spacer + text.replaceAll("\r", "").replaceAll("\n", spacer + "\n");
