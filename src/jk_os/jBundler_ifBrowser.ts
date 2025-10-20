@@ -1,13 +1,11 @@
 export async function which(command: string, ifNotFound?: string): Promise<string|null> {
-    if (ifNotFound) return Promise.resolve(ifNotFound);
-    return Promise.resolve(null);
+    throw new Error("Not implemented");
 }
 
 export function whichSync(cmd: string, ifNotFound?: string): string|null {
-    if (ifNotFound) return ifNotFound;
-    return null;
+    throw new Error("Not implemented");
 }
 
 export function exec(command: string): Promise<void> {
-    return Promise.resolve();
+    throw new Error("Not implemented");
 }

@@ -274,3 +274,5 @@ export const sep = path.sep;
 export const isAbsolute = path.isAbsolute;
 export const normalize = path.normalize;
 export const basename = path.basename;
+
+export const symlink = fs.symlink;
