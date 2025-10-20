@@ -6,7 +6,7 @@ import {fileURLToPath as n_fileURLToPath, pathToFileURL as n_pathToFileURL } fro
 import {lookup} from "mime-types";
 import {Readable} from "node:stream";
 import path from "node:path";
-import {isBunJS} from "jopi-node-space/ns_what";
+import {isBunJS} from "jopi-toolkit/ns_what";
 import type {DirItem, FileState} from "./common.ts";
 
 class WebToNodeReadableStreamAdapter extends Readable {

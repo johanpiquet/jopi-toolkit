@@ -1,6 +1,6 @@
 // noinspection JSUnusedGlobalSymbols
 
-import {generateUUIDv4} from "jopi-node-space/ns_tools";
+import {generateUUIDv4} from "jopi-toolkit/ns_tools";
 
 //region Validation
 

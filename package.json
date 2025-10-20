@@ -1,9 +1,9 @@
 {
   "version": "0.0.23",
   "private": false,
-  "name": "jopi-node-space",
+  "name": "jopi-toolkit",
   "license": "MIT",
-  "homepage": "https://github.com/johanpiquet/jopi-node-space",
+  "homepage": "https://github.com/johanpiquet/jopi-toolkit",
   "keywords": [],
   "author": "Johan PIQUET",
   "description": "An helper for hybrid apps",

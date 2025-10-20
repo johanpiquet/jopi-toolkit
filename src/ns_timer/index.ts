@@ -1,5 +1,5 @@
-import * as ns_app from "jopi-node-space/ns_app";
-import * as ns_term from "jopi-node-space/ns_term";
+import * as ns_app from "jopi-toolkit/ns_app";
+import * as ns_term from "jopi-toolkit/ns_term";
 
 export type TimerCallback = () => void|boolean|Promise<void|boolean>;
 

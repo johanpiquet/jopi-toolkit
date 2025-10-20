@@ -1,10 +1,10 @@
 // noinspection JSUnusedGlobalSymbols
 
-import * as ns_thread from "jopi-node-space/ns_thread";
-import * as ns_fs from "jopi-node-space/ns_fs";
-import * as ns_timer from "jopi-node-space/ns_timer";
-import {isBunJS, isNodeJS} from "jopi-node-space/ns_what";
-import {isUsingWorker} from "jopi-node-space/ns_thread";
+import * as ns_thread from "jopi-toolkit/ns_thread";
+import * as ns_fs from "jopi-toolkit/ns_fs";
+import * as ns_timer from "jopi-toolkit/ns_timer";
+import {isBunJS, isNodeJS} from "jopi-toolkit/ns_what";
+import {isUsingWorker} from "jopi-toolkit/ns_thread";
 
 export type Listener = ()=>void|Promise<void>;
 
