@@ -230,11 +230,13 @@ export const readFileToBytes = isBunJS
     ? async (filePath: string) => Bun.file(filePath).bytes()
     : readFileToBytes_node
 
-export function getRelativePath(absolutePath: string, fromPath: string = process.cwd()) {
-    return path.relative(fromPath, absolutePath);
+export function getRelativePath(fromDir: string, absolutePath: string) {
+    return path.relative(fromDir, absolutePath);
 }
 
 export async function listDir(dirPath: string): Promise<DirItem[]> {
+    if (!await isDirectory(dirPath)) return [];
+
     const ditItems = await fs.readdir(dirPath);
     const result: DirItem[] = [];
 
@@ -276,3 +278,4 @@ export const normalize = path.normalize;
 export const basename = path.basename;
 
 export const symlink = fs.symlink;
+export const rename = fs.rename;

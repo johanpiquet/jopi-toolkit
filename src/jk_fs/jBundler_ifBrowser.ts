@@ -88,7 +88,7 @@ export async function readFileToBytes(filePath: string): Promise<Uint8Array> {
     throw new Error("Not implemented");
 }
 
-export function getRelativePath(absolutePath: string, fromPath?: string) {
+export function getRelativePath(fromDir: string, absolutePath: string) {
     throw new Error("Not implemented");
 }
 
@@ -112,3 +112,5 @@ export const sep = "/";
 export const isAbsolute = () => { throw new Error("Not implemented"); }
 export const normalize = () => { throw new Error("Not implemented"); }
 export const basename = () => { throw new Error("Not implemented"); }
+export const rename = () => { throw new Error("Not implemented"); }
+export const symlink = () => { throw new Error("Not implemented"); }
