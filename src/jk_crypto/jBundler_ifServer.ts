@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-import {isNodeJS} from "jopi-toolkit/ns_what";
+import {isNodeJS} from "jopi-toolkit/jk_what";
 
 function node_md5(text: string): string {
     return crypto.createHash('md5').update(text).digest('hex');

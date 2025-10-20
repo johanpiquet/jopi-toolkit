@@ -1,5 +1,5 @@
 import {gunzipSync as n_gunzipSync, gzipSync as n_gzipSync} from "node:zlib";
-import {isNodeJS} from "jopi-toolkit/ns_what";
+import {isNodeJS} from "jopi-toolkit/jk_what";
 
 type t_gunzipSync = (data: Uint8Array|string) => Buffer;
 type t_gzipSync = (data: Uint8Array|string) => Buffer;

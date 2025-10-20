@@ -1,10 +1,10 @@
 // noinspection JSUnusedGlobalSymbols
 
-import * as ns_thread from "jopi-toolkit/ns_thread";
-import * as ns_fs from "jopi-toolkit/ns_fs";
-import * as ns_timer from "jopi-toolkit/ns_timer";
-import {isBunJS, isNodeJS} from "jopi-toolkit/ns_what";
-import {isUsingWorker} from "jopi-toolkit/ns_thread";
+import * as jk_thread from "jopi-toolkit/jk_thread";
+import * as jk_fs from "jopi-toolkit/jk_fs";
+import * as jk_timer from "jopi-toolkit/jk_timer";
+import {isBunJS, isNodeJS} from "jopi-toolkit/jk_what";
+import {isUsingWorker} from "jopi-toolkit/jk_thread";
 
 export type Listener = ()=>void|Promise<void>;
 
@@ -99,7 +99,7 @@ export async function declareAppExiting() {
 
     if (isUsingWorker()) {
         // Wait 1 sec, which allows the worker to correctly initialize.
-        await ns_timer.tick(1000);
+        await jk_timer.tick(1000);
     }
 
     gIsAppStarted = false;
@@ -108,12 +108,12 @@ export async function declareAppExiting() {
 
     if (isUsingWorker()) {
         // Allows to worker to correctly stop their activity.
-        await ns_timer.tick(100);
+        await jk_timer.tick(100);
     }
 
-    if (!ns_thread.isMainThread) {
+    if (!jk_thread.isMainThread) {
         // Allows to worker to correctly stop their activity.
-        await ns_timer.tick(50);
+        await jk_timer.tick(50);
     }
 
     await execListeners(gOnAppExited);
@@ -148,7 +148,7 @@ export function clearHotReloadKey(key: string) {
 
 export function getTempDir(): string {
     if (!gTempDir) {
-        gTempDir = ns_fs.resolve(process.cwd(), "temp")!;
+        gTempDir = jk_fs.resolve(process.cwd(), "temp")!;
     }
 
     return gTempDir;
@@ -158,17 +158,17 @@ let gIsExited = false;
 let gTempDir: string|undefined;
 
 export function findNodePackageDir(packageName: string, useLinuxPathFormat: boolean = true): string|undefined {
-    let currentDir = ns_fs.dirname(findPackageJson());
+    let currentDir = jk_fs.dirname(findPackageJson());
 
     while (true) {
-        const packagePath = ns_fs.join(currentDir, 'node_modules', packageName);
+        const packagePath = jk_fs.join(currentDir, 'node_modules', packageName);
 
-        if (ns_fs.isDirectorySync(packagePath)) {
-            if (useLinuxPathFormat) return ns_fs.win32ToLinuxPath(packagePath);
+        if (jk_fs.isDirectorySync(packagePath)) {
+            if (useLinuxPathFormat) return jk_fs.win32ToLinuxPath(packagePath);
             return packagePath;
         }
 
-        const parentDir = ns_fs.dirname(currentDir);
+        const parentDir = jk_fs.dirname(currentDir);
 
         // Reached root directory
         if (parentDir === currentDir) {
@@ -189,7 +189,7 @@ export function requireNodePackageDir(packageName: string, useLinuxPathFormat: b
 
 export function findPackageJsonDir(searchFromDir = getCodeSourceDirHint()): string {
     let pkgJsonPath = findPackageJson(searchFromDir);
-    return ns_fs.dirname(pkgJsonPath);
+    return jk_fs.dirname(pkgJsonPath);
 }
 
 export function findPackageJson(searchFromDir = getCodeSourceDirHint()): string {
@@ -198,11 +198,11 @@ export function findPackageJson(searchFromDir = getCodeSourceDirHint()): string 
     let currentDir = searchFromDir;
 
     while (true) {
-        const packagePath = ns_fs.join(currentDir, 'package.json');
+        const packagePath = jk_fs.join(currentDir, 'package.json');
 
-        if (ns_fs.isFileSync(packagePath)) return gPackageJsonPath = packagePath;
+        if (jk_fs.isFileSync(packagePath)) return gPackageJsonPath = packagePath;
 
-        const parentDir = ns_fs.dirname(currentDir);
+        const parentDir = jk_fs.dirname(currentDir);
 
         // Reached root directory
         if (parentDir === currentDir) break;
@@ -217,7 +217,7 @@ let gPackageJsonPath: string|undefined;
 
 export function setApplicationMainFile(applicationMainFile: string) {
     gApplicationMainFile = applicationMainFile;
-    gCodeSourceDirHint = ns_fs.dirname(applicationMainFile);
+    gCodeSourceDirHint = jk_fs.dirname(applicationMainFile);
 }
 
 export function getApplicationMainFile(): string|undefined {
@@ -233,13 +233,13 @@ export function getSourceCodeDir(): string {
     if (gSourceCodeDir) return gSourceCodeDir;
 
     let pkgJsonPath = findPackageJson();
-    let dirName = ns_fs.join(ns_fs.dirname(pkgJsonPath), "src");
+    let dirName = jk_fs.join(jk_fs.dirname(pkgJsonPath), "src");
 
-    if (ns_fs.isDirectorySync(dirName)) {
+    if (jk_fs.isDirectorySync(dirName)) {
         return gSourceCodeDir = dirName;
     }
 
-    return gSourceCodeDir = ns_fs.dirname(pkgJsonPath);
+    return gSourceCodeDir = jk_fs.dirname(pkgJsonPath);
 }
 
 export function getCompiledCodeDir(): string {
@@ -257,11 +257,11 @@ export function getCompiledCodeDir(): string {
 
     let pkgJsonPath = findPackageJson();
 
-    let rootDir = ns_fs.dirname(pkgJsonPath);
+    let rootDir = jk_fs.dirname(pkgJsonPath);
 
     for (let toTest of ["dist", "build", "out"]) {
-        if (ns_fs.isDirectorySync(ns_fs.join(rootDir, toTest))) {
-            return gCompiledSourcesDir = ns_fs.join(rootDir, toTest);
+        if (jk_fs.isDirectorySync(jk_fs.join(rootDir, toTest))) {
+            return gCompiledSourcesDir = jk_fs.join(rootDir, toTest);
         }
     }
 
@@ -284,7 +284,7 @@ export function getCompiledFilePathFor(sourceFilePath: string): string {
         if (idx !== -1) filePath = filePath.substring(0, idx) + ".js";
     }
 
-    return ns_fs.join(compiledCodeDir, filePath);
+    return jk_fs.join(compiledCodeDir, filePath);
 }
 
 export function getSourcesCodePathFor(compiledFilePath: string): string {
@@ -295,16 +295,16 @@ export function getSourcesCodePathFor(compiledFilePath: string): string {
         throw new Error("jopi-loader - The compiled file must be in the compiled code directory: " + compiledFilePath);
     }
 
-    let filePath =  ns_fs.join(sourceCodeDir, compiledFilePath.substring(compiledCodeDir.length));
+    let filePath =  jk_fs.join(sourceCodeDir, compiledFilePath.substring(compiledCodeDir.length));
 
     let idx = filePath.lastIndexOf(".");
     if (idx !== -1) filePath = filePath.substring(0, idx);
 
-    if (ns_fs.isFileSync(filePath + ".tsx")) {
+    if (jk_fs.isFileSync(filePath + ".tsx")) {
         return filePath + ".tsx";
     }
 
-    if (ns_fs.isFileSync(filePath + ".ts")) {
+    if (jk_fs.isFileSync(filePath + ".ts")) {
         return filePath + ".ts";
     }
 
@@ -323,18 +323,18 @@ export function requireSourceOf(scriptPath: string): string {
  */
 export function searchSourceOf(scriptPath: string): string|undefined {
     function tryResolve(filePath: string, outDir: string) {
-        let out = ns_fs.sep + outDir + ns_fs.sep;
+        let out = jk_fs.sep + outDir + jk_fs.sep;
         let idx = filePath.lastIndexOf(out);
 
         if (idx !== -1) {
-            filePath = filePath.slice(0, idx) + ns_fs.sep + "src" + ns_fs.sep + filePath.slice(idx + out.length);
-            if (ns_fs.isFileSync(filePath)) return filePath;
+            filePath = filePath.slice(0, idx) + jk_fs.sep + "src" + jk_fs.sep + filePath.slice(idx + out.length);
+            if (jk_fs.isFileSync(filePath)) return filePath;
         }
 
         return undefined;
     }
 
-    let scriptExt = ns_fs.extname(scriptPath);
+    let scriptExt = jk_fs.extname(scriptPath);
 
     if ((scriptExt===".ts") || (scriptExt===".tsx")) {
         // Is already the source.

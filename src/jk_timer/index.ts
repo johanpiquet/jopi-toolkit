@@ -1,5 +1,5 @@
-import * as ns_app from "jopi-toolkit/ns_app";
-import * as ns_term from "jopi-toolkit/ns_term";
+import * as jk_app from "jopi-toolkit/jk_app";
+import * as jk_term from "jopi-toolkit/jk_term";
 
 export type TimerCallback = () => void|boolean|Promise<void|boolean>;
 
@@ -64,7 +64,7 @@ export function newInterval(durationInMs: number, callback: TimerCallback) {
 
     }, durationInMs);
 
-    ns_app.onHotReload(() => {
+    jk_app.onHotReload(() => {
         clearInterval(timerId);
         entry.splice(0);
     });
@@ -84,7 +84,7 @@ export function chrono(mustSaveMeasures: boolean): Chrono {
 
 function logAutoTrigger(m: ChronoMeasure) {
     if (m.logIfMoreThan_ms && (m.elapsedTime_ms > m.logIfMoreThan_ms)) {
-        if (m.title) ns_term.logRed("Chrono - " + m.title + ":", m.elapsedTime_sec);
+        if (m.title) jk_term.logRed("Chrono - " + m.title + ":", m.elapsedTime_sec);
         else console.log("Chrono - " + m.label + ":", m.elapsedTime_sec);
     }
 }

@@ -1,6 +1,6 @@
 // noinspection JSUnusedGlobalSymbols
 
-import {generateUUIDv4} from "jopi-toolkit/ns_tools";
+import {generateUUIDv4} from "jopi-toolkit/jk_tools";
 
 //region Validation
 
@@ -201,7 +201,7 @@ interface RegistryEntry {
 
 export function registerSchema(schemaId: string|undefined, schema: Schema, meta?: any) {
     if (!schemaId) {
-        throw new Error("ns_schemas - Schema id required. If you need an uid you can use: " + generateUUIDv4());
+        throw new Error("jk_schemas - Schema id required. If you need an uid you can use: " + generateUUIDv4());
     }
 
     gRegistry[schemaId!] = {schema, meta};
@@ -223,7 +223,7 @@ export function requireSchema(schemaId: string): Schema {
     const s = getSchema(schemaId);
 
     if (!s) {
-        throw new Error(`ns_schemas - Schema ${schemaId} not found`);
+        throw new Error(`jk_schemas - Schema ${schemaId} not found`);
     }
 
     return s;

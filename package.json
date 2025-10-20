@@ -39,20 +39,20 @@
   "publicPublishedDate": "9/25/2025",
 
   "exports": {
-    "./ns_schema": "./dist/ns_schemas/index.js",
-    "./ns_tools": "./dist/ns_tools/index.js",
-    "./ns_translate": "./dist/ns_translate/index.js",
-    "./ns_process": "./dist/ns_process/index.js",
-    "./ns_what": "./dist/ns_what/index.js",
-    "./ns_os": "./dist/ns_os/index.js",
-    "./ns_crypto": "./dist/ns_crypto/index.js",
-    "./ns_thread": "./dist/ns_thread/index.js",
-    "./ns_events": "./dist/ns_events/index.js",
-    "./ns_fs": "./dist/ns_fs/index.js",
-    "./ns_timer": "./dist/ns_timer/index.js",
-    "./ns_term": "./dist/ns_term/index.js",
-    "./ns_app": "./dist/ns_app/index.js",
-    "./ns_compress": "./dist/ns_compress/index.js",
-    "./ns_webSocket": "./dist/ns_webSocket/index.js"
+    "./ns_schema": "./dist/jk_schemas/index.js",
+    "./jk_tools": "./dist/jk_tools/index.js",
+    "./jk_translate": "./dist/jk_translate/index.js",
+    "./jk_process": "./dist/jk_process/index.js",
+    "./jk_what": "./dist/jk_what/index.js",
+    "./jk_os": "./dist/jk_os/index.js",
+    "./jk_crypto": "./dist/jk_crypto/index.js",
+    "./jk_thread": "./dist/jk_thread/index.js",
+    "./jk_events": "./dist/jk_events/index.js",
+    "./jk_fs": "./dist/jk_fs/index.js",
+    "./jk_timer": "./dist/jk_timer/index.js",
+    "./jk_term": "./dist/jk_term/index.js",
+    "./jk_app": "./dist/jk_app/index.js",
+    "./jk_compress": "./dist/jk_compress/index.js",
+    "./jk_webSocket": "./dist/jk_webSocket/index.js"
   }
 }

@@ -1,5 +1,5 @@
 import {WebSocket as WsWebSocket} from "ws";
-import {isNodeJS} from "jopi-toolkit/ns_what";
+import {isNodeJS} from "jopi-toolkit/jk_what";
 
 //region openConnection
 
