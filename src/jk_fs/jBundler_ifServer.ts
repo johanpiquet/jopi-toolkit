@@ -246,10 +246,16 @@ export async function listDir(dirPath: string): Promise<DirItem[]> {
 
         if (stats.isFile()) {
             toAdd.isFile = true;
+            toAdd.isDirectory = false;
+            toAdd.isSymbolicLink = false;
         } else if (stats.isDirectory()) {
             toAdd.isDirectory = true;
+            toAdd.isFile = false;
+            toAdd.isSymbolicLink = false;
         } else if (stats.isSymbolicLink()) {
             toAdd.isSymbolicLink = true;
+            toAdd.isDirectory = false;
+            toAdd.isFile = false;
         } else {
             continue;
         }
