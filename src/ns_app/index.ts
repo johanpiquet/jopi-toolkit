@@ -1,4 +1,4 @@
 export * from "./common.ts";
 
-import {init} from  "./jopi-node-space-server.ts";
+import {init} from "./jBundler_ifServer.ts";
 init();
