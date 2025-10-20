@@ -10,6 +10,10 @@ export function generateUUIDv4(): string {
     });
 }
 
+export function isUUIDv4(text: string): boolean {
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(text);
+}
+
 export function getErrorMessage(e: unknown): string {
     if (e instanceof Error) return e.message;
     return "" + e;
