@@ -1,9 +1,10 @@
 export interface DirItem {
     name: string;
     fullPath: string;
-    isFile?: boolean;
-    isDirectory?: boolean;
-    isSymbolicLink?: boolean;
+
+    isFile: boolean;
+    isDirectory: boolean;
+    isSymbolicLink: boolean;
 }
 
 export interface FileState {
