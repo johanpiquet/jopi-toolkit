@@ -92,7 +92,7 @@ const arobaseType = addArobaseType("composites", {
         }
 
         let max = composite.items.length;
-        source += "\nexport const C = [";
+        source += "\nexport default [";
         for (let i = 1; i <= max; i++) source += `I${i},`;
         source += "];";
 
