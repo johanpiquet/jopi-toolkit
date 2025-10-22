@@ -210,9 +210,7 @@ async function generateAll() {
     }
 
     let installerFile = gInstallFile_imports;
-    installerFile += "export default async function() {";
     installerFile += gInstallFile_body;
-    installerFile += "\n}";
     installerFile += gInstallFile_footer;
 
     await jk_fs.writeTextToFile(jk_fs.join(gGenRootDir, "install.ts"), installerFile);

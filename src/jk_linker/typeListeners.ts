@@ -111,22 +111,19 @@ const arobaseType = addArobaseType("listeners", {
     async endGeneratingCode() {
         genAddToInstaller_imports(`import {addListener} from "jopi-toolkit/jk_events";\n`);
         let count = 0;
+
         for (let eventName of gEvents) {
             count++;
 
             genAddToInstaller_body(`
-    let E${count}: undefined | ((event: any) => Promise<void>);
-    addListener("myEvent", async (e) => {
-        if (!E${count}) E${count} = (await import("@/events/${eventName}")).default;       
-        await E${count}(e);
-    });`                        ); // genAddToInstaller_body
+let E${count}: undefined | ((event: any) => Promise<void>);
+addListener("${eventName}", async (e) => {
+    if (!E${count}) E${count} = (await import("@/events/${eventName}")).default;       
+    await E${count}(e);
+});`                        ); // genAddToInstaller_body
         }
     }
 });
-
-function calcEventDir(eventName: string) {
-    return jk_fs.join(getProjectGenDir(), "events", eventName);
-}
 
 async function transformEventListener(p: DirTransformParams) {
     let eventName = p.parentDirName;
