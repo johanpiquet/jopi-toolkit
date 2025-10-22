@@ -2,18 +2,28 @@ import * as jk_fs from "jopi-toolkit/jk_fs";
 import chunkArobaseType, {type ChunkType} from "./typeChunks.ts";
 
 import {
-    addArobaseType, addToRegistry,
-    checkDirItem, type ChildDirResolveAndTransformParams,
-    declareError, genWriteFile, getRegistryItem,
-    getSortedDirItem,
-    type DirTransformParams, PriorityLevel, type RegistryItem, requireRegistryItem, resolveAndTransformChildDir,
-    genAddToInstaller_body, genAddToInstaller_imports
+    addArobaseType,
+    addToRegistry,
+    checkDirItem,
+    type ChildDirResolveAndTransformParams,
+    declareError,
+    type DirTransformParams,
+    FilePart,
+    genAddToInstallFile,
+    genWriteFile,
+    getRegistryItem,
+    getSortedDirItem, InstallFileType,
+    PriorityLevel,
+    type RegistryItem,
+    requireRegistryItem,
+    resolveAndTransformChildDir
 } from "./engine.ts";
 
 export interface ListenerType extends RegistryItem {
     allDirPath: string[];
     listeners: ListenerPart[];
     eventName: string;
+    conditions?: Set<string>;
 }
 
 export interface ListenerPart {
@@ -23,7 +33,7 @@ export interface ListenerPart {
     sortKey: string;
 }
 
-let gEvents: string[] = [];
+let gEvents: Record<string, ListenerType> = {};
 
 const arobaseType = addArobaseType("listeners", {
     async processDir(p) {
@@ -40,6 +50,9 @@ const arobaseType = addArobaseType("listeners", {
                 childDir_requireRefFile: false,
 
                 rootDirName: eventDir.name,
+
+                // Allow conditioning events on "ifServer", "ifBrowser".
+                childDir_allowConditions: true,
 
                 transform: transformEventListener
             }, eventDir);
@@ -105,22 +118,66 @@ const arobaseType = addArobaseType("listeners", {
         let fileName = key.substring(key.indexOf("_") + 1) + ".ts";
         await genWriteFile(jk_fs.join(outDir, fileName), source);
 
-        gEvents.push(event.eventName);
+        gEvents[event.eventName] = event;
     },
 
     async endGeneratingCode() {
-        genAddToInstaller_imports(`import {addListener} from "jopi-toolkit/jk_events";\n`);
+        function addBrowserHeader() {
+            if (isBrowserHeaderAdded) return;
+            isBrowserHeaderAdded = true;
+
+            genAddToInstallFile(InstallFileType.browser, FilePart.imports, `import {addListener} from "jopi-toolkit/jk_events";\n`);
+        }
+
+        function addServerHeader() {
+            if (isServerHeaderAdded) return;
+            isServerHeaderAdded = true;
+
+            genAddToInstallFile(InstallFileType.server, FilePart.imports, `import {addListener} from "jopi-toolkit/jk_events";\n`);
+        }
+
         let count = 0;
+        let isBrowserHeaderAdded = false;
+        let isServerHeaderAdded = false;
 
-        for (let eventName of gEvents) {
+        for (let eventName in gEvents) {
             count++;
+            let installFileType: InstallFileType;
 
-            genAddToInstaller_body(`
+            let event = gEvents[eventName];
+            let conditions = event.conditions;
+
+            if (conditions) {
+                console.log("listener conditions:", conditions);
+
+                if (conditions.has("server") && conditions.has("browser")) {
+                    installFileType = InstallFileType.both;
+                    addBrowserHeader();
+                    addServerHeader();
+                } else if (conditions.has("server")) {
+                    installFileType = InstallFileType.server;
+                    addServerHeader();
+                } else if (conditions.has("browser")) {
+                    installFileType = InstallFileType.browser;
+                    addBrowserHeader();
+                } else {
+                    // Should not happen.
+                    installFileType = InstallFileType.both;
+                    addBrowserHeader();
+                    addBrowserHeader();
+                }
+            } else {
+                installFileType = InstallFileType.both;
+                addBrowserHeader();
+                addBrowserHeader();
+            }
+
+            genAddToInstallFile(installFileType, FilePart.body, `
 let E${count}: undefined | ((event: any) => Promise<void>);
 addListener("${eventName}", async (e) => {
     if (!E${count}) E${count} = (await import("@/events/${eventName}")).default;       
     await E${count}(e);
-});`                        ); // genAddToInstaller_body
+});`                        ); // genAddToInstallFile
         }
     }
 });
@@ -169,12 +226,25 @@ async function transformEventListener(p: DirTransformParams) {
 
     if (!current) {
         const newItem: ListenerType = {
+            conditions: p.conditions,
             arobaseType, itemPath: p.itemPath,
             listeners: listenerItems, eventName: p.parentDirName, allDirPath: [p.itemPath]
         };
 
         addToRegistry(registryKey, newItem);
         return;
+    } else {
+        if (p.conditions) {
+            if (current.conditions) {
+                for (let c of p.conditions) {
+                    current.conditions.add(c);
+                }
+            } else {
+                if (!current.conditions) {
+                    current.conditions = p.conditions;
+                }
+            }
+        }
     }
 
     current.allDirPath.push(p.itemPath);

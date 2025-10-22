@@ -28,8 +28,8 @@ export function declareError(message: string, filePath?: string): Error {
     process.exit(1);
 }
 
-export function addNameIntoFile(filePath: string) {
-    return jk_fs.writeTextToFile(filePath, jk_fs.basename(filePath));
+export function addNameIntoFile(filePath: string, name: string = jk_fs.basename(filePath)) {
+    return jk_fs.writeTextToFile(filePath, name);
 }
 
 export async function getSortedDirItem(dirPath: string): Promise<jk_fs.DirItem[]> {
@@ -58,6 +58,10 @@ export async function checkDirItem(entry: jk_fs.DirItem) {
 
     // Ignore if start by "_".
     return entry.name[0] !== "_";
+}
+
+export function mergeText(...parts: (string|undefined)[]): string {
+    return parts.filter(p => p !== undefined).join("");
 }
 
 //endregion
@@ -121,25 +125,36 @@ export function addToRegistry<T extends RegistryItem>(uid: string, item: T) {
 
 //region Generating code
 
-let gInstallFile_imports = "";
-let gInstallFile_body = "";
-let gInstallFile_footer = "";
+export enum FilePart {
+    imports = "imports",
+    body = "body",
+    footer = "footer",
+}
+
+export enum InstallFileType {server, browser, both};
+
+let gServerInstallFile: Record<string, string> = {};
+let gBrowserInstallFile: Record<string, string> = {};
 
 export async function genWriteFile(filePath: string, fileContent: string): Promise<void> {
     await jk_fs.mkDir(jk_fs.dirname(filePath));
     return jk_fs.writeTextToFile(filePath, fileContent);
 }
 
-export function genAddToInstaller_imports(text: string) {
-    gInstallFile_imports += text;
-}
+export function genAddToInstallFile(who: InstallFileType, where: FilePart, text: string) {
+    function addTo(group: Record<string, string>) {
+        let part = group[where] || "";
+        group[where] = part + text;
+    }
 
-export function genAddToInstaller_body(text: string) {
-    gInstallFile_body += text;
-}
-
-export function genAddToInstaller_footer(text: string) {
-    gInstallFile_footer += text;
+    if (who===InstallFileType.both) {
+        addTo(gServerInstallFile);
+        addTo(gBrowserInstallFile);
+    } else if (who===InstallFileType.server) {
+        addTo(gServerInstallFile);
+    } else if (who===InstallFileType.browser) {
+        addTo(gBrowserInstallFile);
+    }
 }
 
 async function generateAll() {
@@ -191,20 +206,13 @@ async function generateAll() {
         }
     }
 
-    let installerFile = gInstallFile_imports;
-    installerFile += gInstallFile_body;
-    installerFile += gInstallFile_footer;
+    let installerFile = mergeText(gServerInstallFile[FilePart.imports], gServerInstallFile[FilePart.body], gServerInstallFile[FilePart.footer]);
+    await jk_fs.writeTextToFile(jk_fs.join(gGenRootDir, "installServer.ts"), installerFile);
+    gServerInstallFile = {};
 
-    await jk_fs.writeTextToFile(jk_fs.join(gGenRootDir, "install.ts"), installerFile);
-
-    // > Clean the resources
-
-    gInstallFile_imports = "";
-    gInstallFile_body = "";
-    gInstallFile_footer = "";
-
-    gRegistry = {};
-    gReplacing = {};
+    installerFile = mergeText(gBrowserInstallFile[FilePart.imports], gBrowserInstallFile[FilePart.body], gBrowserInstallFile[FilePart.footer]);
+    await jk_fs.writeTextToFile(jk_fs.join(gGenRootDir, "installBrowser.ts"), installerFile);
+    gBrowserInstallFile = {};
 }
 
 //endregion
@@ -219,6 +227,7 @@ export interface ChildDirResolveAndTransformParams {
     childDir_requireMyUidFile?: boolean;
     childDir_createMissingMyUidFile?: boolean;
     childDir_nameConstraint: "canBeUid"|"mustNotBeUid"|"mustBeUid";
+    childDir_allowConditions?: boolean;
 
     transform: (props: DirTransformParams) => Promise<void>;
 }
@@ -235,6 +244,7 @@ export interface DirTransformParams {
 
     uid?: string;
     refFile?: string;
+    conditions?: Set<string>;
 
     parentDirName: string;
     priority: PriorityLevel;
@@ -393,7 +403,8 @@ export async function resolveAndTransformChildDir(p: ChildDirResolveAndTransform
         }
     }
 
-    // Search the ref file.
+    // region .ref files
+
     let refFile: string|undefined;
     //
     (await jk_fs.listDir(itemPath)).forEach(entry => {
@@ -419,10 +430,44 @@ export async function resolveAndTransformChildDir(p: ChildDirResolveAndTransform
         }
     }
 
+    //endregion
+
+    //region .cond files
+
+    let conditions: Set<string>|undefined;
+    //
+    await Promise.all((await jk_fs.listDir(itemPath)).map(async (entry) => {
+        if (!(entry.isFile && entry.name.endsWith(".cond"))) return;
+
+        let condName = jk_fs.basename(entry.name, ".cond").toLowerCase();
+        if (condName.startsWith("if")) condName = condName.substring(2);
+        condName = condName.replace("-", "");
+        condName = condName.replace("_", "");
+
+        if (!conditions) conditions = new Set<string>();
+        conditions.add(condName);
+
+        await addNameIntoFile(entry.fullPath, condName + ".cond");
+    }));
+
+    if (conditions) {
+        if (p.childDir_allowConditions!==true) {
+            throw declareError("A .cond file is NOT expected", itemPath);
+        }
+    }
+
+    //endregion
+
+    //region .priority files
+
     // File named "defaultPriority", "highPriority", ...
     // allow giving a priority to the rule.
     //
     const priority: PriorityLevel = await searchPriorityLevel(itemPath);
+
+    //endregion
+
+    //region .myuid file
 
     if (itemUid) {
         if (p.childDir_requireMyUidFile===false) {
@@ -435,10 +480,13 @@ export async function resolveAndTransformChildDir(p: ChildDirResolveAndTransform
         }
     }
 
+    //endregion
+
     await p.transform({
         itemName, uid: itemUid, refFile,
         itemPath, isFile, resolved, priority,
-        parentDirName: p.rootDirName
+        parentDirName: p.rootDirName,
+        conditions
     });
 }
 
