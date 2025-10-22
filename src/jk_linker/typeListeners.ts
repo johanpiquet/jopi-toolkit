@@ -1,5 +1,5 @@
 import * as jk_fs from "jopi-toolkit/jk_fs";
-import defineArobaseType, {type DefineType} from "./typeDefines.ts";
+import chunkArobaseType, {type ChunkType} from "./typeChunks.ts";
 
 import {
     addArobaseType, addToRegistry,
@@ -7,7 +7,7 @@ import {
     declareError, genWriteFile, getRegistryItem,
     getSortedDirItem,
     type DirTransformParams, PriorityLevel, type RegistryItem, requireRegistryItem, resolveAndTransformChildDir,
-    processThisDirItems, getProjectGenDir, genAddToInstaller_body, genAddToInstaller_imports
+    genAddToInstaller_body, genAddToInstaller_imports
 } from "./engine.ts";
 
 export interface ListenerType extends RegistryItem {
@@ -82,7 +82,7 @@ const arobaseType = addArobaseType("listeners", {
             let entryPoint = item.entryPoint;
 
             if (!entryPoint) {
-                let d = requireRegistryItem<DefineType>(item.ref!, defineArobaseType);
+                let d = requireRegistryItem<ChunkType>(item.ref!, chunkArobaseType);
                 entryPoint = d.entryPoint;
             }
 

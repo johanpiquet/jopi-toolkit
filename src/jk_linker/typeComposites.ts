@@ -1,5 +1,5 @@
 import * as jk_fs from "jopi-toolkit/jk_fs";
-import defineArobaseType, {type DefineType} from "./typeDefines.ts";
+import chnukArobaseType, {type ChunkType} from "./typeChunks.ts";
 
 import {
     addArobaseType, addToRegistry,
@@ -83,7 +83,7 @@ const arobaseType = addArobaseType("composites", {
             let entryPoint = item.entryPoint;
 
             if (!entryPoint) {
-                let d = requireRegistryItem<DefineType>(item.ref!, defineArobaseType);
+                let d = requireRegistryItem<ChunkType>(item.ref!, chnukArobaseType);
                 entryPoint = d.entryPoint;
             }
 

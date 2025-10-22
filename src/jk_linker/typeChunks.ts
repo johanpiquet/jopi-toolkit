@@ -8,12 +8,12 @@ import {
     processThisDirItems
 } from "./engine.ts";
 
-export interface DefineType extends RegistryItem {
+export interface ChunkType extends RegistryItem {
     entryPoint: string;
     itemType: string;
 }
 
-const arobaseType = addArobaseType("defines", {
+const arobaseType = addArobaseType("chunks", {
     async processDir(p) {
         let allChildDir = await jk_fs.listDir(p.arobaseDir);
 
@@ -40,7 +40,7 @@ const arobaseType = addArobaseType("defines", {
                         throw declareError("No 'index.ts' or 'index.tsx' file found", props.itemPath);
                     }
 
-                    const newItem: DefineType = {
+                    const newItem: ChunkType = {
                         arobaseType: arobaseType,
                         entryPoint: props.resolved.entryPoint,
                         itemType: props.parentDirName,
@@ -54,8 +54,8 @@ const arobaseType = addArobaseType("defines", {
     },
 
     async generateCodeForItem(key, rItem, infos) {
-        const item = rItem as DefineType;
-        const newFilePath = jk_fs.join(infos.genDir, "uid", key);
+        const item = rItem as ChunkType;
+        const newFilePath = jk_fs.join(infos.genDir, "chunk", key);
         await createDirSymlink(newFilePath, jk_fs.dirname(item.entryPoint));
     }
 });

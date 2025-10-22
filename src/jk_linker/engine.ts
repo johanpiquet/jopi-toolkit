@@ -151,7 +151,7 @@ async function generateAll() {
             //
             if (!itemToReplaceRef) {
                 let message = "Can't find the UID to replace : " + mustReplace +
-                    "\nCheck that the item is declared in a @defines clause";
+                    "\nCheck that the item is declared in a @chunks clause";
 
                 throw declareError(message, replaceParams.declarationFile);
             }
