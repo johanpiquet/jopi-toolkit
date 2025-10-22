@@ -133,8 +133,9 @@ async function processComposite(p: DirTransformParams) {
     };
 
     for (let dirItem of dirItems) {
+        if (!await checkDirItem(dirItem)) continue;
         if (!dirItem.isDirectory) continue;
-        if (!await checkDirItem(dirItem, false)) continue;
+
         await resolveAndTransformChildDir(params, dirItem);
     }
 
@@ -148,7 +149,7 @@ async function processComposite(p: DirTransformParams) {
             items: compositeItems, itemsType: p.parentDirName, allDirPath: [p.itemPath]
         };
 
-        addToRegistry([compositeId], newItem);
+        addToRegistry(compositeId, newItem);
         return;
     }
 

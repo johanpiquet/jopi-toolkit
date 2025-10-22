@@ -11,7 +11,7 @@ addArobaseType("replaces", {
             await processThisDirItems({
                 dirToScan: itemType.fullPath,
                 dirToScan_expectFsType: "dir",
-                childDir_nameConstraint: "canBeUid",
+                childDir_nameConstraint: "mustBeUid",
 
                 childDir_requireMyUidFile: false,
                 childDir_requireRefFile: true,

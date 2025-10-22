@@ -29,7 +29,7 @@ export function declareError(message: string, filePath?: string): Error {
 }
 
 export function addNameIntoFile(filePath: string) {
-    jk_fs.writeTextToFile(filePath, jk_fs.basename(filePath)).catch();
+    return jk_fs.writeTextToFile(filePath, jk_fs.basename(filePath));
 }
 
 export async function getSortedDirItem(dirPath: string): Promise<jk_fs.DirItem[]> {
@@ -41,25 +41,23 @@ export async function getSortedDirItem(dirPath: string): Promise<jk_fs.DirItem[]
  * This function checks the validity of a directory item
  * and allows to know if we must skip this item.
  */
-export async function checkDirItem(entry: jk_fs.DirItem, allowRefFile: boolean) {
+export async function checkDirItem(entry: jk_fs.DirItem) {
     if (entry.isSymbolicLink) return false;
-    if ((entry.name[0] === ".") || (entry.name[0] === "_")) return false;
-
-    if (!allowRefFile && entry.name.endsWith(".ref")) {
-        throw declareError("A .ref file is found here but not expected", entry.fullPath);
-    }
+    if (entry.name[0] === ".") return false;
 
     // _ allows generating an UID replacing the item.
     //
-    if (entry.name === "uid.myuid") {
+    if (entry.name === "_.myuid") {
         let uid = jk_tools.generateUUIDv4();
-        let newPath = jk_fs.join(jk_fs.dirname(entry.fullPath), uid + ".myuid");
-        await jk_fs.rename(entry.fullPath, newPath);
-        entry.fullPath = newPath;
-        entry.name = uid;
+        await jk_fs.unlink(entry.fullPath);
+        entry.fullPath = jk_fs.join(jk_fs.dirname(entry.fullPath), uid + ".myuid");
+        entry.name = uid + ".myuid";
+
+        await jk_fs.writeTextToFile(entry.fullPath, uid);
     }
 
-    return true;
+    // Ignore if start by "_".
+    return entry.name[0] !== "_";
 }
 
 //endregion
@@ -73,10 +71,7 @@ export interface RegistryItem {
 
 export interface ReplaceItem {
     mustReplace: string;
-    mustReplaceIsUID: boolean;
-
     replaceWith: string;
-    replaceWithIsUID: boolean;
 
     priority: PriorityLevel;
     declarationFile: string;
@@ -106,26 +101,19 @@ export function addReplace(mustReplace: string, replaceWith: string, priority: P
         if (current.priority>priority) return;
     }
 
-    gReplacing[mustReplace] = {
-        declarationFile,
-        mustReplace, replaceWith, priority,
-        mustReplaceIsUID: jk_tools.isUUIDv4(mustReplace),
-        replaceWithIsUID: jk_tools.isUUIDv4(replaceWith)
-    };
+    gReplacing[mustReplace] = {declarationFile, mustReplace, replaceWith, priority};
 
     if (LOG) console.log("Add REPLACE", mustReplace, "=>", replaceWith, "priority", priority);
 }
 
-export function addToRegistry<T extends RegistryItem>(keys: string[], item: T) {
-    for (let key of keys) {
-        if (gRegistry[key]) declareError("The item " + key + " is already defined", gRegistry[key].itemPath);
+export function addToRegistry<T extends RegistryItem>(uid: string, item: T) {
+    if (gRegistry[uid]) declareError("The UID " + uid + " is already defined", gRegistry[uid].itemPath);
 
-        gRegistry[key] = item;
+    gRegistry[uid] = item;
 
-        if (LOG) {
-            const relPath = jk_fs.getRelativePath(gSrcRootDir, item.itemPath);
-            console.log(`Add @${item.arobaseType.typeName}:${key} to registry. Path: ${relPath}`);
-        }
+    if (LOG) {
+        const relPath = jk_fs.getRelativePath(gSrcRootDir, item.itemPath);
+        console.log(`Add ${uid} to registry. Path: ${relPath}`);
     }
 }
 
@@ -162,22 +150,16 @@ async function generateAll() {
             let itemToReplaceRef = gRegistry[mustReplace];
             //
             if (!itemToReplaceRef) {
-                let message =  "Can't find the UID to replace : " + mustReplace +
+                let message = "Can't find the UID to replace : " + mustReplace +
                     "\nCheck that the item is declared in a @defines clause";
 
-                if (replaceParams.mustReplaceIsUID) {
-                    throw declareError(message, replaceParams.declarationFile);
-                }
-
-                message = message.replace("UID", "alias");
                 throw declareError(message, replaceParams.declarationFile);
             }
 
             let replaceWithRef = gRegistry[replaceParams.replaceWith];
             //
             if (!replaceWithRef) {
-                if (replaceParams.replaceWithIsUID) throw declareError("Can't find the UID used for replacement : " + replaceParams.replaceWith, replaceParams.declarationFile);
-                throw declareError("Can't find the alias used for replacement : " + replaceParams.replaceWith, replaceParams.declarationFile);
+                throw declareError("Can't find the UID used for replacement : " + replaceParams.replaceWith, replaceParams.declarationFile);
             }
 
             if (itemToReplaceRef.arobaseType!==replaceWithRef.arobaseType) {
@@ -252,7 +234,6 @@ export interface DirTransformParams {
     isFile: boolean;
 
     uid?: string;
-    alias: string[];
     refFile?: string;
 
     parentDirName: string;
@@ -277,32 +258,39 @@ async function searchPriorityLevel(baseDir: string): Promise<PriorityLevel> {
 
     let priority: PriorityLevel | undefined = undefined;
 
-    (await jk_fs.listDir(baseDir)).forEach(entry => {
-        if (!entry.isFile) return false;
-        if (!entry.name.startsWith("priority")) return false;
+    let dirItems = await jk_fs.listDir(baseDir);
+
+    for (let entry of dirItems) {
+        if (!entry.isFile) continue;
+        if (!entry.name.endsWith(".priority")) continue;
 
         entry.name = entry.name.toLowerCase();
         entry.name = entry.name.replace("-", "");
         entry.name = entry.name.replace("_", "");
 
         switch (entry.name) {
-            case "priorityveryhigh":
+            case "veryhigh.priority":
+                await addNameIntoFile(entry.fullPath);
                 setPriority(PriorityLevel.veryHigh);
                 break;
-            case "priorityhigh":
+            case "high.priority":
+                await addNameIntoFile(entry.fullPath);
                 setPriority(PriorityLevel.high);
                 break;
-            case "prioritydefault":
+            case "default.priority":
+                await addNameIntoFile(entry.fullPath);
                 setPriority(PriorityLevel.default);
                 break;
-            case "prioritylow":
+            case "low.priority":
+                await addNameIntoFile(entry.fullPath);
                 setPriority(PriorityLevel.low);
                 break;
-            case "priorityverylow":
+            case "verylow.priority":
+                await addNameIntoFile(entry.fullPath);
                 setPriority(PriorityLevel.veryLow);
                 break;
         }
-    });
+    }
 
     if (!priority) return PriorityLevel.default;
     return priority;
@@ -312,7 +300,7 @@ export async function processThisDirItems(p: ProcessThisDirItemsParams) {
     let dirContent = await jk_fs.listDir(p.dirToScan);
 
     for (let entry of dirContent) {
-        if (!await checkDirItem(entry, false)) continue
+        if ((entry.name[0] === ".")||(entry.name[0] === "_")) return false;
 
         if (p.dirToScan_expectFsType === "file") {
             if (entry.isFile) {
@@ -356,8 +344,6 @@ export async function resolveAndTransformChildDir(p: ChildDirResolveAndTransform
         await p.transform({
             itemName,
             uid: isUUID ? itemName : undefined,
-            alias: [],
-
             priority: PriorityLevel.default,
 
             itemPath, isFile,
@@ -383,26 +369,20 @@ export async function resolveAndTransformChildDir(p: ChildDirResolveAndTransform
 
     // Search the "uid.myuid" file, which allows knowing the uid of the item.
     //
-    (await jk_fs.listDir(itemPath)).forEach(entry => {
+    const dirItems = await jk_fs.listDir(itemPath);
+    //
+    for (let entry of dirItems) {
+        if (!await checkDirItem(entry)) continue
+
         if (entry.isFile && entry.name.endsWith(".myuid")) {
             if (itemUid) {
                 throw declareError("More than one UID file declared", entry.fullPath);
             }
 
-            // "_.myduid" is a special file name, which is automatically renamed with a new uid.
-            // Is used to help the developer to avoid generating himself a new uid.
-            //
-            if (entry.name==="_.myuid") {
-                entry.name = jk_tools.generateUUIDv4() + ".myuid";
-                jk_fs.rename(entry.fullPath, jk_fs.join(jk_fs.dirname(entry.fullPath), entry.name));
-            }
-
             itemUid = jk_fs.basename(entry.name, ".myuid");
             addNameIntoFile(entry.fullPath);
-
-            return entry.fullPath;
         }
-    });
+    }
 
     if (!itemUid) {
         // > Not "ui.myuid" found? Then add it.
@@ -413,16 +393,6 @@ export async function resolveAndTransformChildDir(p: ChildDirResolveAndTransform
         }
     }
 
-    let itemAlias: string[] = [];
-
-    // Search the alias.
-    (await jk_fs.listDir(itemPath)).forEach(entry => {
-        if (entry.isFile && entry.name.endsWith(".alias")) {
-            itemAlias.push(jk_fs.basename(entry.name, ".alias"));
-            addNameIntoFile(entry.fullPath);
-        }
-    });
-
     // Search the ref file.
     let refFile: string|undefined;
     //
@@ -430,6 +400,11 @@ export async function resolveAndTransformChildDir(p: ChildDirResolveAndTransform
         if (entry.isFile && entry.name.endsWith(".ref")) {
             if (refFile) throw declareError("More than one .ref file found", itemPath);
             refFile = jk_fs.basename(entry.name, ".ref");
+
+            if (!jk_tools.isUUIDv4(refFile)) {
+                throw declareError("The .ref file must be a valid UID", entry.fullPath);
+            }
+
             addNameIntoFile(entry.fullPath);
         }
     });
@@ -461,7 +436,7 @@ export async function resolveAndTransformChildDir(p: ChildDirResolveAndTransform
     }
 
     await p.transform({
-        itemName, uid: itemUid, alias: itemAlias, refFile,
+        itemName, uid: itemUid, refFile,
         itemPath, isFile, resolved, priority,
         parentDirName: p.rootDirName
     });

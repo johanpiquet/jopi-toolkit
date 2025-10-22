@@ -47,7 +47,7 @@ const arobaseType = addArobaseType("defines", {
                         itemPath: props.itemPath,
                     };
 
-                    addToRegistry([props.uid!, ...props.alias], newItem);
+                    addToRegistry(props.uid!, newItem);
                 }
             });
         }
@@ -55,7 +55,7 @@ const arobaseType = addArobaseType("defines", {
 
     async generateCodeForItem(key, rItem, infos) {
         const item = rItem as DefineType;
-        const newFilePath = jk_fs.join(infos.genDir, "id", key);
+        const newFilePath = jk_fs.join(infos.genDir, "uid", key);
         await createDirSymlink(newFilePath, jk_fs.dirname(item.entryPoint));
     }
 });

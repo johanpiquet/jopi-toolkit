@@ -157,8 +157,8 @@ async function transformEventListener(p: DirTransformParams) {
     };
 
     for (let dirItem of dirItems) {
+        if (!await checkDirItem(dirItem)) continue;
         if (!dirItem.isDirectory) continue;
-        if (!await checkDirItem(dirItem, false)) continue;
         await resolveAndTransformChildDir(params, dirItem);
     }
 
@@ -173,7 +173,7 @@ async function transformEventListener(p: DirTransformParams) {
             listeners: listenerItems, eventName: p.parentDirName, allDirPath: [p.itemPath]
         };
 
-        addToRegistry([registryKey], newItem);
+        addToRegistry(registryKey, newItem);
         return;
     }
 
