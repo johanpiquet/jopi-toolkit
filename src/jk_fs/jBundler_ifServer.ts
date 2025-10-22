@@ -241,7 +241,12 @@ export async function listDir(dirPath: string): Promise<DirItem[]> {
     const result: DirItem[] = [];
 
     for (const dirItem of ditItems) {
-        let toAdd: DirItem = {name: dirItem, fullPath: path.join(dirPath, dirItem)};
+        let toAdd: DirItem = {
+            name: dirItem,
+            fullPath: path.join(dirPath, dirItem),
+            isFile: false, isDirectory: false, isSymbolicLink: false
+        };
+
         const stats = await fs.stat(toAdd.fullPath);
 
         if (stats.isFile()) {
