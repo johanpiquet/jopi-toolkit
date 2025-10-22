@@ -19,23 +19,23 @@ import {
     resolveAndTransformChildDir
 } from "./engine.ts";
 
-export interface ListenerType extends RegistryItem {
+export interface EventType extends RegistryItem {
     allDirPath: string[];
-    listeners: ListenerPart[];
+    listeners: EventListener[];
     eventName: string;
     conditions?: Set<string>;
 }
 
-export interface ListenerPart {
+export interface EventListener {
     ref?: string;
     entryPoint?: string;
     priority: PriorityLevel;
     sortKey: string;
 }
 
-let gEvents: Record<string, ListenerType> = {};
+let gEvents: Record<string, EventType> = {};
 
-const arobaseType = addArobaseType("listeners", {
+const arobaseType = addArobaseType("events", {
     async processDir(p) {
         let allEventDir = await jk_fs.listDir(p.arobaseDir);
 
@@ -60,7 +60,7 @@ const arobaseType = addArobaseType("listeners", {
     },
 
     async generateCodeForItem(key, rItem, infos) {
-        function sortByPriority(items: ListenerPart[]): ListenerPart[] {
+        function sortByPriority(items: EventListener[]): EventListener[] {
             function addPriority(priority: PriorityLevel) {
                 let e = byPriority[priority];
                 if (e) items.push(...e);
@@ -84,7 +84,7 @@ const arobaseType = addArobaseType("listeners", {
             return items;
         }
 
-        const event = rItem as ListenerType;
+        const event = rItem as EventType;
         event.listeners = sortByPriority(event.listeners);
 
         let source = "";
@@ -188,7 +188,7 @@ async function transformEventListener(p: DirTransformParams) {
     // > Extract the listener items.
 
     const dirItems = await getSortedDirItem(p.itemPath);
-    let listenerItems: ListenerPart[] = [];
+    let listenerItems: EventListener[] = [];
 
     const params: ChildDirResolveAndTransformParams = {
         rootDirName: eventName,
@@ -222,10 +222,10 @@ async function transformEventListener(p: DirTransformParams) {
     // > Add the listener.
 
     const registryKey = "event_" + eventName;
-    let current = getRegistryItem<ListenerType>(registryKey, arobaseType);
+    let current = getRegistryItem<EventType>(registryKey, arobaseType);
 
     if (!current) {
-        const newItem: ListenerType = {
+        const newItem: EventType = {
             conditions: p.conditions,
             arobaseType, itemPath: p.itemPath,
             listeners: listenerItems, eventName: p.parentDirName, allDirPath: [p.itemPath]
