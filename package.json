@@ -53,6 +53,7 @@
     "./jk_term": "./dist/jk_term/index.js",
     "./jk_app": "./dist/jk_app/index.js",
     "./jk_compress": "./dist/jk_compress/index.js",
-    "./jk_webSocket": "./dist/jk_webSocket/index.js"
+    "./jk_webSocket": "./dist/jk_webSocket/index.js",
+    "./jk_linker": "./dist/jk_linker/index.js"
   }
 }
