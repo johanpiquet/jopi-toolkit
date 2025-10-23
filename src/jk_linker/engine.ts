@@ -149,10 +149,6 @@ export async function analizeDirContent(dirPath: string, rules: DirAnalizingRule
 
                 result.refTarget = entry.name.slice(0, -4);
 
-                if (!jk_tools.isUUIDv4(result.refTarget)) {
-                    throw declareError("The .ref file name must be an UUID", entry.fullPath);
-                }
-
                 await addNameIntoFile(entry.fullPath);
             }
 
@@ -189,10 +185,6 @@ export async function mustSkip_expectDir(item: jk_fs.DirItem) {
     }
 
     return ((item.name[0] === "_") || (item.name[0] === "."));
-}
-
-export function mergeText(...parts: (string|undefined)[]): string {
-    return parts.filter(p => p !== undefined).join("");
 }
 
 //endregion
@@ -289,6 +281,19 @@ export function genAddToInstallFile(who: InstallFileType, where: FilePart, text:
 }
 
 async function generateAll() {
+    function merge(header: string, body: string, footer: string): string {
+        let result = "";
+        if (header) result += header + "\n";
+        result += `import type {Registry} from "jopi-toolkit/jk_registry"`;
+
+        result += "\n\nexport default function(registry: Registry) {\n";
+        if (body) result += body;
+        result += "\n}";
+        if (footer) result += "\n" + footer;
+
+        return result;
+    }
+
     function applyReplaces() {
         for (let mustReplace in gReplacing) {
             let replaceParams = gReplacing[mustReplace];
@@ -296,16 +301,13 @@ async function generateAll() {
             let itemToReplaceRef = gRegistry[mustReplace];
             //
             if (!itemToReplaceRef) {
-                const message = "Can't find the UID to replace : " + mustReplace +
-                    "\nCheck that the item is declared in a @chunks clause";
-
-                throw declareError(message, replaceParams.declarationFile);
+                throw declareError("Can't find the element to replace : " + mustReplace, replaceParams.declarationFile);
             }
 
             let replaceWithRef = gRegistry[replaceParams.replaceWith];
             //
             if (!replaceWithRef) {
-                throw declareError("Can't find the UID used for replacement : " + replaceParams.replaceWith, replaceParams.declarationFile);
+                throw declareError("Can't find the element used for replacement : " + replaceParams.replaceWith, replaceParams.declarationFile);
             }
 
             if (itemToReplaceRef.arobaseType!==replaceWithRef.arobaseType) {
@@ -321,27 +323,26 @@ async function generateAll() {
     const infos = {genDir: gGenRootDir};
 
     for (let arobaseType of Object.values(gArobaseHandler)) {
-        if (arobaseType.beginGeneratingCode) {
-            await arobaseType.beginGeneratingCode();
-        }
+        await arobaseType.beginGeneratingCode();
+
+        let items: RegistryItem[] = [];
 
         for (let key in gRegistry) {
             const entry = gRegistry[key];
             if (entry.arobaseType === arobaseType) {
+                items.push(entry);
                 await entry.arobaseType.generateCodeForItem(key, entry, infos);
             }
         }
 
-        if (arobaseType.endGeneratingCode) {
-            await arobaseType.endGeneratingCode();
-        }
+        await arobaseType.endGeneratingCode(items);
     }
 
-    let installerFile = mergeText(gServerInstallFile[FilePart.imports], gServerInstallFile[FilePart.body], gServerInstallFile[FilePart.footer]);
+    let installerFile = merge(gServerInstallFile[FilePart.imports], gServerInstallFile[FilePart.body], gServerInstallFile[FilePart.footer]);
     await jk_fs.writeTextToFile(jk_fs.join(gGenRootDir, "installServer.ts"), installerFile);
     gServerInstallFile = {};
 
-    installerFile = mergeText(gBrowserInstallFile[FilePart.imports], gBrowserInstallFile[FilePart.body], gBrowserInstallFile[FilePart.footer]);
+    installerFile = merge(gBrowserInstallFile[FilePart.imports], gBrowserInstallFile[FilePart.body], gBrowserInstallFile[FilePart.footer]);
     await jk_fs.writeTextToFile(jk_fs.join(gGenRootDir, "installBrowser.ts"), installerFile);
     gBrowserInstallFile = {};
 }
@@ -356,7 +357,7 @@ export interface DirAnalizingRules {
     requirePriority?: boolean
 }
 
-export interface TypeRules_ItemDef extends DirAnalizingRules {
+export interface TypeRules_CollectionItem extends DirAnalizingRules {
     rootDirName: string;
     filesToResolve?: Record<string, string[]>;
     nameConstraint: "canBeUid"|"mustNotBeUid"|"mustBeUid";
@@ -364,10 +365,10 @@ export interface TypeRules_ItemDef extends DirAnalizingRules {
     transform: (props: TransformParams) => Promise<void>;
 }
 
-export interface TypeRules_ItemList {
+export interface RulesFor_Collection {
     dirToScan: string;
     expectFsType: "file"|"dir"|"fileOrDir";
-    itemDefRules: TypeRules_ItemDef;
+    itemDefRules: TypeRules_CollectionItem;
 }
 
 export interface TransformParams {
@@ -400,7 +401,7 @@ export enum PriorityLevel {
  *          ^- we will iterate it
  * ^-- we are here
  */
-export async function applyTypeRulesOnDir(p: TypeRules_ItemList) {
+export async function applyTypeRulesOnDir(p: RulesFor_Collection) {
     const dirItems = await jk_fs.listDir(p.dirToScan);
 
     for (let entry of dirItems) {
@@ -428,7 +429,7 @@ export async function applyTypeRulesOnDir(p: TypeRules_ItemList) {
  *                   ^- we will iterate on it
  *          ^-- we are here
  */
-export async function applyTypeRulesOnChildDir(p: TypeRules_ItemDef, dirItem: jk_fs.DirItem) {
+export async function applyTypeRulesOnChildDir(p: TypeRules_CollectionItem, dirItem: jk_fs.DirItem) {
     const thisIsFile = dirItem.isFile;
     const thisFullPath = dirItem.fullPath;
     const thisName = dirItem.name;
@@ -483,7 +484,12 @@ export async function applyTypeRulesOnChildDir(p: TypeRules_ItemDef, dirItem: jk
     const myUid = result.myUid;
     const refTarget = result.refTarget;
     const conditions = result.conditionsFound;
-    const priority: PriorityLevel = result.priority || PriorityLevel.default;
+    let priority = result.priority!;
+
+    if (!priority) {
+        priority = PriorityLevel.default;
+        await jk_fs.writeTextToFile(jk_fs.join(thisFullPath, "default.priority"), "default.priority");
+    }
 
     if (myUid) {
         // If itemUid already defined, then must match myUidFile.
@@ -560,24 +566,29 @@ async function processModule(moduleDir: string) {
 
 //region Extensions
 
-export type ArobaseDirScanner = (infos: { moduleDir: string; arobaseDir: string; genDir: string; }) => Promise<void>;
-export type ArobaseItemProcessor = (key: string, item: RegistryItem, infos: { genDir: string; }) => Promise<void>;
+export abstract class ArobaseType {
+    constructor(public readonly typeName: string, public readonly position?: "root"|undefined) {
+    }
 
-export interface ArobaseType {
-    position?: "root"|undefined;
+    abstract processDir(p: { moduleDir: string; arobaseDir: string; genDir: string; }): Promise<void>;
 
-    typeName: string;
-    processDir: ArobaseDirScanner;
-    generateCodeForItem: ArobaseItemProcessor;
-    beginGeneratingCode?: () => Promise<void>;
-    endGeneratingCode?: () => Promise<void>;
+    generateCodeForItem(key: string, rItem: RegistryItem, infos: { genDir: string; }): Promise<void> {
+        return Promise.resolve();
+    }
+
+    beginGeneratingCode(): Promise<void> {
+        return Promise.resolve();
+    }
+
+    endGeneratingCode(items: RegistryItem[]): Promise<void> {
+        return Promise.resolve();
+    }
 }
 
 let gArobaseHandler: Record<string, ArobaseType> = {};
 
-export function addArobaseType(name: string, type: Omit<ArobaseType, "typeName">) {
-    if (name.startsWith("@")) name = name.substring(1);
-    return gArobaseHandler[name] = {...type, typeName: name};
+export function addArobaseType(type: ArobaseType) {
+    return gArobaseHandler[type.typeName] = type;
 }
 
 //endregion

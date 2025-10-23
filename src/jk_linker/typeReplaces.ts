@@ -1,10 +1,8 @@
 import * as jk_fs from "jopi-toolkit/jk_fs";
-import {addArobaseType, applyTypeRulesOnDir, addReplace} from "./engine.ts";
+import {applyTypeRulesOnDir, addReplace, ArobaseType, declareError} from "./engine.ts";
 
-addArobaseType("replaces", {
-    position: "root",
-
-    async processDir(p) {
+export default class TypeReplaces extends ArobaseType {
+    async processDir(p: { moduleDir: string; arobaseDir: string; genDir: string; }): Promise<void> {
         let itemTypes = await jk_fs.listDir(p.arobaseDir);
 
         for (let itemType of itemTypes) {
@@ -15,20 +13,36 @@ addArobaseType("replaces", {
                 expectFsType: "dir",
 
                 itemDefRules: {
-                    nameConstraint: "mustBeUid",
+                    nameConstraint: "canBeUid",
                     requireRefFile: true,
 
                     rootDirName: itemType.name,
 
                     transform: async (props) => {
                         const itemToReplace = props.itemName;
-                        const mustReplaceWith = props.refTarget!;
+                        let mustReplaceWith = props.refTarget!;
+
+                        let idx = itemToReplace.indexOf("!");
+                        if (idx===-1) throw declareError("The type is missing in the name. Should be 'type!elementId'", props.itemPath);
+
+                        let type = itemToReplace.substring(0, idx);
+                        idx = mustReplaceWith.indexOf("!");
+
+                        if (!idx) {
+                            mustReplaceWith = type + "!" + mustReplaceWith;
+                        }
+                        else {
+                            let type2 = mustReplaceWith.substring(0, idx);
+                            if (type!==type2) {
+                                let expected = type2 + mustReplaceWith.substring(idx);
+                                throw declareError(`Type mismatch. Must be ${expected}`, props.itemPath);
+                            }
+                        }
+
                         addReplace(itemToReplace, mustReplaceWith, props.priority, props.itemPath);
                     }
                 }
             });
         }
-    },
-
-    async generateCodeForItem(e) {}
-});
+    }
+}

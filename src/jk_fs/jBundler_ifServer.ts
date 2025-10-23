@@ -234,6 +234,22 @@ export function getRelativePath(fromDir: string, absolutePath: string) {
     return path.relative(fromDir, absolutePath);
 }
 
+export function dirItemFromFile(filePath: string): DirItem {
+    return {
+        name: basename(filePath),
+        fullPath: filePath,
+        isFile: true, isDirectory: false, isSymbolicLink: false
+    }
+}
+
+export function dirItemFromDir(dirPath: string): DirItem {
+    return {
+        name: basename(dirPath),
+        fullPath: dirPath,
+        isFile: false, isDirectory: true, isSymbolicLink: false
+    }
+}
+
 export async function listDir(dirPath: string): Promise<DirItem[]> {
     if (!await isDirectory(dirPath)) return [];
 
