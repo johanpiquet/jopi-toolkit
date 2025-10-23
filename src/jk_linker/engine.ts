@@ -40,9 +40,9 @@ export async function getSortedDirItem(dirPath: string): Promise<jk_fs.DirItem[]
 export interface NormalizeDirResult {
     dirItems: jk_fs.DirItem[];
 
+    myUid?: string;
     priority?: PriorityLevel;
-    fileRefFound?: string;
-    fileMyUidFound?: string;
+    refTarget?: string;
     conditionsFound?: Set<string>;
 }
 
@@ -109,11 +109,11 @@ export async function analizeDirContent(dirPath: string, rules: DirAnalizingRule
             if (entry.name[0]== "_") return false;
 
             if (entry.name.endsWith(".myuid")) {
-                if (result.fileMyUidFound) {
+                if (result.myUid) {
                     throw declareError("More than one .myuid file found here", entry.fullPath);
                 }
 
-                result.fileMyUidFound = entry.fullPath;
+                result.myUid = entry.name.slice(0, -6);
                 await addNameIntoFile(entry.fullPath);
             }
             else if (entry.name.endsWith(".priority")) {
@@ -139,7 +139,7 @@ export async function analizeDirContent(dirPath: string, rules: DirAnalizingRule
                 result.conditionsFound.add(decodeCond(entry.name));
             }
             else if (entry.name.endsWith(".ref")) {
-                if (result.fileRefFound) {
+                if (result.refTarget) {
                     throw declareError("More than one .ref file found here", entry.fullPath);
                 }
 
@@ -147,11 +147,12 @@ export async function analizeDirContent(dirPath: string, rules: DirAnalizingRule
                     throw declareError("A .ref file is NOT expected here", entry.fullPath);
                 }
 
-                if (!jk_tools.isUUIDv4(entry.name)) {
+                result.refTarget = entry.name.slice(0, -4);
+
+                if (!jk_tools.isUUIDv4(result.refTarget)) {
                     throw declareError("The .ref file name must be an UUID", entry.fullPath);
                 }
 
-                result.fileRefFound = entry.fullPath;
                 await addNameIntoFile(entry.fullPath);
             }
 
@@ -355,26 +356,27 @@ export interface DirAnalizingRules {
     requirePriority?: boolean
 }
 
-export interface ChildDirResolveAndTransformParams extends DirAnalizingRules {
+export interface TypeChildDirRule extends DirAnalizingRules {
     rootDirName: string;
-    childDir_filesToResolve?: Record<string, string[]>;
-    childDir_nameConstraint: "canBeUid"|"mustNotBeUid"|"mustBeUid";
+    filesToResolve?: Record<string, string[]>;
+    nameConstraint: "canBeUid"|"mustNotBeUid"|"mustBeUid";
 
-    transform: (props: DirTransformParams) => Promise<void>;
+    transform: (props: TransformParams) => Promise<void>;
 }
 
-export interface ProcessThisDirItemsParams extends ChildDirResolveAndTransformParams {
+export interface TypeRootDirRules {
     dirToScan: string;
-    dirToScan_expectFsType: "file"|"dir"|"fileOrDir";
+    expectFsType: "file"|"dir"|"fileOrDir";
+    childRules: TypeChildDirRule;
 }
 
-export interface DirTransformParams {
+export interface TransformParams {
     itemName: string;
     itemPath: string;
     isFile: boolean;
 
     uid?: string;
-    refFile?: string;
+    refTarget?: string;
     conditions?: Set<string>;
 
     parentDirName: string;
@@ -398,22 +400,22 @@ export enum PriorityLevel {
  *          ^- we will iterate it
  * ^-- we are here
  */
-export async function processThisDirItems(p: ProcessThisDirItemsParams) {
-    const result = await analizeDirContent(p.dirToScan, p);
+export async function applyTypeRulesOnDir(p: TypeRootDirRules) {
+    const dirItems = await jk_fs.listDir(p.dirToScan);
 
-    for (let entry of result.dirItems) {
+    for (let entry of dirItems) {
         if (doesDirItemBeExclude(entry)) continue;
 
-        if (p.dirToScan_expectFsType === "file") {
+        if (p.expectFsType === "file") {
             if (entry.isFile) {
-                await resolveAndTransformChildDir(p, entry);
+                await applyTypeRulesOnChildDir(p.childRules, entry);
             }
-        } else if (p.dirToScan_expectFsType === "dir") {
+        } else if (p.expectFsType === "dir") {
             if (entry.isDirectory) {
-                await resolveAndTransformChildDir(p, entry);
+                await applyTypeRulesOnChildDir(p.childRules, entry);
             }
-        } else if (p.dirToScan_expectFsType === "fileOrDir") {
-            await resolveAndTransformChildDir(p, entry);
+        } else if (p.expectFsType === "fileOrDir") {
+            await applyTypeRulesOnChildDir(p.childRules, entry);
         }
     }
 }
@@ -426,7 +428,7 @@ export async function processThisDirItems(p: ProcessThisDirItemsParams) {
  *                   ^- we will iterate on it
  *          ^-- we are here
  */
-export async function resolveAndTransformChildDir(p: ChildDirResolveAndTransformParams, dirItem: jk_fs.DirItem) {
+export async function applyTypeRulesOnChildDir(p: TypeChildDirRule, dirItem: jk_fs.DirItem) {
     const thisIsFile = dirItem.isFile;
     const thisFullPath = dirItem.fullPath;
     const thisName = dirItem.name;
@@ -436,13 +438,13 @@ export async function resolveAndTransformChildDir(p: ChildDirResolveAndTransform
     let thisIsUUID = jk_tools.isUUIDv4(thisName);
 
     if (thisIsUUID) {
-        if (p.childDir_nameConstraint==="mustNotBeUid") {
+        if (p.nameConstraint==="mustNotBeUid") {
             throw declareError("The name must NOT be an UID", thisFullPath);
         }
 
         thisNameAsUID = thisName;
     } else {
-        if (p.childDir_nameConstraint==="mustBeUid") {
+        if (p.nameConstraint==="mustBeUid") {
             throw declareError("The name MUST be an UID", thisFullPath);
         }
     }
@@ -468,9 +470,9 @@ export async function resolveAndTransformChildDir(p: ChildDirResolveAndTransform
     //
     let resolved: Record<string, string | undefined> = {};
     //
-    if (p.childDir_filesToResolve) {
-        for (let key in p.childDir_filesToResolve) {
-            resolved[key] = await resolve(thisFullPath, p.childDir_filesToResolve[key]);
+    if (p.filesToResolve) {
+        for (let key in p.filesToResolve) {
+            resolved[key] = await resolve(thisFullPath, p.filesToResolve[key]);
         }
     }
 
@@ -478,22 +480,22 @@ export async function resolveAndTransformChildDir(p: ChildDirResolveAndTransform
     //
     const result = await analizeDirContent(thisFullPath, p);
 
-    const refFile = result.fileRefFound;
-    const myUidFile = result.fileMyUidFound;
+    const myUid = result.myUid;
+    const refTarget = result.refTarget;
     const conditions = result.conditionsFound;
     const priority: PriorityLevel = result.priority || PriorityLevel.default;
 
-    if (myUidFile) {
+    if (myUid) {
         // If itemUid already defined, then must match myUidFile.
-        if (thisNameAsUID && (thisNameAsUID!==myUidFile)) {
+        if (thisNameAsUID && (thisNameAsUID!==myUid)) {
             throw declareError("The UID in the .myuid file is NOT the same as the UID in the folder name", thisFullPath);
         }
 
-        thisNameAsUID = myUidFile;
+        thisNameAsUID = myUid;
     }
 
     await p.transform({
-        itemName: thisName, uid: thisNameAsUID, refFile,
+        itemName: thisName, uid: thisNameAsUID, refTarget,
         itemPath: thisFullPath, isFile: thisIsFile, resolved, priority,
         parentDirName: p.rootDirName,
         conditions

@@ -4,9 +4,9 @@ import chunkArobaseType, {type ChunkType} from "./typeChunks.ts";
 import {
     addArobaseType,
     addToRegistry,
-    type ChildDirResolveAndTransformParams,
+    type TypeChildDirRule,
     declareError,
-    type DirTransformParams,
+    type TransformParams,
     FilePart,
     genAddToInstallFile,
     genWriteFile,
@@ -15,7 +15,7 @@ import {
     PriorityLevel,
     type RegistryItem,
     requireRegistryItem,
-    resolveAndTransformChildDir, getSortedDirItem
+    applyTypeRulesOnChildDir, getSortedDirItem
 } from "./engine.ts";
 
 export interface EventType extends RegistryItem {
@@ -41,8 +41,8 @@ const arobaseType = addArobaseType("events", {
         for (let eventDir of allEventDir) {
             if (await mustSkip_expectDir(eventDir)) continue;
 
-            await resolveAndTransformChildDir({
-                childDir_nameConstraint: "mustNotBeUid",
+            await applyTypeRulesOnChildDir({
+                nameConstraint: "mustNotBeUid",
                 requireRefFile: false,
                 requirePriority: false,
                 rootDirName: eventDir.name,
@@ -178,28 +178,28 @@ addListener("${eventName}", async (e) => {
     }
 });
 
-async function transformEventListener(p: DirTransformParams) {
+async function transformEventListener(p: TransformParams) {
     let eventName = p.parentDirName;
 
     // > Extract the listener items.
 
-    const params: ChildDirResolveAndTransformParams = {
+    const params: TypeChildDirRule = {
         rootDirName: eventName,
-        childDir_nameConstraint: "mustNotBeUid",
+        nameConstraint: "mustNotBeUid",
         requirePriority: true,
-        childDir_filesToResolve: {
+        filesToResolve: {
             "entryPoint": ["index.tsx", "index.ts"]
         },
 
         transform: async (item) => {
-            if (item.refFile && item.resolved.entryPoint) {
+            if (item.refTarget && item.resolved.entryPoint) {
                 throw declareError("The event listener can't have both an index file and a .ref file", item.itemPath);
             }
 
             listenerItems.push({
                 priority: item.priority,
                 sortKey: item.itemName,
-                ref: item.refFile,
+                ref: item.refTarget,
                 entryPoint: item.resolved.entryPoint
             });
         }
@@ -211,7 +211,7 @@ async function transformEventListener(p: DirTransformParams) {
     for (let dirItem of dirItems) {
         if (await mustSkip_expectDir(dirItem)) continue;
         if (!dirItem.isDirectory) continue;
-        await resolveAndTransformChildDir(params, dirItem);
+        await applyTypeRulesOnChildDir(params, dirItem);
     }
 
     // > Add the listener.

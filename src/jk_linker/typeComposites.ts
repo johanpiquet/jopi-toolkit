@@ -3,11 +3,11 @@ import chnukArobaseType, {type ChunkType} from "./typeChunks.ts";
 
 import {
     addArobaseType, addToRegistry,
-    type ChildDirResolveAndTransformParams,
+    type TypeChildDirRule,
     declareError, genWriteFile, getRegistryItem,
     getSortedDirItem,
-    type DirTransformParams, PriorityLevel, type RegistryItem, requireRegistryItem, resolveAndTransformChildDir,
-    processThisDirItems, mustSkip_expectDir
+    type TransformParams, PriorityLevel, type RegistryItem, requireRegistryItem, applyTypeRulesOnChildDir,
+    applyTypeRulesOnDir, mustSkip_expectDir
 } from "./engine.ts";
 
 export interface CompositeType extends RegistryItem {
@@ -30,17 +30,17 @@ const arobaseType = addArobaseType("composites", {
         for (let childDir of itemTypes) {
             if (!childDir.isDirectory || (childDir.name[0] === "_") || (childDir.name[0] === ".")) continue;
 
-            await processThisDirItems({
+            await applyTypeRulesOnDir({
                 dirToScan: childDir.fullPath,
-                dirToScan_expectFsType: "dir",
-                childDir_nameConstraint: "mustBeUid",
+                expectFsType: "dir",
 
-                requireRefFile: false,
-                requirePriority: false,
-
-                rootDirName: childDir.name,
-
-                transform: processComposite
+                childRules: {
+                    nameConstraint: "mustBeUid",
+                    requireRefFile: false,
+                    requirePriority: false,
+                    rootDirName: childDir.name,
+                    transform: processComposite
+                }
             });
         }
     },
@@ -100,7 +100,7 @@ const arobaseType = addArobaseType("composites", {
     }
 });
 
-async function processComposite(p: DirTransformParams) {
+async function processComposite(p: TransformParams) {
     let compositeId = "composite_" + p.uid!;
 
     // > Extract the composite items.
@@ -108,24 +108,24 @@ async function processComposite(p: DirTransformParams) {
     const dirItems = await getSortedDirItem(p.itemPath);
     let compositeItems: CompositePart[] = [];
 
-    const params: ChildDirResolveAndTransformParams = {
+    const params: TypeChildDirRule = {
         rootDirName: p.parentDirName,
-        childDir_nameConstraint: "mustNotBeUid",
+        nameConstraint: "mustNotBeUid",
         requirePriority: true,
 
-        childDir_filesToResolve: {
+        filesToResolve: {
             "entryPoint": ["index.tsx", "index.ts"]
         },
 
         transform: async (item) => {
-            if (item.refFile && item.resolved.entryPoint) {
+            if (item.refTarget && item.resolved.entryPoint) {
                 throw declareError("The composite can't have both an index file and a .ref file", item.itemPath);
             }
 
             compositeItems.push({
                 priority: item.priority,
                 sortKey: item.itemName,
-                ref: item.refFile,
+                ref: item.refTarget,
                 entryPoint: item.resolved.entryPoint
             });
         }
@@ -133,7 +133,7 @@ async function processComposite(p: DirTransformParams) {
 
     for (let dirItem of dirItems) {
         if (await mustSkip_expectDir(dirItem)) continue;
-        await resolveAndTransformChildDir(params, dirItem);
+        await applyTypeRulesOnChildDir(params, dirItem);
     }
 
     // > Add the composite.

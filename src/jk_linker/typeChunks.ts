@@ -5,7 +5,7 @@ import {
     createDirSymlink,
     declareError,
     type RegistryItem,
-    processThisDirItems
+    applyTypeRulesOnDir
 } from "./engine.ts";
 
 export interface ChunkType extends RegistryItem {
@@ -20,32 +20,34 @@ const arobaseType = addArobaseType("chunks", {
         for (let childDir of allChildDir) {
             if (!childDir.isDirectory || (childDir.name[0] === "_") || (childDir.name[0] === ".")) continue;
 
-            await processThisDirItems({
+            await applyTypeRulesOnDir({
                 dirToScan: childDir.fullPath,
-                dirToScan_expectFsType: "dir",
-                childDir_nameConstraint: "mustBeUid",
+                expectFsType: "dir",
 
-                rootDirName: childDir.name,
-                requireRefFile: false,
+                childRules: {
+                    rootDirName: childDir.name,
+                    nameConstraint: "mustBeUid",
+                    requireRefFile: false,
 
-                childDir_filesToResolve: {
-                    "info": ["info.json"],
-                    "entryPoint": ["index.tsx", "index.ts"]
-                },
+                    filesToResolve: {
+                        "info": ["info.json"],
+                        "entryPoint": ["index.tsx", "index.ts"]
+                    },
 
-                transform: async (props) => {
-                    if (!props.resolved?.entryPoint) {
-                        throw declareError("No 'index.ts' or 'index.tsx' file found", props.itemPath);
+                    transform: async (props) => {
+                        if (!props.resolved?.entryPoint) {
+                            throw declareError("No 'index.ts' or 'index.tsx' file found", props.itemPath);
+                        }
+
+                        const newItem: ChunkType = {
+                            arobaseType: arobaseType,
+                            entryPoint: props.resolved.entryPoint,
+                            itemType: props.parentDirName,
+                            itemPath: props.itemPath,
+                        };
+
+                        addToRegistry(props.uid!, newItem);
                     }
-
-                    const newItem: ChunkType = {
-                        arobaseType: arobaseType,
-                        entryPoint: props.resolved.entryPoint,
-                        itemType: props.parentDirName,
-                        itemPath: props.itemPath,
-                    };
-
-                    addToRegistry(props.uid!, newItem);
                 }
             });
         }

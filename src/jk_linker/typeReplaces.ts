@@ -1,5 +1,5 @@
 import * as jk_fs from "jopi-toolkit/jk_fs";
-import {addArobaseType, processThisDirItems, addReplace} from "./engine.ts";
+import {addArobaseType, applyTypeRulesOnDir, addReplace} from "./engine.ts";
 
 addArobaseType("replaces", {
     async processDir(p) {
@@ -8,18 +8,21 @@ addArobaseType("replaces", {
         for (let itemType of itemTypes) {
             if ((itemType.name[0]==='_') || (itemType.name[0]==='.')) continue;
 
-            await processThisDirItems({
+            await applyTypeRulesOnDir({
                 dirToScan: itemType.fullPath,
-                dirToScan_expectFsType: "dir",
-                childDir_nameConstraint: "mustBeUid",
-                requireRefFile: true,
+                expectFsType: "dir",
 
-                rootDirName: itemType.name,
+                childRules: {
+                    nameConstraint: "mustBeUid",
+                    requireRefFile: true,
 
-                transform: async (props) => {
-                    const itemToReplace = props.itemName;
-                    const mustReplaceWith = props.refFile!;
-                    addReplace(itemToReplace, mustReplaceWith, props.priority, props.itemPath);
+                    rootDirName: itemType.name,
+
+                    transform: async (props) => {
+                        const itemToReplace = props.itemName;
+                        const mustReplaceWith = props.refTarget!;
+                        addReplace(itemToReplace, mustReplaceWith, props.priority, props.itemPath);
+                    }
                 }
             });
         }
