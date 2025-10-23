@@ -12,9 +12,7 @@ addArobaseType("replaces", {
                 dirToScan: itemType.fullPath,
                 dirToScan_expectFsType: "dir",
                 childDir_nameConstraint: "mustBeUid",
-
-                childDir_requireMyUidFile: false,
-                childDir_requireRefFile: true,
+                requireRefFile: true,
 
                 rootDirName: itemType.name,
 

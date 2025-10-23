@@ -3,11 +3,11 @@ import chnukArobaseType, {type ChunkType} from "./typeChunks.ts";
 
 import {
     addArobaseType, addToRegistry,
-    normalizeDirItem, type ChildDirResolveAndTransformParams,
+    type ChildDirResolveAndTransformParams,
     declareError, genWriteFile, getRegistryItem,
     getSortedDirItem,
     type DirTransformParams, PriorityLevel, type RegistryItem, requireRegistryItem, resolveAndTransformChildDir,
-    processThisDirItems, normalizeDirName
+    processThisDirItems, mustSkip_expectDir
 } from "./engine.ts";
 
 export interface CompositeType extends RegistryItem {
@@ -35,10 +35,9 @@ const arobaseType = addArobaseType("composites", {
                 dirToScan_expectFsType: "dir",
                 childDir_nameConstraint: "mustBeUid",
 
-                childDir_requireMyUidFile: true,
-                childDir_createMissingMyUidFile: true,
+                requireRefFile: false,
+                requirePriority: false,
 
-                childDir_requireRefFile: false,
                 rootDirName: childDir.name,
 
                 transform: processComposite
@@ -112,7 +111,7 @@ async function processComposite(p: DirTransformParams) {
     const params: ChildDirResolveAndTransformParams = {
         rootDirName: p.parentDirName,
         childDir_nameConstraint: "mustNotBeUid",
-        childDir_requireMyUidFile: false,
+        requirePriority: true,
 
         childDir_filesToResolve: {
             "entryPoint": ["index.tsx", "index.ts"]
@@ -133,7 +132,7 @@ async function processComposite(p: DirTransformParams) {
     };
 
     for (let dirItem of dirItems) {
-        if (!await normalizeDirName(dirItem)) continue;
+        if (await mustSkip_expectDir(dirItem)) continue;
         await resolveAndTransformChildDir(params, dirItem);
     }
 

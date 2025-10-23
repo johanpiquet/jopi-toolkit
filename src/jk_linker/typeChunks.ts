@@ -5,7 +5,7 @@ import {
     createDirSymlink,
     declareError,
     type RegistryItem,
-    processThisDirItems, normalizeDirName
+    processThisDirItems
 } from "./engine.ts";
 
 export interface ChunkType extends RegistryItem {
@@ -26,10 +26,7 @@ const arobaseType = addArobaseType("chunks", {
                 childDir_nameConstraint: "mustBeUid",
 
                 rootDirName: childDir.name,
-
-                childDir_requireMyUidFile: true,
-                childDir_createMissingMyUidFile: true,
-                childDir_requireRefFile: false,
+                requireRefFile: false,
 
                 childDir_filesToResolve: {
                     "info": ["info.json"],

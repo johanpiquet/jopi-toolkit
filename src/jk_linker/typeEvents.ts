@@ -4,7 +4,6 @@ import chunkArobaseType, {type ChunkType} from "./typeChunks.ts";
 import {
     addArobaseType,
     addToRegistry,
-    normalizeDirItem,
     type ChildDirResolveAndTransformParams,
     declareError,
     type DirTransformParams,
@@ -12,11 +11,11 @@ import {
     genAddToInstallFile,
     genWriteFile,
     getRegistryItem,
-    getSortedDirItem, InstallFileType, normalizeDirName,
+    InstallFileType, doesDirItemBeExclude, analizeDirContent, mustSkip_expectDir,
     PriorityLevel,
     type RegistryItem,
     requireRegistryItem,
-    resolveAndTransformChildDir
+    resolveAndTransformChildDir, getSortedDirItem
 } from "./engine.ts";
 
 export interface EventType extends RegistryItem {
@@ -40,19 +39,16 @@ const arobaseType = addArobaseType("events", {
         let allEventDir = await jk_fs.listDir(p.arobaseDir);
 
         for (let eventDir of allEventDir) {
-            if (!await normalizeDirName(eventDir)) continue;
+            if (await mustSkip_expectDir(eventDir)) continue;
 
             await resolveAndTransformChildDir({
                 childDir_nameConstraint: "mustNotBeUid",
-
-                childDir_requireMyUidFile: false,
-                childDir_createMissingMyUidFile: false,
-                childDir_requireRefFile: false,
-
+                requireRefFile: false,
+                requirePriority: false,
                 rootDirName: eventDir.name,
 
                 // Allow conditioning events on "ifServer", "ifBrowser".
-                childDir_allowConditions: true,
+                allowConditions: true,
 
                 transform: transformEventListener
             }, eventDir);
@@ -187,14 +183,10 @@ async function transformEventListener(p: DirTransformParams) {
 
     // > Extract the listener items.
 
-    const dirItems = await getSortedDirItem(p.itemPath);
-    let listenerItems: EventListener[] = [];
-
     const params: ChildDirResolveAndTransformParams = {
         rootDirName: eventName,
         childDir_nameConstraint: "mustNotBeUid",
-        childDir_requireMyUidFile: false,
-
+        requirePriority: true,
         childDir_filesToResolve: {
             "entryPoint": ["index.tsx", "index.ts"]
         },
@@ -213,8 +205,11 @@ async function transformEventListener(p: DirTransformParams) {
         }
     };
 
+    const dirItems = await getSortedDirItem(p.itemPath);
+    let listenerItems: EventListener[] = [];
+
     for (let dirItem of dirItems) {
-        if (!await normalizeDirItem(dirItem)) continue;
+        if (await mustSkip_expectDir(dirItem)) continue;
         if (!dirItem.isDirectory) continue;
         await resolveAndTransformChildDir(params, dirItem);
     }

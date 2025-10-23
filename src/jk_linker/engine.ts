@@ -37,43 +37,146 @@ export async function getSortedDirItem(dirPath: string): Promise<jk_fs.DirItem[]
     return items.sort((a, b) => a.name.localeCompare(b.name));
 }
 
-/**
- * This function checks the validity of a directory item
- * and allows to know if we must skip this item.
- */
-export async function normalizeDirItem(entry: jk_fs.DirItem, useThisUid?: string | undefined) {
-    if (entry.isSymbolicLink) return false;
-    if (entry.name[0] === ".") return false;
+export interface NormalizeDirResult {
+    dirItems: jk_fs.DirItem[];
 
-    if (entry.isDirectory) {
-        if (entry.name==="_") {
-            let uid = useThisUid || jk_tools.generateUUIDv4();
-            let newPath = jk_fs.join(jk_fs.dirname(entry.fullPath), uid);
-            await jk_fs.rename(entry.fullPath, newPath);
-
-            entry.name = uid;
-            entry.fullPath = newPath;
-        }
-    }
-    // _ allows generating an UID replacing the item.
-    //
-    else {
-        if (entry.name === "_.myuid") {
-            let uid = useThisUid || jk_tools.generateUUIDv4();
-            await jk_fs.unlink(entry.fullPath);
-            entry.fullPath = jk_fs.join(jk_fs.dirname(entry.fullPath), uid + ".myuid");
-            entry.name = uid + ".myuid";
-
-            await jk_fs.writeTextToFile(entry.fullPath, uid);
-        }
-    }
-
-    // Ignore if start by "_".
-    return entry.name[0] !== "_";
+    priority?: PriorityLevel;
+    fileRefFound?: string;
+    fileMyUidFound?: string;
+    conditionsFound?: Set<string>;
 }
 
-export async function normalizeDirName(item: jk_fs.DirItem) {
-    if (!item.isDirectory) return false;
+export async function analizeDirContent(dirPath: string, rules: DirAnalizingRules, useThisUid?: string | undefined): Promise<NormalizeDirResult> {
+    function decodeCond(condName: string) {
+        // Remove .cond at the end.
+        condName = condName.slice(0, -5);
+
+        condName = condName.toLowerCase();
+        if (condName.startsWith("if")) condName = condName.substring(2);
+        condName = condName.replace("-", "");
+        condName = condName.replace("_", "");
+
+        return condName;
+    }
+
+    function decodePriority(priorityName: string, itemFullPath: string): PriorityLevel {
+        priorityName = priorityName.toLowerCase();
+        priorityName = priorityName.replace("-", "");
+        priorityName = priorityName.replace("_", "");
+
+        switch (priorityName) {
+            case "default.priority":
+                return PriorityLevel.default;
+            case "veryhigh.priority":
+                return PriorityLevel.veryHigh;
+            case "high.priority":
+                return PriorityLevel.high;
+            case "low.priority":
+                return PriorityLevel.low;
+            case "verylow.priority":
+                return PriorityLevel.veryLow;
+        }
+
+        throw declareError("Unknown priority name: " + jk_fs.basename(itemFullPath, ".priority"), itemFullPath);
+    }
+
+    async function checkDirItem(entry: jk_fs.DirItem) {
+        if (entry.isSymbolicLink) return false;
+        if (entry.name[0] === ".") return false;
+
+        if (entry.isDirectory) {
+            if (entry.name==="_") {
+                let uid = useThisUid || jk_tools.generateUUIDv4();
+                let newPath = jk_fs.join(jk_fs.dirname(entry.fullPath), uid);
+                await jk_fs.rename(entry.fullPath, newPath);
+
+                entry.name = uid;
+                entry.fullPath = newPath;
+            }
+
+            if (entry.name[0]== "_") return false;
+        }
+        else {
+            if (entry.name === "_.myuid") {
+                let uid = useThisUid || jk_tools.generateUUIDv4();
+                await jk_fs.unlink(entry.fullPath);
+                entry.fullPath = jk_fs.join(jk_fs.dirname(entry.fullPath), uid + ".myuid");
+                entry.name = uid + ".myuid";
+
+                await jk_fs.writeTextToFile(entry.fullPath, uid);
+            }
+
+            if (entry.name[0]== "_") return false;
+
+            if (entry.name.endsWith(".myuid")) {
+                if (result.fileMyUidFound) {
+                    throw declareError("More than one .myuid file found here", entry.fullPath);
+                }
+
+                result.fileMyUidFound = entry.fullPath;
+                await addNameIntoFile(entry.fullPath);
+            }
+            else if (entry.name.endsWith(".priority")) {
+                if (result.priority) {
+                    throw declareError("More than one .priority file found here", entry.fullPath);
+                }
+
+                if (rules.requirePriority===false) {
+                    throw declareError("A .priority file is NOT expected here", entry.fullPath);
+                }
+
+                await addNameIntoFile(entry.fullPath);
+                result.priority = decodePriority(entry.name, entry.fullPath);
+            }
+            else if (entry.name.endsWith(".cond")) {
+                if (rules.allowConditions===false) {
+                    throw declareError("A .cond file is NOT expected here", entry.fullPath);
+                }
+
+                await addNameIntoFile(entry.fullPath);
+
+                if (!result.conditionsFound)  result.conditionsFound = new Set<string>();
+                result.conditionsFound.add(decodeCond(entry.name));
+            }
+            else if (entry.name.endsWith(".ref")) {
+                if (result.fileRefFound) {
+                    throw declareError("More than one .ref file found here", entry.fullPath);
+                }
+
+                if (rules.requireRefFile === false) {
+                    throw declareError("A .ref file is NOT expected here", entry.fullPath);
+                }
+
+                if (!jk_tools.isUUIDv4(entry.name)) {
+                    throw declareError("The .ref file name must be an UUID", entry.fullPath);
+                }
+
+                result.fileRefFound = entry.fullPath;
+                await addNameIntoFile(entry.fullPath);
+            }
+
+            return true;
+        }
+    }
+
+    let result: NormalizeDirResult = { dirItems: [] };
+
+    const items = await getSortedDirItem(dirPath);
+
+    for (let item of items) {
+        if (!await checkDirItem(item)) continue;
+        result.dirItems.push(item);
+    }
+
+    return result;
+}
+
+export function doesDirItemBeExclude(item: jk_fs.DirItem) {
+    return (item.name[0] === ".") || (item.name[0] === "_");
+}
+
+export async function mustSkip_expectDir(item: jk_fs.DirItem) {
+    if (!item.isDirectory) return true;
 
     if (item.name==="_") {
         let uid = jk_tools.generateUUIDv4();
@@ -84,7 +187,7 @@ export async function normalizeDirName(item: jk_fs.DirItem) {
         item.fullPath = newPath;
     }
 
-    return !((item.name[0] === "_") || (item.name[0] === "."));
+    return ((item.name[0] === "_") || (item.name[0] === "."));
 }
 
 export function mergeText(...parts: (string|undefined)[]): string {
@@ -158,7 +261,7 @@ export enum FilePart {
     footer = "footer",
 }
 
-export enum InstallFileType {server, browser, both};
+export enum InstallFileType {server, browser, both}
 
 let gServerInstallFile: Record<string, string> = {};
 let gBrowserInstallFile: Record<string, string> = {};
@@ -192,7 +295,7 @@ async function generateAll() {
             let itemToReplaceRef = gRegistry[mustReplace];
             //
             if (!itemToReplaceRef) {
-                let message = "Can't find the UID to replace : " + mustReplace +
+                const message = "Can't find the UID to replace : " + mustReplace +
                     "\nCheck that the item is declared in a @chunks clause";
 
                 throw declareError(message, replaceParams.declarationFile);
@@ -246,15 +349,16 @@ async function generateAll() {
 
 //region Processing dir
 
-export interface ChildDirResolveAndTransformParams {
-    rootDirName: string;
+export interface DirAnalizingRules {
+    requireRefFile?: boolean;
+    allowConditions?: boolean;
+    requirePriority?: boolean
+}
 
+export interface ChildDirResolveAndTransformParams extends DirAnalizingRules {
+    rootDirName: string;
     childDir_filesToResolve?: Record<string, string[]>;
-    childDir_requireRefFile?: boolean;
-    childDir_requireMyUidFile?: boolean;
-    childDir_createMissingMyUidFile?: boolean;
     childDir_nameConstraint: "canBeUid"|"mustNotBeUid"|"mustBeUid";
-    childDir_allowConditions?: boolean;
 
     transform: (props: DirTransformParams) => Promise<void>;
 }
@@ -287,57 +391,18 @@ export enum PriorityLevel {
     veryHigh = 200,
 }
 
-async function searchPriorityLevel(baseDir: string): Promise<PriorityLevel> {
-    function setPriority(level: PriorityLevel) {
-        if (priority) throw declareError("More than one priority file declared", baseDir);
-        priority = level;
-    }
-
-    let priority: PriorityLevel | undefined = undefined;
-
-    let dirItems = await jk_fs.listDir(baseDir);
-
-    for (let entry of dirItems) {
-        if (!entry.isFile) continue;
-        if (!entry.name.endsWith(".priority")) continue;
-
-        entry.name = entry.name.toLowerCase();
-        entry.name = entry.name.replace("-", "");
-        entry.name = entry.name.replace("_", "");
-
-        switch (entry.name) {
-            case "veryhigh.priority":
-                await addNameIntoFile(entry.fullPath);
-                setPriority(PriorityLevel.veryHigh);
-                break;
-            case "high.priority":
-                await addNameIntoFile(entry.fullPath);
-                setPriority(PriorityLevel.high);
-                break;
-            case "default.priority":
-                await addNameIntoFile(entry.fullPath);
-                setPriority(PriorityLevel.default);
-                break;
-            case "low.priority":
-                await addNameIntoFile(entry.fullPath);
-                setPriority(PriorityLevel.low);
-                break;
-            case "verylow.priority":
-                await addNameIntoFile(entry.fullPath);
-                setPriority(PriorityLevel.veryLow);
-                break;
-        }
-    }
-
-    if (!priority) return PriorityLevel.default;
-    return priority;
-}
-
+/**
+ * Process the root directory of a type.
+ *
+ * ruleType/itemType/newRule/...
+ *          ^- we will iterate it
+ * ^-- we are here
+ */
 export async function processThisDirItems(p: ProcessThisDirItemsParams) {
-    let dirContent = await jk_fs.listDir(p.dirToScan);
+    const result = await analizeDirContent(p.dirToScan, p);
 
-    for (let entry of dirContent) {
-        if (!await normalizeDirItem(entry)) continue;
+    for (let entry of result.dirItems) {
+        if (doesDirItemBeExclude(entry)) continue;
 
         if (p.dirToScan_expectFsType === "file") {
             if (entry.isFile) {
@@ -353,40 +418,44 @@ export async function processThisDirItems(p: ProcessThisDirItemsParams) {
     }
 }
 
+/**
+ * Process the subdirectory of a type.
+ * Generally, it's the rule we add.
+ *
+ * ruleType/itemType/newRule/...
+ *                   ^- we will iterate on it
+ *          ^-- we are here
+ */
 export async function resolveAndTransformChildDir(p: ChildDirResolveAndTransformParams, dirItem: jk_fs.DirItem) {
-    const itemPath = dirItem.fullPath;
-    const itemName = dirItem.name;
-    const isFile = dirItem.isFile;
-    let itemUid: string|undefined;
+    const thisIsFile = dirItem.isFile;
+    const thisFullPath = dirItem.fullPath;
+    const thisName = dirItem.name;
+    let thisNameAsUID: string|undefined;
 
     // The file / folder-name is a UUID4?
-    let isUUID = jk_tools.isUUIDv4(itemName);
+    let thisIsUUID = jk_tools.isUUIDv4(thisName);
 
-    if (isUUID) {
+    if (thisIsUUID) {
         if (p.childDir_nameConstraint==="mustNotBeUid") {
-            throw declareError("The name must NOT be an UID", itemPath);
+            throw declareError("The name must NOT be an UID", thisFullPath);
         }
 
-        itemUid = itemName;
+        thisNameAsUID = thisName;
     } else {
         if (p.childDir_nameConstraint==="mustBeUid") {
-            throw declareError("The name MUST be an UID", itemPath);
+            throw declareError("The name MUST be an UID", thisFullPath);
         }
     }
 
     // It's a file?
-    if (isFile) {
-        if ((p.childDir_requireMyUidFile===true) && !isUUID) {
-            throw declareError("The file name MUST be an UID", itemPath);
-        }
-
+    if (thisIsFile) {
         // Process it now.
         await p.transform({
-            itemName,
-            uid: isUUID ? itemName : undefined,
+            itemName: thisName,
+            uid: thisIsUUID ? thisName : undefined,
             priority: PriorityLevel.default,
 
-            itemPath, isFile,
+            itemPath: thisFullPath, isFile: thisIsFile,
             parentDirName: p.rootDirName,
 
             resolved: {}
@@ -401,135 +470,31 @@ export async function resolveAndTransformChildDir(p: ChildDirResolveAndTransform
     //
     if (p.childDir_filesToResolve) {
         for (let key in p.childDir_filesToResolve) {
-            resolved[key] = await resolve(itemPath, p.childDir_filesToResolve[key]);
+            resolved[key] = await resolve(thisFullPath, p.childDir_filesToResolve[key]);
         }
     }
 
     // Search the "uid.myuid" file, which allows knowing the uid of the item.
     //
-    const dirItems = await jk_fs.listDir(itemPath);
+    const result = await analizeDirContent(thisFullPath, p);
 
-    //region .myuid file
+    const refFile = result.fileRefFound;
+    const myUidFile = result.fileMyUidFound;
+    const conditions = result.conditionsFound;
+    const priority: PriorityLevel = result.priority || PriorityLevel.default;
 
-    let myUidFile: string|undefined;
-
-    // Search the .myuid file.
-    // Emit eror if more than one.
-    //
-    for (let entry of dirItems) {
-        if (!await normalizeDirItem(entry, itemUid)) continue
-
-        if (entry.isFile && entry.name.endsWith(".myuid")) {
-            if (myUidFile) {
-                throw declareError("More than one UID file declared", entry.fullPath);
-            }
-
-            myUidFile = jk_fs.basename(entry.name, ".myuid");
-            await addNameIntoFile(entry.fullPath);
-        }
-    }
-
-    // > Not "ui.myuid" found? Then add it if needed.
-    //
-    if (!myUidFile &&  p.childDir_createMissingMyUidFile && (p.childDir_requireMyUidFile!==false)) {
-        if (itemUid) myUidFile = itemUid;
-        else myUidFile = jk_tools.generateUUIDv4();
-        await jk_fs.writeTextToFile(jk_fs.join(itemPath, myUidFile + ".myuid"), myUidFile);
-    }
-
-    // itemUid became myUidFile.
-    // If itemUid already defined, then must match myUidFile.
-    //
     if (myUidFile) {
-        if (itemUid && (itemUid!==myUidFile)) {
-            throw declareError("The UID in the .myuid file is NOT the same as the UID in the folder name", itemPath);
+        // If itemUid already defined, then must match myUidFile.
+        if (thisNameAsUID && (thisNameAsUID!==myUidFile)) {
+            throw declareError("The UID in the .myuid file is NOT the same as the UID in the folder name", thisFullPath);
         }
 
-        itemUid = myUidFile;
+        thisNameAsUID = myUidFile;
     }
-
-    // Check the rule: must have / must not have a .myuid.
-    //
-    if (myUidFile) {
-        if (p.childDir_requireMyUidFile===false) {
-            throw declareError("A .myuid file is found here but NOT EXPECTED", itemPath);
-        }
-    }
-    else {
-        if (p.childDir_requireMyUidFile===true) {
-            throw declareError("A .myuid file is required", itemPath);
-        }
-    }
-
-    //endregion
-
-    // region .ref files
-
-    let refFile: string|undefined;
-    //
-    (await jk_fs.listDir(itemPath)).forEach(entry => {
-        if (entry.isFile && entry.name.endsWith(".ref")) {
-            if (refFile) throw declareError("More than one .ref file found", itemPath);
-            refFile = jk_fs.basename(entry.name, ".ref");
-
-            if (!jk_tools.isUUIDv4(refFile)) {
-                throw declareError("The .ref file must be a valid UID", entry.fullPath);
-            }
-
-            addNameIntoFile(entry.fullPath);
-        }
-    });
-
-    if (refFile) {
-        if (p.childDir_requireRefFile===false) {
-            throw declareError("A .ref file is NOT expected", itemPath);
-        }
-    } else {
-        if (p.childDir_requireRefFile===true) {
-            throw declareError("A .ref file is required", itemPath);
-        }
-    }
-
-    //endregion
-
-    //region .cond files
-
-    let conditions: Set<string>|undefined;
-    //
-    await Promise.all((await jk_fs.listDir(itemPath)).map(async (entry) => {
-        if (!(entry.isFile && entry.name.endsWith(".cond"))) return;
-
-        let condName = jk_fs.basename(entry.name, ".cond").toLowerCase();
-        if (condName.startsWith("if")) condName = condName.substring(2);
-        condName = condName.replace("-", "");
-        condName = condName.replace("_", "");
-
-        if (!conditions) conditions = new Set<string>();
-        conditions.add(condName);
-
-        await addNameIntoFile(entry.fullPath, condName + ".cond");
-    }));
-
-    if (conditions) {
-        if (p.childDir_allowConditions!==true) {
-            throw declareError("A .cond file is NOT expected", itemPath);
-        }
-    }
-
-    //endregion
-
-    //region .priority files
-
-    // File named "defaultPriority", "highPriority", ...
-    // allow giving a priority to the rule.
-    //
-    const priority: PriorityLevel = await searchPriorityLevel(itemPath);
-
-    //endregion
 
     await p.transform({
-        itemName, uid: itemUid, refFile,
-        itemPath, isFile, resolved, priority,
+        itemName: thisName, uid: thisNameAsUID, refFile,
+        itemPath: thisFullPath, isFile: thisIsFile, resolved, priority,
         parentDirName: p.rootDirName,
         conditions
     });
