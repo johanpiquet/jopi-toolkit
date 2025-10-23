@@ -2,6 +2,8 @@ import * as jk_fs from "jopi-toolkit/jk_fs";
 import {addArobaseType, applyTypeRulesOnDir, addReplace} from "./engine.ts";
 
 addArobaseType("replaces", {
+    position: "root",
+
     async processDir(p) {
         let itemTypes = await jk_fs.listDir(p.arobaseDir);
 

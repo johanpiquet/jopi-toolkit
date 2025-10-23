@@ -524,17 +524,34 @@ async function processModules() {
 }
 
 async function processModule(moduleDir: string) {
-    let rootDirItem = await jk_fs.listDir(moduleDir);
+    let dirItems = await jk_fs.listDir(moduleDir);
+    let arobaseDir: jk_fs.DirItem|undefined;
 
-    for (let dirItem of rootDirItem) {
+    for (let dirItem of dirItems) {
         if (!dirItem.isDirectory) continue;
+        if (dirItem.name[0] !== "@") continue;
+        if (dirItem.name == "@") { arobaseDir = dirItem; continue; }
 
-        if (dirItem.name[0]==="@") {
-            let name = dirItem.name.substring(1);
+        let name = dirItem.name.substring(1);
+        let arobaseType = gArobaseHandler[name];
+        if (!arobaseType) throw declareError("Unknown arobase type: " + name, dirItem.fullPath);
 
+        if (arobaseType.position !== "root") continue;
+        await arobaseType.processDir({moduleDir, arobaseDir: dirItem.fullPath, genDir: gGenRootDir});
+    }
+
+    if (arobaseDir) {
+        dirItems = await jk_fs.listDir(arobaseDir.fullPath);
+
+        for (let dirItem of dirItems) {
+            if (!dirItem.isDirectory) continue;
+
+            let name = dirItem.name;
             let arobaseType = gArobaseHandler[name];
-            let params = { moduleDir, arobaseDir: dirItem.fullPath, genDir: gGenRootDir };
-            if (arobaseType) await arobaseType.processDir(params);
+            if (!arobaseType) throw declareError("Unknown arobase type: " + name, dirItem.fullPath);
+
+            if (arobaseType.position === "root") continue;
+            await arobaseType.processDir({moduleDir, arobaseDir: dirItem.fullPath, genDir: gGenRootDir});
         }
     }
 }
@@ -547,6 +564,8 @@ export type ArobaseDirScanner = (infos: { moduleDir: string; arobaseDir: string;
 export type ArobaseItemProcessor = (key: string, item: RegistryItem, infos: { genDir: string; }) => Promise<void>;
 
 export interface ArobaseType {
+    position?: "root"|undefined;
+
     typeName: string;
     processDir: ArobaseDirScanner;
     generateCodeForItem: ArobaseItemProcessor;
