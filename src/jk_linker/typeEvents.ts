@@ -4,7 +4,7 @@ import chunkArobaseType, {type ChunkType} from "./typeChunks.ts";
 import {
     addArobaseType,
     addToRegistry,
-    type TypeChildDirRule,
+    type TypeRules_ItemDef,
     declareError,
     type TransformParams,
     FilePart,
@@ -183,7 +183,7 @@ async function transformEventListener(p: TransformParams) {
 
     // > Extract the listener items.
 
-    const params: TypeChildDirRule = {
+    const params: TypeRules_ItemDef = {
         rootDirName: eventName,
         nameConstraint: "mustNotBeUid",
         requirePriority: true,

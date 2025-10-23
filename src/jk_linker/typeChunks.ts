@@ -24,7 +24,7 @@ const arobaseType = addArobaseType("chunks", {
                 dirToScan: childDir.fullPath,
                 expectFsType: "dir",
 
-                childRules: {
+                itemDefRules: {
                     rootDirName: childDir.name,
                     nameConstraint: "mustBeUid",
                     requireRefFile: false,

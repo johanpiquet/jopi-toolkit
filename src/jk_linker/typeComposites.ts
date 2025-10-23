@@ -3,7 +3,7 @@ import chnukArobaseType, {type ChunkType} from "./typeChunks.ts";
 
 import {
     addArobaseType, addToRegistry,
-    type TypeChildDirRule,
+    type TypeRules_ItemDef,
     declareError, genWriteFile, getRegistryItem,
     getSortedDirItem,
     type TransformParams, PriorityLevel, type RegistryItem, requireRegistryItem, applyTypeRulesOnChildDir,
@@ -34,7 +34,7 @@ const arobaseType = addArobaseType("composites", {
                 dirToScan: childDir.fullPath,
                 expectFsType: "dir",
 
-                childRules: {
+                itemDefRules: {
                     nameConstraint: "mustBeUid",
                     requireRefFile: false,
                     requirePriority: false,
@@ -108,7 +108,7 @@ async function processComposite(p: TransformParams) {
     const dirItems = await getSortedDirItem(p.itemPath);
     let compositeItems: CompositePart[] = [];
 
-    const params: TypeChildDirRule = {
+    const params: TypeRules_ItemDef = {
         rootDirName: p.parentDirName,
         nameConstraint: "mustNotBeUid",
         requirePriority: true,

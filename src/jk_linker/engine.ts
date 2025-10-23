@@ -356,7 +356,7 @@ export interface DirAnalizingRules {
     requirePriority?: boolean
 }
 
-export interface TypeChildDirRule extends DirAnalizingRules {
+export interface TypeRules_ItemDef extends DirAnalizingRules {
     rootDirName: string;
     filesToResolve?: Record<string, string[]>;
     nameConstraint: "canBeUid"|"mustNotBeUid"|"mustBeUid";
@@ -364,10 +364,10 @@ export interface TypeChildDirRule extends DirAnalizingRules {
     transform: (props: TransformParams) => Promise<void>;
 }
 
-export interface TypeRootDirRules {
+export interface TypeRules_ItemList {
     dirToScan: string;
     expectFsType: "file"|"dir"|"fileOrDir";
-    childRules: TypeChildDirRule;
+    itemDefRules: TypeRules_ItemDef;
 }
 
 export interface TransformParams {
@@ -400,7 +400,7 @@ export enum PriorityLevel {
  *          ^- we will iterate it
  * ^-- we are here
  */
-export async function applyTypeRulesOnDir(p: TypeRootDirRules) {
+export async function applyTypeRulesOnDir(p: TypeRules_ItemList) {
     const dirItems = await jk_fs.listDir(p.dirToScan);
 
     for (let entry of dirItems) {
@@ -408,14 +408,14 @@ export async function applyTypeRulesOnDir(p: TypeRootDirRules) {
 
         if (p.expectFsType === "file") {
             if (entry.isFile) {
-                await applyTypeRulesOnChildDir(p.childRules, entry);
+                await applyTypeRulesOnChildDir(p.itemDefRules, entry);
             }
         } else if (p.expectFsType === "dir") {
             if (entry.isDirectory) {
-                await applyTypeRulesOnChildDir(p.childRules, entry);
+                await applyTypeRulesOnChildDir(p.itemDefRules, entry);
             }
         } else if (p.expectFsType === "fileOrDir") {
-            await applyTypeRulesOnChildDir(p.childRules, entry);
+            await applyTypeRulesOnChildDir(p.itemDefRules, entry);
         }
     }
 }
@@ -428,7 +428,7 @@ export async function applyTypeRulesOnDir(p: TypeRootDirRules) {
  *                   ^- we will iterate on it
  *          ^-- we are here
  */
-export async function applyTypeRulesOnChildDir(p: TypeChildDirRule, dirItem: jk_fs.DirItem) {
+export async function applyTypeRulesOnChildDir(p: TypeRules_ItemDef, dirItem: jk_fs.DirItem) {
     const thisIsFile = dirItem.isFile;
     const thisFullPath = dirItem.fullPath;
     const thisName = dirItem.name;

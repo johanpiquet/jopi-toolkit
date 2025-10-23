@@ -12,7 +12,7 @@ addArobaseType("replaces", {
                 dirToScan: itemType.fullPath,
                 expectFsType: "dir",
 
-                childRules: {
+                itemDefRules: {
                     nameConstraint: "mustBeUid",
                     requireRefFile: true,
 
