@@ -23,6 +23,12 @@ async function execListeners(listeners: Listener[]) {
     }
 }
 
+//region Life cycle
+
+declare global {
+    var jopiHotReload: HotReloadType;
+}
+
 const gOnServerSideReady: Listener[] = [];
 const gOnAppExiting: Listener[] = [];
 const gOnAppExited: Listener[] = [];
@@ -31,10 +37,6 @@ let gIsServerSideReady = !(isNodeJS || isBunJS);
 
 let gIsHotReload = globalThis.jopiHotReload !== undefined;
 let gIsAppStarted = false;
-
-declare global {
-    var jopiHotReload: HotReloadType;
-}
 
 export interface HotReloadType {
     onHotReload: Listener[];
@@ -132,6 +134,10 @@ export async function executeApp(app: Listener) {
     }
 }
 
+//endregion
+
+//region Hot-reload
+
 export function onHotReload(listener: Listener) {
     gOnHotReload.push(listener);
 }
@@ -146,6 +152,10 @@ export function clearHotReloadKey(key: string) {
     delete(gMemory[key]);
 }
 
+//endregion
+
+//region Temp dir
+
 export function getTempDir(): string {
     if (!gTempDir) {
         gTempDir = jk_fs.resolve(process.cwd(), "temp")!;
@@ -156,6 +166,10 @@ export function getTempDir(): string {
 
 let gIsExited = false;
 let gTempDir: string|undefined;
+
+//endregion
+
+//region Resolving
 
 export function findNodePackageDir(packageName: string, useLinuxPathFormat: boolean = true): string|undefined {
     let currentDir = jk_fs.dirname(findPackageJson());
@@ -371,3 +385,5 @@ let gSourceCodeDir: string|undefined;
 let gCodeSourceDirHint: string|undefined;
 let gApplicationMainFile: string|undefined;
 let gCompiledSourcesDir: string|undefined;
+
+//endregion
