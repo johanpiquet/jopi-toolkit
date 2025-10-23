@@ -3,11 +3,11 @@ import chnukArobaseType, {type ChunkType} from "./typeChunks.ts";
 
 import {
     addArobaseType, addToRegistry,
-    checkDirItem, type ChildDirResolveAndTransformParams,
+    normalizeDirItem, type ChildDirResolveAndTransformParams,
     declareError, genWriteFile, getRegistryItem,
     getSortedDirItem,
     type DirTransformParams, PriorityLevel, type RegistryItem, requireRegistryItem, resolveAndTransformChildDir,
-    processThisDirItems
+    processThisDirItems, normalizeDirName
 } from "./engine.ts";
 
 export interface CompositeType extends RegistryItem {
@@ -27,19 +27,19 @@ const arobaseType = addArobaseType("composites", {
     async processDir(p) {
         let itemTypes = await jk_fs.listDir(p.arobaseDir);
 
-        for (let itemType of itemTypes) {
-            if ((itemType.name[0]==='_') || (itemType.name[0]==='.')) continue;
+        for (let childDir of itemTypes) {
+            if (!childDir.isDirectory || (childDir.name[0] === "_") || (childDir.name[0] === ".")) continue;
 
             await processThisDirItems({
-                dirToScan: itemType.fullPath,
+                dirToScan: childDir.fullPath,
                 dirToScan_expectFsType: "dir",
-                childDir_nameConstraint: "mustNotBeUid",
+                childDir_nameConstraint: "mustBeUid",
 
                 childDir_requireMyUidFile: true,
                 childDir_createMissingMyUidFile: true,
-                childDir_requireRefFile: false,
 
-                rootDirName: itemType.name,
+                childDir_requireRefFile: false,
+                rootDirName: childDir.name,
 
                 transform: processComposite
             });
@@ -77,7 +77,7 @@ const arobaseType = addArobaseType("composites", {
         let source = "";
         let count = 1;
 
-        let outDir = jk_fs.join(infos.genDir, "composites");
+        let outDir = jk_fs.join(infos.genDir, "composites", composite.itemsType);
 
         for (let item of composite.items) {
             let entryPoint = item.entryPoint;
@@ -133,9 +133,7 @@ async function processComposite(p: DirTransformParams) {
     };
 
     for (let dirItem of dirItems) {
-        if (!await checkDirItem(dirItem)) continue;
-        if (!dirItem.isDirectory) continue;
-
+        if (!await normalizeDirName(dirItem)) continue;
         await resolveAndTransformChildDir(params, dirItem);
     }
 

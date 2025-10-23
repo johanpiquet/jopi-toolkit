@@ -4,7 +4,7 @@ import chunkArobaseType, {type ChunkType} from "./typeChunks.ts";
 import {
     addArobaseType,
     addToRegistry,
-    checkDirItem,
+    normalizeDirItem,
     type ChildDirResolveAndTransformParams,
     declareError,
     type DirTransformParams,
@@ -12,7 +12,7 @@ import {
     genAddToInstallFile,
     genWriteFile,
     getRegistryItem,
-    getSortedDirItem, InstallFileType,
+    getSortedDirItem, InstallFileType, normalizeDirName,
     PriorityLevel,
     type RegistryItem,
     requireRegistryItem,
@@ -40,7 +40,7 @@ const arobaseType = addArobaseType("events", {
         let allEventDir = await jk_fs.listDir(p.arobaseDir);
 
         for (let eventDir of allEventDir) {
-            if ((eventDir.name[0]==='_') || (eventDir.name[0]==='.')) continue;
+            if (!await normalizeDirName(eventDir)) continue;
 
             await resolveAndTransformChildDir({
                 childDir_nameConstraint: "mustNotBeUid",
@@ -214,7 +214,7 @@ async function transformEventListener(p: DirTransformParams) {
     };
 
     for (let dirItem of dirItems) {
-        if (!await checkDirItem(dirItem)) continue;
+        if (!await normalizeDirItem(dirItem)) continue;
         if (!dirItem.isDirectory) continue;
         await resolveAndTransformChildDir(params, dirItem);
     }

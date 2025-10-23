@@ -41,23 +41,50 @@ export async function getSortedDirItem(dirPath: string): Promise<jk_fs.DirItem[]
  * This function checks the validity of a directory item
  * and allows to know if we must skip this item.
  */
-export async function checkDirItem(entry: jk_fs.DirItem) {
+export async function normalizeDirItem(entry: jk_fs.DirItem, useThisUid?: string | undefined) {
     if (entry.isSymbolicLink) return false;
     if (entry.name[0] === ".") return false;
 
+    if (entry.isDirectory) {
+        if (entry.name==="_") {
+            let uid = useThisUid || jk_tools.generateUUIDv4();
+            let newPath = jk_fs.join(jk_fs.dirname(entry.fullPath), uid);
+            await jk_fs.rename(entry.fullPath, newPath);
+
+            entry.name = uid;
+            entry.fullPath = newPath;
+        }
+    }
     // _ allows generating an UID replacing the item.
     //
-    if (entry.name === "_.myuid") {
-        let uid = jk_tools.generateUUIDv4();
-        await jk_fs.unlink(entry.fullPath);
-        entry.fullPath = jk_fs.join(jk_fs.dirname(entry.fullPath), uid + ".myuid");
-        entry.name = uid + ".myuid";
+    else {
+        if (entry.name === "_.myuid") {
+            let uid = useThisUid || jk_tools.generateUUIDv4();
+            await jk_fs.unlink(entry.fullPath);
+            entry.fullPath = jk_fs.join(jk_fs.dirname(entry.fullPath), uid + ".myuid");
+            entry.name = uid + ".myuid";
 
-        await jk_fs.writeTextToFile(entry.fullPath, uid);
+            await jk_fs.writeTextToFile(entry.fullPath, uid);
+        }
     }
 
     // Ignore if start by "_".
     return entry.name[0] !== "_";
+}
+
+export async function normalizeDirName(item: jk_fs.DirItem) {
+    if (!item.isDirectory) return false;
+
+    if (item.name==="_") {
+        let uid = jk_tools.generateUUIDv4();
+        let newPath = jk_fs.join(jk_fs.dirname(item.fullPath), uid);
+        await jk_fs.rename(item.fullPath, newPath);
+
+        item.name = uid;
+        item.fullPath = newPath;
+    }
+
+    return !((item.name[0] === "_") || (item.name[0] === "."));
 }
 
 export function mergeText(...parts: (string|undefined)[]): string {
@@ -310,7 +337,7 @@ export async function processThisDirItems(p: ProcessThisDirItemsParams) {
     let dirContent = await jk_fs.listDir(p.dirToScan);
 
     for (let entry of dirContent) {
-        if ((entry.name[0] === ".")||(entry.name[0] === "_")) return false;
+        if (!await normalizeDirItem(entry)) continue;
 
         if (p.dirToScan_expectFsType === "file") {
             if (entry.isFile) {
@@ -330,6 +357,7 @@ export async function resolveAndTransformChildDir(p: ChildDirResolveAndTransform
     const itemPath = dirItem.fullPath;
     const itemName = dirItem.name;
     const isFile = dirItem.isFile;
+    let itemUid: string|undefined;
 
     // The file / folder-name is a UUID4?
     let isUUID = jk_tools.isUUIDv4(itemName);
@@ -338,6 +366,8 @@ export async function resolveAndTransformChildDir(p: ChildDirResolveAndTransform
         if (p.childDir_nameConstraint==="mustNotBeUid") {
             throw declareError("The name must NOT be an UID", itemPath);
         }
+
+        itemUid = itemName;
     } else {
         if (p.childDir_nameConstraint==="mustBeUid") {
             throw declareError("The name MUST be an UID", itemPath);
@@ -375,33 +405,63 @@ export async function resolveAndTransformChildDir(p: ChildDirResolveAndTransform
         }
     }
 
-    let itemUid: string|undefined;
-
     // Search the "uid.myuid" file, which allows knowing the uid of the item.
     //
     const dirItems = await jk_fs.listDir(itemPath);
+
+    //region .myuid file
+
+    let myUidFile: string|undefined;
+
+    // Search the .myuid file.
+    // Emit eror if more than one.
     //
     for (let entry of dirItems) {
-        if (!await checkDirItem(entry)) continue
+        if (!await normalizeDirItem(entry, itemUid)) continue
 
         if (entry.isFile && entry.name.endsWith(".myuid")) {
-            if (itemUid) {
+            if (myUidFile) {
                 throw declareError("More than one UID file declared", entry.fullPath);
             }
 
-            itemUid = jk_fs.basename(entry.name, ".myuid");
-            addNameIntoFile(entry.fullPath);
+            myUidFile = jk_fs.basename(entry.name, ".myuid");
+            await addNameIntoFile(entry.fullPath);
         }
     }
 
-    if (!itemUid) {
-        // > Not "ui.myuid" found? Then add it.
+    // > Not "ui.myuid" found? Then add it if needed.
+    //
+    if (!myUidFile &&  p.childDir_createMissingMyUidFile && (p.childDir_requireMyUidFile!==false)) {
+        if (itemUid) myUidFile = itemUid;
+        else myUidFile = jk_tools.generateUUIDv4();
+        await jk_fs.writeTextToFile(jk_fs.join(itemPath, myUidFile + ".myuid"), myUidFile);
+    }
 
-        if (p.childDir_createMissingMyUidFile) {
-            itemUid = jk_tools.generateUUIDv4();
-            await jk_fs.writeTextToFile(jk_fs.join(itemPath, itemUid + ".myuid"), itemUid);
+    // itemUid became myUidFile.
+    // If itemUid already defined, then must match myUidFile.
+    //
+    if (myUidFile) {
+        if (itemUid && (itemUid!==myUidFile)) {
+            throw declareError("The UID in the .myuid file is NOT the same as the UID in the folder name", itemPath);
+        }
+
+        itemUid = myUidFile;
+    }
+
+    // Check the rule: must have / must not have a .myuid.
+    //
+    if (myUidFile) {
+        if (p.childDir_requireMyUidFile===false) {
+            throw declareError("A .myuid file is found here but NOT EXPECTED", itemPath);
         }
     }
+    else {
+        if (p.childDir_requireMyUidFile===true) {
+            throw declareError("A .myuid file is required", itemPath);
+        }
+    }
+
+    //endregion
 
     // region .ref files
 
@@ -464,21 +524,6 @@ export async function resolveAndTransformChildDir(p: ChildDirResolveAndTransform
     // allow giving a priority to the rule.
     //
     const priority: PriorityLevel = await searchPriorityLevel(itemPath);
-
-    //endregion
-
-    //region .myuid file
-
-    if (itemUid) {
-        if (p.childDir_requireMyUidFile===false) {
-            throw declareError("A .myuid file is found here but NOT EXPECTED", itemPath);
-        }
-    }
-    else {
-        if (p.childDir_requireMyUidFile===true) {
-            throw declareError("A .myuid file is required", itemPath);
-        }
-    }
 
     //endregion
 

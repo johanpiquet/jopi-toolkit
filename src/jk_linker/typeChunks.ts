@@ -5,7 +5,7 @@ import {
     createDirSymlink,
     declareError,
     type RegistryItem,
-    processThisDirItems
+    processThisDirItems, normalizeDirName
 } from "./engine.ts";
 
 export interface ChunkType extends RegistryItem {
@@ -18,16 +18,17 @@ const arobaseType = addArobaseType("chunks", {
         let allChildDir = await jk_fs.listDir(p.arobaseDir);
 
         for (let childDir of allChildDir) {
-            if ((childDir.name[0]==='_') || (childDir.name[0]==='.')) continue;
+            if (!childDir.isDirectory || (childDir.name[0] === "_") || (childDir.name[0] === ".")) continue;
 
             await processThisDirItems({
                 dirToScan: childDir.fullPath,
                 dirToScan_expectFsType: "dir",
-                childDir_nameConstraint: "mustNotBeUid",
+                childDir_nameConstraint: "mustBeUid",
 
                 rootDirName: childDir.name,
 
                 childDir_requireMyUidFile: true,
+                childDir_createMissingMyUidFile: true,
                 childDir_requireRefFile: false,
 
                 childDir_filesToResolve: {
@@ -55,7 +56,7 @@ const arobaseType = addArobaseType("chunks", {
 
     async generateCodeForItem(key, rItem, infos) {
         const item = rItem as ChunkType;
-        const newFilePath = jk_fs.join(infos.genDir, "chunk", key);
+        const newFilePath = jk_fs.join(infos.genDir, "chunk", item.itemType, key);
         await createDirSymlink(newFilePath, jk_fs.dirname(item.entryPoint));
     }
 });
