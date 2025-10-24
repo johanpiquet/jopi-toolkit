@@ -256,8 +256,19 @@ export enum FilePart {
 
 export enum InstallFileType {server, browser, both}
 
+const gDefaultInstallTemplate = `import type {Registry} from "jopi-toolkit/jk_registry";
+__HEADER
+export default function(registry: Registry) {
+__BODY
+}
+__FOOTER
+`;
+
 let gServerInstallFile: Record<string, string> = {};
+let gServerInstallFileTemplate = gDefaultInstallTemplate;
+
 let gBrowserInstallFile: Record<string, string> = {};
+let gBrowserInstallFileTemplate = gDefaultInstallTemplate;
 
 export async function genWriteFile(filePath: string, fileContent: string): Promise<void> {
     await jk_fs.mkDir(jk_fs.dirname(filePath));
@@ -281,17 +292,16 @@ export function genAddToInstallFile(who: InstallFileType, where: FilePart, text:
 }
 
 async function generateAll() {
-    function merge(header: string, body: string, footer: string): string {
-        let result = "";
-        if (header) result += header + "\n";
-        result += `import type {Registry} from "jopi-toolkit/jk_registry"`;
+    function applyTemplate(template: string, header: string, body: string, footer: string): string {
+        if (!header) header = "";
+        if (!footer) footer = "";
+        if (!body) body = "";
 
-        result += "\n\nexport default function(registry: Registry) {\n";
-        if (body) result += body;
-        result += "\n}";
-        if (footer) result += "\n" + footer;
+        template = template.replace("__HEADER", header);
+        template = template.replace("__BODY", body);
+        template = template.replace("__FOOTER", footer);
 
-        return result;
+        return template;
     }
 
     function applyReplaces() {
@@ -338,13 +348,24 @@ async function generateAll() {
         await arobaseType.endGeneratingCode(items);
     }
 
-    let installerFile = merge(gServerInstallFile[FilePart.imports], gServerInstallFile[FilePart.body], gServerInstallFile[FilePart.footer]);
+    let installerFile = applyTemplate(gServerInstallFileTemplate, gServerInstallFile[FilePart.imports], gServerInstallFile[FilePart.body], gServerInstallFile[FilePart.footer]);
     await jk_fs.writeTextToFile(jk_fs.join(gGenRootDir, "installServer.ts"), installerFile);
     gServerInstallFile = {};
 
-    installerFile = merge(gBrowserInstallFile[FilePart.imports], gBrowserInstallFile[FilePart.body], gBrowserInstallFile[FilePart.footer]);
+    installerFile = applyTemplate(gBrowserInstallFileTemplate, gBrowserInstallFile[FilePart.imports], gBrowserInstallFile[FilePart.body], gBrowserInstallFile[FilePart.footer]);
     await jk_fs.writeTextToFile(jk_fs.join(gGenRootDir, "installBrowser.ts"), installerFile);
     gBrowserInstallFile = {};
+}
+
+export async function setInstallerTemplate(type: InstallFileType, template: string) {
+    if (type === InstallFileType.both) {
+        gServerInstallFileTemplate = template;
+        gBrowserInstallFileTemplate = template;
+    } else if (type === InstallFileType.server) {
+        gServerInstallFileTemplate = template;
+    } else if (type === InstallFileType.browser) {
+        gBrowserInstallFileTemplate = template;
+    }
 }
 
 //endregion
