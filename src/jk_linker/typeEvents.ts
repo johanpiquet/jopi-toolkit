@@ -22,7 +22,7 @@ export default class TypeEvents extends Type_ArobaseList {
                 installFileType = InstallFileType.both;
             }
 
-            let source = `    registry.addEventProvider("${list.listName}", async () => { const R = await import("@/events/${list.listName}"); return R.default; });`;
+            let source = `    registry.events.addProvider("${list.listName}", async () => { const R = await import("@/events/${list.listName}"); return R.default; });`;
             genAddToInstallFile(installFileType, FilePart.body, source);
         }
     }
