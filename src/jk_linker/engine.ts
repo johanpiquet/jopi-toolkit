@@ -261,8 +261,8 @@ __HEADER
 export default function() {
 const registry = new Registry();
 __BODY
-}
 __FOOTER
+}
 `;
 
 let gServerInstallFile: Record<string, string> = {};
@@ -347,6 +347,10 @@ async function generateAll() {
         }
 
         await arobaseType.endGeneratingCode(items);
+    }
+
+    for (let p of gModuleDirProcessors) {
+        await p.generateCode();
     }
 
     let installerFile = applyTemplate(gServerInstallFileTemplate, gServerInstallFile[FilePart.imports], gServerInstallFile[FilePart.body], gServerInstallFile[FilePart.footer]);
@@ -547,7 +551,15 @@ async function processModules() {
         if (!module.isDirectory) continue;
         if (!module.name.startsWith("mod_")) continue;
 
+        for (let p of gModuleDirProcessors) {
+            await p.onBeginModuleProcessing(module.fullPath);
+        }
+
         await processModule(module.fullPath);
+
+        for (let p of gModuleDirProcessors) {
+            await p.onEndModuleProcessing(module.fullPath);
+        }
     }
 }
 
@@ -607,11 +619,30 @@ export abstract class ArobaseType {
     }
 }
 
-let gArobaseHandler: Record<string, ArobaseType> = {};
+export class ModuleDirProcessor {
+    onBeginModuleProcessing(moduleDir: string): Promise<void> {
+        return Promise.resolve();
+    }
+
+    onEndModuleProcessing(moduleDir: string): Promise<void> {
+        return Promise.resolve();
+    }
+
+    generateCode(): Promise<void> {
+        return Promise.resolve();
+    }
+}
 
 export function addArobaseType(type: ArobaseType) {
     return gArobaseHandler[type.typeName] = type;
 }
+
+export function addModuleDirProcess(p: ModuleDirProcessor) {
+    gModuleDirProcessors.push(p);
+}
+
+let gArobaseHandler: Record<string, ArobaseType> = {};
+let gModuleDirProcessors: ModuleDirProcessor[] = [];
 
 //endregion
 
