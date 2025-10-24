@@ -63,3 +63,5 @@ export class Event<T = any> {
 }
 
 export type EventListener<T> = (data: T) => void|Promise<void>;
+
+export const globalRegistry = new Registry();

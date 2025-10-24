@@ -256,9 +256,10 @@ export enum FilePart {
 
 export enum InstallFileType {server, browser, both}
 
-const gDefaultInstallTemplate = `import type {Registry} from "jopi-toolkit/jk_registry";
+const gDefaultInstallTemplate = `import {Registry} from "jopi-toolkit/jk_registry";
 __HEADER
-export default function(registry: Registry) {
+export default function() {
+const registry = new Registry();
 __BODY
 }
 __FOOTER
@@ -357,7 +358,7 @@ async function generateAll() {
     gBrowserInstallFile = {};
 }
 
-export async function setInstallerTemplate(type: InstallFileType, template: string) {
+export function setInstallerTemplate(type: InstallFileType, template: string) {
     if (type === InstallFileType.both) {
         gServerInstallFileTemplate = template;
         gBrowserInstallFileTemplate = template;
@@ -624,7 +625,21 @@ export function getProjectGenDir() {
     return gGenRootDir;
 }
 
-export async function compile(rootDir: string = jk_app.findPackageJsonDir()) {
+export function init(rootDir?: string) {
+    if (gIsInit) return;
+    gIsInit = true;
+
+    if (!rootDir) rootDir = jk_app.findPackageJsonDir()
+
+    gProjectRootDir = rootDir;
+    gSrcRootDir = jk_fs.join(gProjectRootDir, "src");
+    gGenRootDir = jk_fs.join(gSrcRootDir, "_jopiLinkerGen");
+}
+
+export async function compile(rootDir?: string) {
+    if (gIsCompiled) return;
+    gIsCompiled = true;
+
     async function searchLinkerScript(): Promise<string|undefined> {
         let jopiLinkerScript = jk_fs.join(gProjectRootDir, "dist", "jopi-linker.js");
         if (await jk_fs.isFile(jopiLinkerScript)) return jopiLinkerScript;
@@ -637,14 +652,15 @@ export async function compile(rootDir: string = jk_app.findPackageJsonDir()) {
         return undefined;
     }
 
-    gProjectRootDir = rootDir;
-    gSrcRootDir = jk_fs.join(gProjectRootDir, "src");
-    gGenRootDir = jk_fs.join(gSrcRootDir, "_jopiLinkerGen");
+    init(rootDir);
 
     let jopiLinkerScript = await searchLinkerScript();
     if (jopiLinkerScript) await import(jopiLinkerScript);
 
     await processProject();
 }
+
+let gIsInit = false;
+let gIsCompiled = false;
 
 //endregion
