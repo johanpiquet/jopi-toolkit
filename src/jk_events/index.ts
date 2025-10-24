@@ -8,52 +8,69 @@ export enum EventPriority {
     VeryHigh = 200
 }
 
-export type EventListener<T = any> = (e: T) => void;
+export type EventListener<T = any> = (e: T) => void|Promise<void>;
+
+export type EventListenerProvider = () => Promise<EventListener[]>;
 
 export class EventGroup {
-    private readonly gEvents: Record<string, PriorityArray<EventListener>> = {};
-    private gSpy: undefined | ((eventName: string, data?: any) => void);
+    private readonly listenersFor: Record<string, PriorityArray<EventListener>> = {};
+    private evenSpy: undefined | ((eventName: string, data?: any) => void);
+    private readonly providers: Record<string, EventListenerProvider> = {};
 
     newEventGroup(): EventGroup {
         return new EventGroup();
     }
 
     enableEventSpying(spy: (eventName: string, data?: any) => void) {
-        this.gSpy = spy;
+        this.evenSpy = spy;
     }
 
     removeListener(eventName: string, listener: any): void {
-        const events = this.gEvents[eventName];
+        const events = this.listenersFor[eventName];
         if (events) events.remove(listener);
     }
 
     sendEvent(eventName: string, e?: any|undefined): void {
-        if (this.gSpy) this.gSpy(eventName, e);
+        if (this.evenSpy) this.evenSpy(eventName, e);
 
-        const events = this.gEvents[eventName];
+        const events = this.listenersFor[eventName];
         if (!events) return;
-        const values = events.value;
 
-        for (const listener of values) {
-            listener(e);
+        if (events.value) {
+            const values = events.value;
+
+            for (const listener of values) {
+                listener(e);
+            }
         }
     }
 
     async sendAsyncEvent(eventName: string, e?: any|undefined): Promise<void> {
-        if (!e) e = {promises: []};
-        this.sendEvent(eventName, e);
+        if (this.evenSpy) this.evenSpy(eventName, e);
 
-        if (e.promise) {
-            try {
-                // This allows having the stack trace.
-                throw new Error("You must use the 'promises' array instead of 'promise' for async events.")
+        let events = this.listenersFor[eventName];
+
+        if (!events) {
+            let provider = this.providers[eventName];
+
+            events = new PriorityArray();
+
+            if (provider) {
+                let listeners = await provider();
+                for (let listener of listeners) events.add(EventPriority.Default, listener);
             }
-            catch (e) {
-                console.error(e);
-            }
+
+            this.listenersFor[eventName] = events;
         }
 
-        if (e.promises.length) await Promise.all(e.promises);
+        if (events.value) {
+            const values = events.value;
+
+            for (const listener of values) {
+                let r = listener(e);
+                if (r instanceof Promise) await r;
+            }
+        }
     }
 
     addListener<T = any|undefined>(eventName: string, priorityOrListener: EventPriority | EventListener<T>, listener?: EventListener<T>): void {
@@ -70,9 +87,17 @@ export class EventGroup {
             actualListener = listener!;
         }
 
-        let events = this.gEvents[eventName];
-        if (!events) this.gEvents[eventName] = events = new PriorityArray<EventListener>();
+        let events = this.listenersFor[eventName];
+        if (!events) this.listenersFor[eventName] = events = new PriorityArray<EventListener>();
         events.add(priority, actualListener);
+    }
+
+    /**
+     * For async events, allow loading some elements (import)
+     * only when the event is emitted for the time.
+     */
+    addProvider(eventName: string, provider: EventListenerProvider) {
+        this.providers[eventName] = provider;
     }
 }
 
