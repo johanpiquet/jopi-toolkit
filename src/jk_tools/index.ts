@@ -1,3 +1,5 @@
+import {fileURLToPath} from "node:url";
+
 export function generateUUIDv4(): string {
     if (typeof crypto !== 'undefined' && crypto.randomUUID) {
         return crypto.randomUUID();
@@ -24,48 +26,38 @@ export function applyDefaults<T>(source: T|undefined, defaults: T): T {
     return {...defaults, ...source};
 }
 
-//region Registry
+/**
+ * Allow knowing the file path of the function calling us.
+ */
+export function getCallerFilePath(): string|undefined {
+    try {
+        throw new Error("");
+    } catch (e: any) {
+        let error: Error = e;
 
-export type AsyncProvider = () => Promise<any>;
+        if (!error.stack) return undefined;
 
-export class Registry {
-    providers: Record<string, Record<string, AsyncProvider>> = {};
-    registry: Record<string, Record<string, unknown>> = {};
+        const stackLines = error.stack.split('\n');
+        if (stackLines.length < 4) return undefined;
 
-    addProvider(category: string, name: string, provider: AsyncProvider) {
-        let categoryRef = this.providers[category];
-        if (!categoryRef) this.providers[category] = categoryRef = {};
-        categoryRef[name] = provider;
+        // Here we have something like:
+        // at file:///Users/johan/Projets/jopi-rewrite-workspace/__tests/jopi-ui-sample/dist/mod_sample/routes/tests/test3.page.js:4:1
+        //
+        let filePath = stackLines[3].trim();
+
+        let idx = filePath.indexOf("file://");
+        filePath = filePath.substring(idx);
+
+        idx = filePath.lastIndexOf(":");
+        filePath = filePath.substring(0, idx);
+
+        idx = filePath.lastIndexOf(":");
+        if (idx!==-1) filePath = filePath.substring(0, idx);
+
+        filePath = fileURLToPath(filePath);
+        return filePath;
     }
 
-    protected getProvider(category: string, name: string): AsyncProvider | undefined {
-        return this.providers[category]?.[name];
-    }
-
-    protected getItem<T>(category: string, name: string): T | undefined {
-        return this.registry[category]?.[name] as T|undefined;
-    }
-
-    protected setItem<T>(category: string, name: string, value: T) {
-        this.registry[category] = this.registry[category] || {};
-        this.registry[category][name] = value;
-    }
-
-    addEventProvider(eventName: string, provider: AsyncProvider) {
-        this.addProvider("event", eventName, provider);
-    }
-
-    async getEvent(eventName: string): Promise<Event> {
-        let event = this.getItem<Event>("event", eventName);
-        if (event) return event;
-
-        let provider = this.getProvider("event", eventName);
-        const listeners = provider ? await provider() : [];
-
-        event = new Event(eventName, listeners);
-        this.setItem("event", eventName, event);
-        return event;
-    }
+    // Never happen.
+    return "";
 }
-
-//endregion
