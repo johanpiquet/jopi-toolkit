@@ -1,5 +1,3 @@
-import {fileURLToPath} from "node:url";
-
 export function generateUUIDv4(): string {
     if (typeof crypto !== 'undefined' && crypto.randomUUID) {
         return crypto.randomUUID();
@@ -43,21 +41,17 @@ export function getCallerFilePath(): string|undefined {
         // Here we have something like:
         // at file:///Users/johan/Projets/jopi-rewrite-workspace/__tests/jopi-ui-sample/dist/mod_sample/routes/tests/test3.page.js:4:1
         //
-        let filePath = stackLines[3].trim();
+        let fileUrl = stackLines[3].trim();
 
-        let idx = filePath.indexOf("file://");
-        filePath = filePath.substring(idx);
+        let idx = fileUrl.indexOf("file://");
+        fileUrl = fileUrl.substring(idx);
 
-        idx = filePath.lastIndexOf(":");
-        filePath = filePath.substring(0, idx);
+        idx = fileUrl.lastIndexOf(":");
+        fileUrl = fileUrl.substring(0, idx);
 
-        idx = filePath.lastIndexOf(":");
-        if (idx!==-1) filePath = filePath.substring(0, idx);
+        idx = fileUrl.lastIndexOf(":");
+        if (idx!==-1) fileUrl = fileUrl.substring(0, idx);
 
-        filePath = fileURLToPath(filePath);
-        return filePath;
+        return fileUrl;
     }
-
-    // Never happen.
-    return "";
 }
