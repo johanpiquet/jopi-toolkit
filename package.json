@@ -20,7 +20,6 @@
   "scripts": {
     "build:priority:1": "npx tsc",
     "clean": "rm -rf ./dist .turbo tsconfig.tsbuildinfo",
-
     "tsc": "tsc",
     "bun-publish": "npx tsc && bun publish",
     "untrack": "git rm -r --cached -- ./dist/**;"
@@ -37,22 +36,66 @@
   },
   "publishedDate": "9/25/2025",
   "publicPublishedDate": "9/25/2025",
-
   "exports": {
-    "./ns_schema": "./dist/jk_schemas/index.js",
-    "./jk_tools": "./dist/jk_tools/index.js",
-    "./jk_translate": "./dist/jk_translate/index.js",
-    "./jk_process": "./dist/jk_process/index.js",
-    "./jk_what": "./dist/jk_what/index.js",
-    "./jk_os": "./dist/jk_os/index.js",
-    "./jk_crypto": "./dist/jk_crypto/index.js",
-    "./jk_thread": "./dist/jk_thread/index.js",
-    "./jk_events": "./dist/jk_events/index.js",
-    "./jk_fs": "./dist/jk_fs/index.js",
-    "./jk_timer": "./dist/jk_timer/index.js",
-    "./jk_term": "./dist/jk_term/index.js",
-    "./jk_app": "./dist/jk_app/index.js",
-    "./jk_compress": "./dist/jk_compress/index.js",
-    "./jk_webSocket": "./dist/jk_webSocket/index.js"
+    "./jk_schema": {
+      "bun": "./src/jk_schemas/index.ts",
+      "default": "./dist/jk_schemas/index.js"
+    },
+    "./jk_tools": {
+      "bun": "./src/jk_tools/index.ts",
+      "default": "./dist/jk_tools/index.js"
+    },
+    "./jk_translate": {
+      "bun": "./src/jk_translate/index.ts",
+      "default": "./dist/jk_translate/index.js"
+    },
+    "./jk_process": {
+      "bun": "./src/jk_process/index.ts",
+      "default": "./dist/jk_process/index.js"
+    },
+    "./jk_what": {
+      "bun": "./src/jk_what/index.ts",
+      "default": "./dist/jk_what/index.js"
+    },
+    "./jk_os": {
+      "bun": "./src/jk_os/index.ts",
+      "default": "./dist/jk_os/index.js"
+    },
+    "./jk_crypto": {
+      "bun": "./src/jk_crypto/index.ts",
+      "default": "./dist/jk_crypto/index.js"
+    },
+    "./jk_thread": {
+      "bun": "./src/jk_thread/index.ts",
+      "default": "./dist/jk_thread/index.js"
+    },
+    "./jk_events": {
+      "bun": "./src/jk_events/index.ts",
+      "default": "./dist/jk_events/index.js"
+    },
+    "./jk_fs": {
+      "bun": "./src/jk_fs/index.ts",
+      "default": "./dist/jk_fs/index.js"
+    },
+    "./jk_timer": {
+      "bun": "./src/jk_timer/index.ts",
+      "default": "./dist/jk_timer/index.js"
+    },
+    "./jk_term": {
+      "bun": "./src/jk_term/index.ts",
+      "default": "./dist/jk_term/index.js"
+    },
+    "./jk_app": {
+      "bun": "./src/jk_app/index.ts",
+      "default": "./dist/jk_app/index.js"
+    },
+    "./jk_compress": {
+      "bun": "./src/jk_compress/index.ts",
+      "default": "./dist/jk_compress/index.js"
+    },
+    "./jk_webSocket": {
+      "bun": "./src/jk_webSocket/index.ts",
+      "default": "./dist/jk_webSocket/index.js"
+    }
   }
 }
