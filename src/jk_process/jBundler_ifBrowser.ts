@@ -17,3 +17,4 @@ function initIsProduction() {
 export const argv: string[] = [];
 export const env: Record<string, string> = initEnv();
 export const isProduction: boolean = initIsProduction();
+export const isDevelopment: boolean = !isProduction;
