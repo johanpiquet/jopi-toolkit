@@ -55,3 +55,11 @@ export function getCallerFilePath(): string|undefined {
         return fileUrl;
     }
 }
+
+export enum PriorityLevel {
+    veryLow = -200,
+    low = -100,
+    default = 0,
+    high = 100,
+    veryHigh = 200,
+}

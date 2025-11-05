@@ -1,12 +1,9 @@
+import {PriorityLevel as EventPriority} from "jopi-toolkit/jk_tools";
+
+export {PriorityLevel as EventPriority} from "jopi-toolkit/jk_tools";
+
 // noinspection JSUnusedGlobalSymbols
 
-export enum EventPriority {
-    VeryLow = -200,
-    Low = -100,
-    Default = 0,
-    High = 100,
-    VeryHigh = 200
-}
 
 export type EventListener<T = any> = (e: T) => void|Promise<void>;
 
@@ -57,7 +54,7 @@ export class EventGroup {
 
             if (provider) {
                 let listeners = await provider();
-                for (let listener of listeners) events.add(EventPriority.Default, listener);
+                for (let listener of listeners) events.add(EventPriority.default, listener);
             }
 
             this.listenersFor[eventName] = events;
@@ -79,7 +76,7 @@ export class EventGroup {
 
         if (typeof priorityOrListener === 'function') {
             // Cas où priority n'est pas fournie, priorityOrListener est le listener
-            priority = EventPriority.Default;
+            priority = EventPriority.default;
             actualListener = priorityOrListener;
         } else {
             // Cas où priority est fournie
