@@ -63,3 +63,20 @@ export enum PriorityLevel {
     high = 100,
     veryHigh = 200,
 }
+
+export interface ValueWithPriority<T> {
+    value: T;
+    priority: PriorityLevel;
+}
+
+export function sortByPriority<T>(values: undefined|ValueWithPriority<T>[]): undefined|(T[]) {
+    if (values === undefined) return undefined;
+
+    values.sort((a, b) => {
+        if (a.priority < b.priority) return -1;
+        if (a.priority > b.priority) return 1;
+        return 0;
+    });
+
+    return values.map(v => v.value);
+}
