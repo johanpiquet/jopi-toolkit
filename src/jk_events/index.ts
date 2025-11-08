@@ -4,7 +4,7 @@ export {PriorityLevel as EventPriority} from "jopi-toolkit/jk_tools";
 
 // noinspection JSUnusedGlobalSymbols
 
-export type EventListener<T = any> = (e: T) => void|Promise<void>;
+export type EventListener<T = any> = (e: T, eventName: string) => void|Promise<void>;
 
 export type EventListenerProvider = () => Promise<EventListener[]>;
 
@@ -36,7 +36,7 @@ export class EventGroup {
             const values = events.value;
 
             for (const listener of values) {
-                listener(e);
+                listener(e, eventName);
             }
         }
     }
@@ -63,7 +63,7 @@ export class EventGroup {
             const values = events.value;
 
             for (const listener of values) {
-                let r = listener(e);
+                let r = listener(e, eventName);
                 if (r instanceof Promise) await r;
             }
         }
@@ -134,18 +134,22 @@ interface PriorityArrayEntry<T> {
 
 //endregion
 
-class NamedEvent {
-    constructor(public readonly eventName: string) {
+export class IsolatedEvent {
+    constructor(public readonly eventName: string, private readonly eventItems: EventListener[]) {
     }
 
     async send<T>(data: T): Promise<T> {
-        await sendAsyncEvent(this.eventName, data);
+        for (const listener of this.eventItems) {
+            let r = listener(data, this.eventName);
+            if (r instanceof Promise) await r;
+        }
+
         return data;
     }
 }
 
-export function getEvent(eventName: string): NamedEvent {
-    return new NamedEvent(eventName);
+export function createIsolatedEvent(eventName: string, eventItems: EventListener[]): IsolatedEvent {
+    return new IsolatedEvent(eventName, eventItems);
 }
 
 export const defaultEventGroup = new EventGroup();
