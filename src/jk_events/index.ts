@@ -1,9 +1,8 @@
 import {PriorityLevel as EventPriority} from "jopi-toolkit/jk_tools";
-
+// Warning: it's export.
 export {PriorityLevel as EventPriority} from "jopi-toolkit/jk_tools";
 
 // noinspection JSUnusedGlobalSymbols
-
 
 export type EventListener<T = any> = (e: T) => void|Promise<void>;
 
@@ -134,6 +133,20 @@ interface PriorityArrayEntry<T> {
 }
 
 //endregion
+
+class NamedEvent {
+    constructor(public readonly eventName: string) {
+    }
+
+    async send<T>(data: T): Promise<T> {
+        await sendAsyncEvent(this.eventName, data);
+        return data;
+    }
+}
+
+export function getEvent(eventName: string): NamedEvent {
+    return new NamedEvent(eventName);
+}
 
 export const defaultEventGroup = new EventGroup();
 
