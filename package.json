@@ -1,6 +1,5 @@
 {
   "version": "0.0.23",
-  "private": false,
   "name": "jopi-toolkit",
   "license": "MIT",
   "homepage": "https://github.com/johanpiquet/jopi-toolkit",
@@ -26,8 +25,8 @@
   },
   "devDependencies": {
     "@types/bun": "latest",
-    "@types/node": "latest",
-    "@types/mime-types": "latest"
+    "@types/mime-types": "latest",
+    "@types/node": "latest"
   },
   "dependencies": {
     "@types/ws": "^8.18.1",
