@@ -1,5 +1,5 @@
 {
-  "version": "3.0.4",
+  "version": "3.0.5",
   "name": "jopi-toolkit",
   "license": "MIT",
   "homepage": "https://github.com/johanpiquet/jopi-toolkit",
@@ -33,8 +33,8 @@
     "mime-types": "^3.0.1",
     "ws": "^8.18.3"
   },
-  "publishedDate": "11/15/2025",
-  "publicPublishedDate": "9/25/2025",
+  "publishedDate": "11/19/2025",
+  "publicPublishedDate": "11/19/2025",
   "exports": {
     "./jk_schema": {
       "bun": "./src/jk_schemas/index.ts",
