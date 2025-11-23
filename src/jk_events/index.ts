@@ -43,6 +43,10 @@ export class EventGroup {
     }
 
     async sendAsyncEvent(eventName: string, e?: any|undefined): Promise<void> {
+        if (eventName[0]!=='@') {
+            throw new Error(`Async events ${eventName} must start with @`);
+        }
+
         if (this.evenSpy) this.evenSpy(eventName, e);
 
         let events = this.listenersFor[eventName];
