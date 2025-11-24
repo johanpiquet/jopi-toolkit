@@ -80,3 +80,20 @@ export function sortByPriority<T>(values: undefined|ValueWithPriority<T>[]): und
 
     return values.map(v => v.value);
 }
+
+/**
+ * Allows avoiding calling a function before n-milliseconds is elapsed.
+ */
+export class DontCallBeforeElapsed {
+    private lastTime = 0;
+
+    constructor(public readonly requireMs = 1000) {
+    }
+
+    check(): boolean {
+        let now = Date.now();
+        if (now-this.lastTime<this.requireMs) return false;
+        this.lastTime = now;
+        return true;
+    }
+}
