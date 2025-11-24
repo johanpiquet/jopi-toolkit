@@ -95,6 +95,10 @@
     "./jk_webSocket": {
       "bun": "./src/jk_webSocket/index.ts",
       "default": "./dist/jk_webSocket/index.js"
+    },
+    "./jk_logs": {
+      "bun": "./src/jk_logs/index.ts",
+      "default": "./dist/jk_logs/index.js"
     }
   }
 }
