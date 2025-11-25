@@ -324,7 +324,7 @@ function calcFileHash_node(filePath: string): Promise<string|undefined> {
 
 /**
  * Calculate the hash of a file.
- * Allows using it for HTTP ETag or other change proof.
+ * Allows using it for HTTP ETag or another change proof.
  * This version is optimized to use streams and avoid loading the whole file in memory.
  */
 export const calcFileHash = isBunJS ? calcFileHash_bun : calcFileHash_node;
