@@ -1,6 +1,7 @@
 // noinspection JSUnusedGlobalSymbols
 
 import * as jk_terms from "jopi-toolkit/jk_term";
+import {init} from "./jBundler_ifServer.ts";
 
 //region Common
 
@@ -15,13 +16,14 @@ export interface LogEntry {
     timeDif?: number;
 }
 
-export type LogEntryFormater = (entry: LogEntry)=>string;
+export type LogEntryFormater = (entry: LogEntry) => string;
 
 export enum LogLevel {
-    SPAM = 8,
-    INFO = 4,
-    WARN = 2,
-    ERROR = 0,
+    NONE = 0,
+    SPAM = 1,
+    INFO = 2,
+    WARN = 3,
+    ERROR = 4
 }
 
 export type LogCall = string | ((w: LogLevelHandler)=>void);
@@ -62,6 +64,8 @@ export const formater_dateTypeTitleSourceData: LogEntryFormater = (entry: LogEnt
             return `${date} - INFO  - ${title}${json}`;
         case LogLevel.SPAM:
             return `${date} - SPAM  - ${title}${json}`;
+        default:
+            return "";
     }
 }
 
@@ -81,6 +85,8 @@ export const formater_typeTitleSourceData_colored: LogEntryFormater = (entry: Lo
             return `${LIGHT_BLUE}info ${RESET} - ${title}${GREY}${json}${RESET}`;
         case LogLevel.SPAM:
             return `${GREY}spam ${RESET} - ${title}${GREY}${json}${RESET}`;
+        default:
+            return "";
     }
 }
 
@@ -137,8 +143,39 @@ let gDefaultWriter: LogWriter = new ConsoleLogWriter();
 
 //region JopiLogger
 
-export abstract class JopiLogger {
-    readonly #fullName: string;
+export interface Logger {
+    get fullName(): string;
+
+    spam(_l?: (w: LogLevelHandler)=>void): boolean;
+    info(_l?: (w: LogLevelHandler)=>void): boolean;
+    warn(_l?: (w: LogLevelHandler)=>void): boolean;
+    error(_l?: (w: LogLevelHandler)=>void): boolean
+    beginSpam(l: (w: LogLevelHandler)=>void): VoidFunction;
+    beginInfo(l: (w: LogLevelHandler)=>void): VoidFunction;
+}
+
+export function getLogger(name: string, parent?: Logger): Logger {
+    let fullName = name;
+    if (parent) fullName = parent.fullName + '.' + name;
+
+    let level = getLogLevelFor(fullName);
+
+    switch (level) {
+        case LogLevel.SPAM:
+            return new Logger_Spam(parent as JopiLogger, name);
+        case LogLevel.INFO:
+            return new Logger_Info(parent as JopiLogger, name);
+        case LogLevel.WARN:
+            return new Logger_Warn(parent as JopiLogger, name);
+        case LogLevel.ERROR:
+            return new Logger_Error(parent as JopiLogger, name);
+    }
+
+    return new Logger_None(parent as JopiLogger, name);
+}
+
+abstract class JopiLogger implements Logger {
+    public readonly fullName: string;
     #onLog: LogWriter = gDefaultWriter;
 
     protected readonly hSpam: LogLevelHandler;
@@ -149,7 +186,7 @@ export abstract class JopiLogger {
     private timeDif?: number;
 
     constructor(parent: JopiLogger|null, public readonly name: string) {
-        this.#fullName = parent ? parent.#fullName + '.' + name : name;
+        this.fullName = parent ? parent.fullName + '.' + name : name;
 
         if (parent) {
             this.#onLog = parent.#onLog;
@@ -163,7 +200,7 @@ export abstract class JopiLogger {
 
             me.#onLog.addEntry({
                 level: LogLevel.SPAM,
-                logger: me.#fullName, date: Date.now(), title, data, timeDif: td });
+                logger: me.fullName, date: Date.now(), title, data, timeDif: td });
         };
 
         this.hInfo = (title?: string, data?: any) => {
@@ -172,7 +209,7 @@ export abstract class JopiLogger {
 
             me.#onLog.addEntry({
                 level: LogLevel.INFO,
-                logger: me.#fullName, date: Date.now(), title, data, timeDif: td });
+                logger: me.fullName, date: Date.now(), title, data, timeDif: td });
         };
 
         this.hWarn = (title?: string, data?: any) => {
@@ -181,7 +218,7 @@ export abstract class JopiLogger {
 
             me.#onLog.addEntry({
                 level: LogLevel.WARN,
-                logger: me.#fullName, date: Date.now(), title, data, timeDif: td });
+                logger: me.fullName, date: Date.now(), title, data, timeDif: td });
         };
 
         this.hError = (title?: string, data?: any) => {
@@ -190,7 +227,7 @@ export abstract class JopiLogger {
 
             me.#onLog.addEntry({
                 level: LogLevel.ERROR,
-                logger: me.#fullName, date: Date.now(), title, data, timeDif: td });
+                logger: me.fullName, date: Date.now(), title, data, timeDif: td });
         };
     }
 
@@ -246,29 +283,10 @@ export abstract class JopiLogger {
     }
 }
 
-export type VoidFunction = () => void;
-const gVoidFunction = () => {};
-
-//endregion
-
-//region Log levels (extends JopiLogger)
-
-export type LogLevelHandler = (title?: string, data?: any|undefined)=>void;
-
-export function getLogLevelName(level: LogLevel) {
-    switch (level) {
-        case LogLevel.SPAM:
-            return "SPAM";
-        case LogLevel.ERROR:
-            return "ERROR";
-        case LogLevel.INFO:
-            return "INFO";
-        case LogLevel.WARN:
-            return "WARN";
-    }
+class Logger_None extends JopiLogger {
 }
 
-export class LogSpamLevel extends JopiLogger {
+class Logger_Spam extends JopiLogger {
     override spam(l?: LogCall) {
         return this.doCall(l, this.hSpam);
     }
@@ -294,7 +312,7 @@ export class LogSpamLevel extends JopiLogger {
     }
 }
 
-export class LogInfoLevel extends JopiLogger {
+class Logger_Info extends JopiLogger {
     override info(l?: LogCall) {
         return this.doCall(l, this.hInfo);
     }
@@ -312,7 +330,7 @@ export class LogInfoLevel extends JopiLogger {
     }
 }
 
-export class LogWarnLevel extends JopiLogger {
+class Logger_Warn extends JopiLogger {
     override warn(l?: LogCall) {
         return this.doCall(l, this.hWarn);
     }
@@ -322,10 +340,86 @@ export class LogWarnLevel extends JopiLogger {
     }
 }
 
-export class LogErrorLevel extends JopiLogger {
+class Logger_Error extends JopiLogger {
     override error(l?: LogCall) {
         return this.doCall(l, this.hError);
     }
 }
 
+export type VoidFunction = () => void;
+const gVoidFunction = () => {};
+
 //endregion
+
+//region Log levels
+
+type LogLevelHandler = (title?: string, data?: any|undefined)=>void;
+
+function getLogLevelName(level: LogLevel) {
+    switch (level) {
+        case LogLevel.SPAM:
+            return "SPAM";
+        case LogLevel.ERROR:
+            return "ERROR";
+        case LogLevel.INFO:
+            return "INFO";
+        case LogLevel.WARN:
+            return "WARN";
+        case LogLevel.NONE:
+            return "NONE";
+    }
+}
+
+function getLogLevelByName(name: string): LogLevel | undefined {
+    switch (name) {
+        case "NONE": return LogLevel.NONE;
+        case "SPAM": return LogLevel.SPAM;
+        case "INFO": return LogLevel.INFO;
+        case "WARN": return LogLevel.WARN;
+        case "ERROR": return LogLevel.ERROR;
+    }
+
+    return undefined;
+}
+
+//endregion
+
+//region Registry
+
+export interface LogConfig {
+    level?: string;
+    writer?: string;
+    formater?: string;
+}
+
+export interface LogInitializer {
+    setLogLevel(name: string, config: LogConfig): void;
+}
+
+class Initializer implements LogInitializer {
+    setLogLevel(name: string, config: LogConfig): void {
+        let logLevel = getLogLevelByName(config.level || "NONE");
+        if (!logLevel) logLevel = LogLevel.NONE;
+        gRegistry[name] = logLevel;
+    }
+}
+
+function getLogLevelFor(name: string) {
+    let entry = gRegistry[name];
+    if (entry!==undefined) return entry;
+
+    for (let prefix in gRegistry) {
+        if (name.startsWith(prefix + ".")) {
+            return gRegistry[prefix];
+        }
+    }
+
+    return gDefaultLogLevel;
+}
+
+const gDefaultLogLevel: LogLevel = LogLevel.WARN;
+const gRegistry: Record<string, LogLevel> = {};
+
+//endregion
+
+init(new Initializer());

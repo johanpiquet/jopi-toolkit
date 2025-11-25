@@ -170,7 +170,7 @@ export async function writeTextToFile(filePath: string, text: string, createDir:
     await fs.writeFile(filePath, text, {encoding: 'utf8', flag: 'w'});
 }
 
-export function writeTextSyncToFile(filePath: string, text: string, createDir: boolean = true): void {
+export function writeTextToFileSync(filePath: string, text: string, createDir: boolean = true): void {
     if (createDir) {
         try {
             fss.mkdirSync(path.dirname(filePath), {recursive: true});
@@ -183,7 +183,7 @@ export function readTextFromFile(filePath: string): Promise<string> {
     return fs.readFile(filePath, 'utf8');
 }
 
-export function readTextSyncFromFile(filePath: string): string {
+export function readTextFromFileSync(filePath: string): string {
     return fss.readFileSync(filePath, 'utf8');
 }
 

@@ -56,7 +56,7 @@ export async function writeTextToFile(filePath: string, text: string, createDir:
     throw new Error("Not implemented");
 }
 
-export function writeTextSyncToFile(filePath: string, text: string, createDir: boolean = true): void {
+export function writeTextToFileSync(filePath: string, text: string, createDir: boolean = true): void {
     throw new Error("Not implemented");
 }
 
@@ -64,7 +64,7 @@ export function readTextFromFile(filePath: string): Promise<string> {
     throw new Error("Not implemented");
 }
 
-export function readTextSyncFromFile(filePath: string): string {
+export function readTextFromFileSync(filePath: string): string {
     throw new Error("Not implemented");
 }
 
