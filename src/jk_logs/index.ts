@@ -19,11 +19,11 @@ export interface LogEntry {
 export type LogEntryFormater = (entry: LogEntry) => string;
 
 export enum LogLevel {
-    NONE = 0,
     SPAM = 1,
     INFO = 2,
     WARN = 3,
-    ERROR = 4
+    ERROR = 4,
+    NONE = 10
 }
 
 export type LogCall = string | ((w: LogLevelHandler)=>void);
