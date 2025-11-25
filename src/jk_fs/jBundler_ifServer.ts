@@ -6,6 +6,7 @@ import {fileURLToPath as n_fileURLToPath, pathToFileURL as n_pathToFileURL } fro
 import {lookup} from "mime-types";
 import {Readable} from "node:stream";
 import path from "node:path";
+import {createHash} from "node:crypto";
 import {isBunJS} from "jopi-toolkit/jk_what";
 import type {DirItem, FileState} from "./common.ts";
 
@@ -286,6 +287,47 @@ export async function listDir(dirPath: string): Promise<DirItem[]> {
 
     return result;
 }
+
+
+async function calcFileHash_bun(filePath: string): Promise<string|undefined> {
+    const file = Bun.file(filePath);
+    if (!await file.exists()) return undefined;
+
+    const stream = file.stream();
+    const reader = stream.getReader();
+    const hasher = new Bun.CryptoHasher("sha256");
+
+    try {
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            hasher.update(value);
+        }
+
+        return hasher.digest("hex");
+    } finally {
+        reader.releaseLock();
+    }
+}
+
+function calcFileHash_node(filePath: string): Promise<string|undefined> {
+    if (!isFile(filePath)) return Promise.resolve(undefined);
+
+    return new Promise((resolve, reject) => {
+        const hash = createHash('sha256');
+        const stream = createReadStream(filePath);
+        stream.on('data', (data) => hash.update(data));
+        stream.on('end', () => resolve(hash.digest('hex')));
+        stream.on('error', (error) => reject(error));
+    });
+}
+
+/**
+ * Calculate the hash of a file.
+ * Allows using it for HTTP ETag or other change proof.
+ * This version is optimized to use streams and avoid loading the whole file in memory.
+ */
+export const calcFileHash = isBunJS ? calcFileHash_bun : calcFileHash_node;
 
 /**
  * Convert a simple win32 path to a linux path.
