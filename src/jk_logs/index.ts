@@ -146,12 +146,13 @@ let gDefaultWriter: LogWriter = new ConsoleLogWriter();
 export interface Logger {
     get fullName(): string;
 
-    spam(_l?: (w: LogLevelHandler)=>void): boolean;
-    info(_l?: (w: LogLevelHandler)=>void): boolean;
-    warn(_l?: (w: LogLevelHandler)=>void): boolean;
-    error(_l?: (w: LogLevelHandler)=>void): boolean
-    beginSpam(l: (w: LogLevelHandler)=>void): VoidFunction;
-    beginInfo(l: (w: LogLevelHandler)=>void): VoidFunction;
+    spam(_l?: LogCall): boolean;
+    info(_l?: LogCall): boolean;
+    warn(_l?: LogCall): boolean;
+    error(_l?: LogCall): boolean
+
+    beginSpam(l: LogCall): VoidFunction;
+    beginInfo(l: LogCall): VoidFunction;
 }
 
 export function getLogger(name: string, parent?: Logger): Logger {
@@ -176,7 +177,7 @@ export function getLogger(name: string, parent?: Logger): Logger {
 
 abstract class JopiLogger implements Logger {
     public readonly fullName: string;
-    #onLog: LogWriter = gDefaultWriter;
+    private _onLog: LogWriter = gDefaultWriter;
 
     protected readonly hSpam: LogLevelHandler;
     protected readonly hInfo: LogLevelHandler;
@@ -189,7 +190,7 @@ abstract class JopiLogger implements Logger {
         this.fullName = parent ? parent.fullName + '.' + name : name;
 
         if (parent) {
-            this.#onLog = parent.#onLog;
+            this._onLog = parent._onLog;
         }
 
         const me = this;
@@ -198,7 +199,7 @@ abstract class JopiLogger implements Logger {
             let td = this.timeDif;
             this.timeDif = undefined;
 
-            me.#onLog.addEntry({
+            me._onLog.addEntry({
                 level: LogLevel.SPAM,
                 logger: me.fullName, date: Date.now(), title, data, timeDif: td });
         };
@@ -207,7 +208,7 @@ abstract class JopiLogger implements Logger {
             let td = this.timeDif;
             this.timeDif = undefined;
 
-            me.#onLog.addEntry({
+            me._onLog.addEntry({
                 level: LogLevel.INFO,
                 logger: me.fullName, date: Date.now(), title, data, timeDif: td });
         };
@@ -216,7 +217,7 @@ abstract class JopiLogger implements Logger {
             let td = this.timeDif;
             this.timeDif = undefined;
 
-            me.#onLog.addEntry({
+            me._onLog.addEntry({
                 level: LogLevel.WARN,
                 logger: me.fullName, date: Date.now(), title, data, timeDif: td });
         };
@@ -225,7 +226,7 @@ abstract class JopiLogger implements Logger {
             let td = this.timeDif;
             this.timeDif = undefined;
 
-            me.#onLog.addEntry({
+            me._onLog.addEntry({
                 level: LogLevel.ERROR,
                 logger: me.fullName, date: Date.now(), title, data, timeDif: td });
         };
@@ -233,7 +234,7 @@ abstract class JopiLogger implements Logger {
 
     setLogWriter(callback: LogWriter) {
         if (!callback) callback = gDefaultWriter;
-        this.#onLog = callback;
+        this._onLog = callback;
     }
 
     spam(_l?: (w: LogLevelHandler)=>void): boolean {
