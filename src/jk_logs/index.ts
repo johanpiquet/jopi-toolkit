@@ -151,8 +151,8 @@ export interface Logger {
     warn(_l?: LogCall): boolean;
     error(_l?: LogCall): boolean
 
-    beginSpam(l: LogCall): VoidFunction;
-    beginInfo(l: LogCall): VoidFunction;
+    beginSpam(l: LogCall): LoggerGroupCallback;
+    beginInfo(l: LogCall): LoggerGroupCallback;
 }
 
 export function getLogger(name: string, parent?: Logger): Logger {
@@ -185,6 +185,7 @@ abstract class JopiLogger implements Logger {
     protected readonly hError: LogLevelHandler;
 
     private timeDif?: number;
+    private extraData?: any;
 
     constructor(parent: JopiLogger|null, public readonly name: string) {
         this.fullName = parent ? parent.fullName + '.' + name : name;
@@ -198,6 +199,7 @@ abstract class JopiLogger implements Logger {
         this.hSpam = (title?: string, data?: any) => {
             let td = this.timeDif;
             this.timeDif = undefined;
+            data = this.mergeData(data);
 
             me._onLog.addEntry({
                 level: LogLevel.SPAM,
@@ -207,6 +209,7 @@ abstract class JopiLogger implements Logger {
         this.hInfo = (title?: string, data?: any) => {
             let td = this.timeDif;
             this.timeDif = undefined;
+            data = this.mergeData(data);
 
             me._onLog.addEntry({
                 level: LogLevel.INFO,
@@ -216,6 +219,7 @@ abstract class JopiLogger implements Logger {
         this.hWarn = (title?: string, data?: any) => {
             let td = this.timeDif;
             this.timeDif = undefined;
+            data = this.mergeData(data);
 
             me._onLog.addEntry({
                 level: LogLevel.WARN,
@@ -225,11 +229,23 @@ abstract class JopiLogger implements Logger {
         this.hError = (title?: string, data?: any) => {
             let td = this.timeDif;
             this.timeDif = undefined;
+            data = this.mergeData(data);
 
             me._onLog.addEntry({
                 level: LogLevel.ERROR,
                 logger: me.fullName, date: Date.now(), title, data, timeDif: td });
         };
+    }
+
+    private mergeData(data?: any): any|undefined {
+        if (!this.extraData) return data;
+        const extraData = this.extraData;
+        this.extraData = undefined;
+
+        if (!data) return extraData;
+        for (let p in extraData) data[p] = extraData[p];
+
+        return data;
     }
 
     setLogWriter(callback: LogWriter) {
@@ -253,24 +269,26 @@ abstract class JopiLogger implements Logger {
         return false;
     }
 
-    beginSpam(l: (w: LogLevelHandler)=>void): VoidFunction {
-        return gVoidFunction;
+    beginSpam(l: (w: LogLevelHandler)=>void): LoggerGroupCallback {
+        return gVoidLoggerGroupCallback;
     }
 
-    beginInfo(l: (w: LogLevelHandler)=>void): VoidFunction {
-        return gVoidFunction;
+    beginInfo(l: (w: LogLevelHandler)=>void): LoggerGroupCallback {
+        return gVoidLoggerGroupCallback;
     }
 
-    protected doBegin(l: LogCall, w: LogLevelHandler): VoidFunction {
+    protected doBegin(l: LogCall, w: LogLevelHandler): LoggerGroupCallback {
         const startTime = Date.now();
 
-        return () => {
+        return (data?: any) => {
             this.timeDif = Date.now() - startTime;
-            this.doCall(l, w);
+            this.doCall(l, w, data);
         }
     }
 
-    protected doCall(l: LogCall|undefined, w: LogLevelHandler) {
+    protected doCall(l: LogCall|undefined, w: LogLevelHandler, data?: any) {
+        this.extraData = data;
+
         if (l) {
             if (l instanceof Function) {
                 l(w);
@@ -308,7 +326,7 @@ class Logger_Spam extends JopiLogger {
         return this.doBegin(l, this.hSpam);
     }
 
-    override beginInfo(l: LogCall): VoidFunction {
+    override beginInfo(l: LogCall): LoggerGroupCallback {
         return this.doBegin(l, this.hInfo);
     }
 }
@@ -326,7 +344,7 @@ class Logger_Info extends JopiLogger {
         return this.doCall(l, this.hError);
     }
 
-    override beginInfo(l: LogCall): VoidFunction {
+    override beginInfo(l: LogCall): LoggerGroupCallback {
         return this.doBegin(l, this.hInfo);
     }
 }
@@ -347,8 +365,8 @@ class Logger_Error extends JopiLogger {
     }
 }
 
-export type VoidFunction = () => void;
-const gVoidFunction = () => {};
+export type LoggerGroupCallback = (data?: any) => void;
+const gVoidLoggerGroupCallback = () => {};
 
 //endregion
 
