@@ -39,7 +39,7 @@ export function getCallerFilePath(): string|undefined {
         if (stackLines.length < 4) return undefined;
 
         // Here we have something like:
-        // at file:///Users/johan/Projets/jopi-rewrite-workspace/__tests/jopi-ui-sample/dist/mod_sample/routes/tests/test3.page.js:4:1
+        // at file:///Users/johan/Projets/jopijs-workspace/__tests/jopi-ui-sample/dist/mod_sample/routes/tests/test3.page.js:4:1
         //
         let fileUrl = stackLines[3].trim();
 
