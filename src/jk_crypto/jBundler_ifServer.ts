@@ -10,7 +10,7 @@ function node_fastHash(data: string | Uint8Array): string {
 }
 
 function bun_fastHash(data: string | Uint8Array): string {
-    return Bun.hash(data).toString();
+    return Bun.hash(data, 12346).toString();
 }
 
 function bun_md5(data: string | Uint8Array): string {

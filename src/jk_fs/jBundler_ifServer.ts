@@ -288,11 +288,20 @@ export async function listDir(dirPath: string): Promise<DirItem[]> {
     return result;
 }
 
+const MEGA = 1024 * 1024;
 
 async function calcFileHash_bun(filePath: string): Promise<string|undefined> {
     const file = Bun.file(filePath);
     if (!await file.exists()) return undefined;
 
+    if (file.size>10 * MEGA) {
+        return calcFileHash_bun_streamed(file)
+    }
+
+    return Bun.hash(await file.arrayBuffer(), 12346).toString();
+}
+
+async function calcFileHash_bun_streamed(file: Bun.BunFile): Promise<string|undefined> {
     const stream = file.stream();
     const reader = stream.getReader();
     const hasher = new Bun.CryptoHasher("sha256");
