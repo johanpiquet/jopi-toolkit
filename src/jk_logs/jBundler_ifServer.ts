@@ -6,7 +6,7 @@ export function init(init: LogInitializer) {
     const mainDir = jk_app.findPackageJsonDir();
     const filePath = jk_fs.join(mainDir, "logConfig.json");
 
-    if (!jk_fs.isFile(filePath)) return;
+    if (!jk_fs.isFileSync(filePath)) return;
     let text = jk_fs.readTextFromFileSync(jk_fs.join(mainDir, "logConfig.json"));
 
     if (!text) return;
