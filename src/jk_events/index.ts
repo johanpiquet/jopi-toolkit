@@ -139,7 +139,15 @@ interface PriorityArrayEntry<T> {
 
 //endregion
 
-export class StaticEvent {
+export interface StaticEvent {
+    send<T>(data: T): T;
+}
+
+export interface SEventController {
+    addListener(listener: SyncEventListener): (() => void);
+}
+
+class StaticEventImpl implements StaticEvent, SEventController {
     constructor(public readonly eventName: string, private readonly eventItems: SyncEventListener[]) {
     }
 
@@ -150,10 +158,19 @@ export class StaticEvent {
 
         return data;
     }
+
+    addListener(listener: SyncEventListener): () => void {
+        this.eventItems.push(listener);
+
+        return () => {
+            let idx = this.eventItems.indexOf(listener);
+            if (idx >= 0) this.eventItems.splice(idx, 1);
+        };
+    }
 }
 
-export function createStaticEvent(eventName: string, eventItems: EventListener[]): StaticEvent {
-    return new StaticEvent(eventName, eventItems);
+export function createStaticEvent(eventName: string, eventItems: SyncEventListener[]): StaticEvent {
+    return new StaticEventImpl(eventName, eventItems);
 }
 
 export const defaultEventGroup = new EventGroup();
