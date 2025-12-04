@@ -1,7 +1,7 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
-
 export * from "./common.ts";
+import * as jk_timer from "jopi-toolkit/jk_timer";
 
 export interface GithubDownloadParams {
     /**
@@ -36,7 +36,7 @@ export async function githubDownload(params: GithubDownloadParams) {
         const response = await fetch(contentUrl, {headers: headers,});
 
         if (!response.ok) {
-            throw new Error(`Échec du téléchargement: ${response.status} ${response.statusText}`);
+            throw new Error(`Github download error: ${response.status} ${response.statusText}`);
         }
 
         const buffer = await response.arrayBuffer();
@@ -52,7 +52,7 @@ export async function githubDownload(params: GithubDownloadParams) {
         const response = await fetch(apiUrl, { headers });
 
         if (!response.ok) {
-            throw new Error(`Échec de l'API: ${response.status} ${response.statusText}`);
+            throw new Error(`Github download error: ${response.status} ${response.statusText}`);
         }
 
         const data = await response.json();
@@ -67,6 +67,9 @@ export async function githubDownload(params: GithubDownloadParams) {
         isFirst = false;
 
         for (const item of contents) {
+            // Reduce, otherwise we get a "403 rate limit exceed" error.
+            await jk_timer.tick(gRateLimit);
+
             if (item.type === 'file' && item.download_url) {
                 let itemPath = item.path;
                 itemPath = itemPath.substring(pathInsideRepo.length + 1);
@@ -94,3 +97,13 @@ export async function githubDownload(params: GithubDownloadParams) {
 
     await fetchAndProcessContent(pathInsideRepo, params.downloadPath);
 }
+
+function getRateLimit() {
+    let sLimit = process.env.GITHUB_API_LIMIT_SECONDS;
+    if (!sLimit) return 50;
+    let res = parseInt(sLimit);
+    if (isNaN(res)) return 50;
+    return res;
+}
+
+const gRateLimit = getRateLimit();
