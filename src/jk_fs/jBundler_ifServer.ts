@@ -185,6 +185,11 @@ export function readTextFromFile(filePath: string): Promise<string> {
     return fs.readFile(filePath, 'utf8');
 }
 
+export async function readJsonFromFile<T = any>(filePath: string): Promise<T> {
+    let txt = await fs.readFile(filePath, 'utf8');
+    return JSON.parse(txt) as T;
+}
+
 export function readTextFromFileSync(filePath: string): string {
     return fss.readFileSync(filePath, 'utf8');
 }
@@ -365,7 +370,11 @@ export async function copyDirectory(srcDir: string, destDir: string): Promise<vo
         if (entry.isDirectory()) {
             await copyDirectory(srcPath, destPath);
         } else {
-            return copyFile(srcPath, destPath);
+            try {
+                await copyFile(srcPath, destPath);
+            } catch {
+                console.warn(`jk_fs.copyDirectory - Failed to copy file ${srcPath}`);
+            }
         }
     }));
 }
@@ -375,6 +384,18 @@ export async function copyDirectory(srcDir: string, destDir: string): Promise<vo
  * Is optimized for large files.
  */
 export async function copyFile(srcPath: string, destPath: string): Promise<void> {
+    let stat = await getFileStat(srcPath);
+    if (!stat) {
+        return;
+    }
+
+    // Assert the symlink exist.
+    if (stat.isSymbolicLink()) {
+        const symStat = await fs.lstat(srcPath);
+        if (!symStat) return;
+        if (!symStat.isFile()) return;
+    }
+
     return new Promise<void>((resolve, reject) => {
         const readStream = createReadStream(srcPath);
         const writeStream = createWriteStream(destPath);
