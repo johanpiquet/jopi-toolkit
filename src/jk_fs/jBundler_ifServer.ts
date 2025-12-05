@@ -1,7 +1,7 @@
 // noinspection JSUnusedGlobalSymbols
 
 import fs from "node:fs/promises";
-import fss, {createReadStream} from "node:fs";
+import fss, {createReadStream, createWriteStream} from "node:fs";
 import {fileURLToPath as n_fileURLToPath, pathToFileURL as n_pathToFileURL } from "node:url";
 import {lookup} from "mime-types";
 import {Readable} from "node:stream";
@@ -9,6 +9,7 @@ import path from "node:path";
 import {createHash} from "node:crypto";
 import {isBunJS} from "jopi-toolkit/jk_what";
 import type {DirItem, FileState} from "./common.ts";
+import * as unzipper from "unzipper";
 
 class WebToNodeReadableStreamAdapter extends Readable {
     private webStreamReader: ReadableStreamDefaultReader<any>;
@@ -345,6 +346,66 @@ export function win32ToLinuxPath(filePath: string): string {
     return filePath.replace(/\\/g, '/');
 }
 
+/**
+ * Copy a directory recursively.
+ * Is optimized for large files.
+ */
+export async function copyDirectory(srcDir: string, destDir: string): Promise<void> {
+    if (!await isDirectory(srcDir)) {
+        throw new Error(`Directory doesn't exist : ${srcDir}`);
+    }
+
+    await mkDir(destDir);
+    const entries = await fs.readdir(srcDir, { withFileTypes: true });
+
+    await Promise.all(entries.map(async (entry) => {
+        const srcPath = path.join(srcDir, entry.name);
+        const destPath = path.join(destDir, entry.name);
+
+        if (entry.isDirectory()) {
+            await copyDirectory(srcPath, destPath);
+        } else {
+            return copyFile(srcPath, destPath);
+        }
+    }));
+}
+
+/**
+ * Copy of a file.
+ * Is optimized for large files.
+ */
+export async function copyFile(srcPath: string, destPath: string): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+        const readStream = createReadStream(srcPath);
+        const writeStream = createWriteStream(destPath);
+
+        readStream.on('error', reject);
+        writeStream.on('error', reject);
+        writeStream.on('finish', resolve);
+
+        readStream.pipe(writeStream);
+    });
+}
+
+/**
+ * Unzip a .zip file in an optimized way.
+ */
+export async function unzipFile(zipFilePath: string, outputDir: string): Promise<void> {
+    if (!await isFile(zipFilePath)) {
+        throw new Error(`File doesn't exist : ${zipFilePath}`);
+    }
+
+    if (!await isDirectory(outputDir)) {
+        await mkDir(outputDir);
+    }
+
+    await createReadStream(zipFilePath)
+        .pipe(unzipper.Extract({path: outputDir}))
+        .promise();
+}
+
+//region Node.js functions
+
 export const join = path.join;
 export const resolve = path.resolve;
 export const dirname = path.dirname;
@@ -357,3 +418,5 @@ export const basename = path.basename;
 
 export const symlink = fs.symlink;
 export const rename = fs.rename;
+
+//endregion
