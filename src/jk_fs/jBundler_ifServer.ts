@@ -385,9 +385,7 @@ export async function copyDirectory(srcDir: string, destDir: string): Promise<vo
  */
 export async function copyFile(srcPath: string, destPath: string): Promise<void> {
     let stat = await getFileStat(srcPath);
-    if (!stat) {
-        return;
-    }
+    if (!stat) return;
 
     // Assert the symlink exist.
     if (stat.isSymbolicLink()) {
@@ -423,6 +421,21 @@ export async function unzipFile(zipFilePath: string, outputDir: string): Promise
     await createReadStream(zipFilePath)
         .pipe(unzipper.Extract({path: outputDir}))
         .promise();
+}
+
+/**
+ * Create a temporary directory.
+ * Return an object containing the directory path and a cleanup function.
+ */
+export async function createTempDir(prefix: string): Promise<{path: string, remove: ()=>Promise<void>}> {
+    const dirPath = await fs.mkdtemp(prefix);
+
+    return {
+        path: dirPath,
+        remove: async () => {
+            return fs.rm(dirPath, {recursive: true, force: true});
+        }
+    }
 }
 
 //region Node.js functions
