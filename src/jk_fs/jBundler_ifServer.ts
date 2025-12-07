@@ -9,7 +9,7 @@ import path from "node:path";
 import {createHash} from "node:crypto";
 import {isBunJS} from "jopi-toolkit/jk_what";
 import type {DirItem, FileState} from "./common.ts";
-import * as unzipper from "unzipper";
+import AdmZip from 'adm-zip';
 
 class WebToNodeReadableStreamAdapter extends Readable {
     private webStreamReader: ReadableStreamDefaultReader<any>;
@@ -408,8 +408,11 @@ export async function copyFile(srcPath: string, destPath: string): Promise<void>
 
 /**
  * Unzip a .zip file in an optimized way.
+ * Note was using : "@types/unzipper": "^0.10.11"
+ * which has some bug, files/folders was forgottens.
+ * import * as unzipper from "unzipper";
  */
-export async function unzipFile(zipFilePath: string, outputDir: string): Promise<void> {
+/*export async function unzipFile_old(zipFilePath: string, outputDir: string): Promise<void> {
     if (!await isFile(zipFilePath)) {
         throw new Error(`File doesn't exist : ${zipFilePath}`);
     }
@@ -421,6 +424,22 @@ export async function unzipFile(zipFilePath: string, outputDir: string): Promise
     await createReadStream(zipFilePath)
         .pipe(unzipper.Extract({path: outputDir}))
         .promise();
+}*/
+
+/**
+ * Unzip a .zip file in an optimized way.
+ */
+export async function unzipFile(zipFilePath: string, outputDir: string): Promise<void> {
+    if (!await isFile(zipFilePath)) {
+        throw new Error(`File doesn't exist : ${zipFilePath}`);
+    }
+
+    if (!await isDirectory(outputDir)) {
+        await mkDir(outputDir);
+    }
+
+    const zip = new AdmZip(zipFilePath);
+    zip.extractAllTo(outputDir, true);
 }
 
 /**
