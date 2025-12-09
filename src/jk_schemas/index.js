@@ -48,54 +48,10 @@ var SchemaError = /** @class */ (function (_super) {
 export function declareError(message, errorCode) {
     throw new SchemaError(message, errorCode);
 }
-var byTypeValidator = {
-    "string": function (v, f) {
-        if (typeof v !== "string") {
-            declareError(f.errorMessage_theValueIsInvalid || "Value must be a string", "INVALID_TYPE");
-            return;
-        }
-        var sf = f;
-        if ((sf.minLength !== undefined) && (v.length < sf.minLength)) {
-            declareError(sf.errorMessage_minLength || "Value must be at least ".concat(sf.minLength, " characters long"), "INVALID_LENGTH");
-            return;
-        }
-        if ((sf.maxLength !== undefined) && (v.length > sf.maxLength)) {
-            declareError(sf.errorMessage_maxLength || "Value must be less than ".concat(sf.maxLength, " characters long"), "INVALID_LENGTH");
-            return;
-        }
-    },
-    "number": function (v, f) {
-        if (typeof v !== "number") {
-            declareError(f.errorMessage_theValueIsInvalid || "Value must be a number", "INVALID_TYPE");
-        }
-        var sf = f;
-        if ((sf.minValue !== undefined) && (v < sf.minValue)) {
-            declareError(sf.errorMessage_minValue || "Value must be at least ".concat(sf.minValue), "INVALID_LENGTH");
-            return;
-        }
-        if ((sf.maxValue !== undefined) && (v > sf.maxValue)) {
-            declareError(sf.errorMessage_maxValue || "Value must be less than ".concat(sf.maxValue), "INVALID_LENGTH");
-            return;
-        }
-    },
-    "boolean": function (v, f) {
-        if (typeof v !== "boolean") {
-            declareError(f.errorMessage_theValueIsInvalid || "Value must be a boolean", "INVALID_TYPE");
-        }
-        var sf = f;
-        if (sf.requireTrue) {
-            if (v !== true) {
-                declareError(sf.errorMessage_requireTrue || "Value must be true", "INVALID_VALUE");
-            }
-        }
-        else if (sf.requireFalse) {
-            if (v !== false) {
-                declareError(sf.errorMessage_requireFalse || "Value must be false", "INVALID_VALUE");
-            }
-        }
-    }
-};
 export function validateSchema(data, schema) {
+    // Normalize the data.
+    // It's a step where we apply automatic corrections.
+    //
     if (schema.schemaMeta.normalize) {
         try {
             schema.schemaMeta.normalize(data);
@@ -112,6 +68,11 @@ export function validateSchema(data, schema) {
             }
         }
     }
+    // >>> Check each field individually.
+    // Each time it will:
+    // - Normalize the value.
+    // - Check if optional + undefined.
+    // - Apply validator for the field type.
     var fieldErrors;
     for (var fieldName in schema.desc) {
         var defaultErrorMessage = void 0;
@@ -159,6 +120,8 @@ export function validateSchema(data, schema) {
             }
         }
     }
+    // >>> Validate the whole fields.
+    //     Allow validating if values are ok with each others.
     if (schema.schemaMeta.validate) {
         try {
             schema.schemaMeta.validate(data);
@@ -176,10 +139,14 @@ export function validateSchema(data, schema) {
             }
         }
     }
+    // No error ? --> undefined.
+    // Otherwise returns the errors.
+    //
     if (!fieldErrors)
         return undefined;
     return { fields: fieldErrors };
 }
+var byTypeValidator = {};
 export function registerSchema(schemaId, schema, meta) {
     if (!schemaId) {
         throw new Error("jk_schemas - Schema id required. If you need an uid you can use: " + generateUUIDv4());
@@ -223,12 +190,57 @@ export function string(title, optional, infos) {
     }
     return __assign(__assign({}, infos), { title: title, optional: optional, type: "string" });
 }
+byTypeValidator["string"] = function (v, f) {
+    if (typeof v !== "string") {
+        declareError(f.errorMessage_theValueIsInvalid || "Value must be a string", "INVALID_TYPE");
+        return;
+    }
+    var sf = f;
+    if ((sf.minLength !== undefined) && (v.length < sf.minLength)) {
+        declareError(sf.errorMessage_minLength || "Value must be at least ".concat(sf.minLength, " characters long"), "INVALID_LENGTH");
+        return;
+    }
+    if ((sf.maxLength !== undefined) && (v.length > sf.maxLength)) {
+        declareError(sf.errorMessage_maxLength || "Value must be less than ".concat(sf.maxLength, " characters long"), "INVALID_LENGTH");
+        return;
+    }
+};
 export function boolean(title, optional, infos) {
     return __assign(__assign({}, infos), { title: title, optional: optional, type: "boolean" });
 }
+byTypeValidator["boolean"] = function (v, f) {
+    if (typeof v !== "boolean") {
+        declareError(f.errorMessage_theValueIsInvalid || "Value must be a boolean", "INVALID_TYPE");
+    }
+    var sf = f;
+    if (sf.requireTrue) {
+        if (v !== true) {
+            declareError(sf.errorMessage_requireTrue || "Value must be true", "INVALID_VALUE");
+        }
+    }
+    else if (sf.requireFalse) {
+        if (v !== false) {
+            declareError(sf.errorMessage_requireFalse || "Value must be false", "INVALID_VALUE");
+        }
+    }
+};
 export function number(title, optional, infos) {
     return __assign(__assign({}, infos), { title: title, optional: optional, type: "number" });
 }
+byTypeValidator["number"] = function (v, f) {
+    if (typeof v !== "number") {
+        declareError(f.errorMessage_theValueIsInvalid || "Value must be a number", "INVALID_TYPE");
+    }
+    var sf = f;
+    if ((sf.minValue !== undefined) && (v < sf.minValue)) {
+        declareError(sf.errorMessage_minValue || "Value must be at least ".concat(sf.minValue), "INVALID_LENGTH");
+        return;
+    }
+    if ((sf.maxValue !== undefined) && (v > sf.maxValue)) {
+        declareError(sf.errorMessage_maxValue || "Value must be less than ".concat(sf.maxValue), "INVALID_LENGTH");
+        return;
+    }
+};
 export function file(title, optional, infos) {
     return __assign(__assign({}, infos), { title: title, optional: optional, type: "file" });
 }

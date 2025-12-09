@@ -41,64 +41,10 @@ export interface ValidationErrors {
     fields?: Record<string, FieldError>;
 }
 
-const byTypeValidator: Record<string, (v: any, fieldInfos: SchemaFieldInfos) => void> = {
-    "string": (v, f) => {
-        if (typeof v !== "string") {
-            declareError(f.errorMessage_theValueIsInvalid || `Value must be a string`, "INVALID_TYPE");
-            return;
-        }
-
-        let sf = f as ScString<any>;
-
-        if ((sf.minLength!==undefined) && (v.length < sf.minLength)) {
-            declareError(sf.errorMessage_minLength || `Value must be at least ${sf.minLength} characters long`, "INVALID_LENGTH");
-            return;
-        }
-
-        if ((sf.maxLength!==undefined) && (v.length > sf.maxLength)) {
-            declareError(sf.errorMessage_maxLength || `Value must be less than ${sf.maxLength} characters long`, "INVALID_LENGTH");
-            return;
-        }
-    },
-
-    "number": (v, f) => {
-        if (typeof v !== "number") {
-            declareError(f.errorMessage_theValueIsInvalid || `Value must be a number`, "INVALID_TYPE");
-        }
-
-        let sf = f as ScNumber<any>;
-
-        if ((sf.minValue!==undefined) && (v < sf.minValue)) {
-            declareError(sf.errorMessage_minValue || `Value must be at least ${sf.minValue}`, "INVALID_LENGTH");
-            return;
-        }
-
-        if ((sf.maxValue!==undefined) && (v > sf.maxValue)) {
-            declareError(sf.errorMessage_maxValue || `Value must be less than ${sf.maxValue}`, "INVALID_LENGTH");
-            return;
-        }
-    },
-
-    "boolean": (v, f) => {
-        if (typeof v !== "boolean") {
-            declareError(f.errorMessage_theValueIsInvalid || `Value must be a boolean`, "INVALID_TYPE");
-        }
-
-        let sf = f as ScBoolean<any>;
-        
-        if (sf.requireTrue) {
-            if (v!==true) {
-                declareError(sf.errorMessage_requireTrue || `Value must be true`, "INVALID_VALUE");
-            }
-        } else if (sf.requireFalse) {
-            if (v!==false) {
-                declareError(sf.errorMessage_requireFalse || `Value must be false`, "INVALID_VALUE");
-            }
-        }
-    }
-}
-
 export function validateSchema(data: any, schema: Schema): ValidationErrors|undefined {
+    // Normalize the data.
+    // It's a step where we apply automatic corrections.
+    //
     if (schema.schemaMeta.normalize) {
         try {
             schema.schemaMeta.normalize(data);
@@ -115,6 +61,13 @@ export function validateSchema(data: any, schema: Schema): ValidationErrors|unde
             }
         }
     }
+
+    // >>> Check each field individually.
+
+    // Each time it will:
+    // - Normalize the value.
+    // - Check if optional + undefined.
+    // - Apply validator for the field type.
 
     let fieldErrors: Record<string, FieldError>|undefined;
 
@@ -168,6 +121,9 @@ export function validateSchema(data: any, schema: Schema): ValidationErrors|unde
         }
     }
 
+    // >>> Validate the whole fields.
+    //     Allow validating if values are ok with each others.
+
     if (schema.schemaMeta.validate) {
         try {
             schema.schemaMeta.validate(data);
@@ -186,9 +142,14 @@ export function validateSchema(data: any, schema: Schema): ValidationErrors|unde
         }
     }
 
+    // No error ? --> undefined.
+    // Otherwise returns the errors.
+    //
     if (!fieldErrors) return undefined;
     return {fields: fieldErrors};
 }
+
+const byTypeValidator: Record<string, (v: any, fieldInfos: SchemaFieldInfos) => void> = {};
 
 //endregion
 
@@ -275,18 +236,13 @@ export function toJson(schema: Schema): SchemaInfo {
  * ```
  */
 export type SchemaToType<S extends Schema> =
-// 1. On accède au descripteur de schéma S['desc']
-// 2. On itère sur ses clés K
-// 3. On filtre les champs obligatoires (Opt = false)
     { [K in keyof S['desc'] as S['desc'][K] extends ScField<any, false> ? K : never]:
-        // 4. On infère le type T du champ
         S['desc'][K] extends ScField<infer T, any> ? T : never }
 
-    // 5. On fusionne avec les champs optionnels (Opt = true)
     & { [K in keyof S['desc'] as S['desc'][K] extends ScField<any, true> ? K : never] ?:
     S['desc'][K] extends ScField<infer T, any> ? T : never };
 
-export interface ScField<T, Opt extends boolean> {
+interface ScField<T, Opt extends boolean> {
     title: string;
     type: string;
 
@@ -302,11 +258,41 @@ export interface ScField<T, Opt extends boolean> {
     validator?: (value: T, allValues: any) => void;
 
     metas?: Record<string, string>;
+
+    /**
+     * If true, then allows hiding the column
+     * when rendering into a UI table component.
+     */
+    tableEnableHiding?: boolean;
+
+    /**
+     * If true, then allows sorting the column
+     * when rendering into a UI table component.
+     */
+    tableEnableSorting?: boolean;
+
+    /**
+     * If true, then allows editing the column
+     * when rendering into a UI table component.
+     */
+    tableEnableEditing?: boolean;
+
+    /**
+     * Contains the name of the renderer to user for the header.
+     */
+    tableHeaderRenderer?: string;
+
+    /**
+     * Contains the name of the renderer to user for the cell.
+     */
+    tableCellRenderer?: string;
 }
 
-export type SchemaFieldInfos = ScField<any, any>;
+export type Field = ScField<any, any>;
+export type SchemaFieldInfos = Field;
 
-type OnlyInfos<T> = Omit<Omit<Omit<T, "title">, "optional">, "type">;
+
+type OnlyInfos<T> = Omit<T, "title" | "optional" | "type">;
 
 //endregion
 
@@ -333,6 +319,25 @@ export function string<Opt extends boolean>(title: string, optional: Opt, infos?
     return {...infos, title, optional, type: "string"};
 }
 
+byTypeValidator["string"] = (v,f) => {
+    if (typeof v !== "string") {
+        declareError(f.errorMessage_theValueIsInvalid || `Value must be a string`, "INVALID_TYPE");
+        return;
+    }
+
+    let sf = f as ScString<any>;
+
+    if ((sf.minLength !== undefined) && (v.length < sf.minLength)) {
+        declareError(sf.errorMessage_minLength || `Value must be at least ${sf.minLength} characters long`, "INVALID_LENGTH");
+        return;
+    }
+
+    if ((sf.maxLength !== undefined) && (v.length > sf.maxLength)) {
+        declareError(sf.errorMessage_maxLength || `Value must be less than ${sf.maxLength} characters long`, "INVALID_LENGTH");
+        return;
+    }
+};
+
 //endregion
 
 //region Boolean
@@ -348,6 +353,24 @@ export interface ScBoolean<Opt extends boolean> extends ScField<boolean, Opt> {
 export function boolean<Opt extends boolean>(title: string, optional: Opt, infos?: OnlyInfos<ScBoolean<Opt>>): ScBoolean<Opt> {
     return {...infos, title, optional, type: "boolean"};
 }
+
+byTypeValidator["boolean"] = (v, f) => {
+    if (typeof v !== "boolean") {
+        declareError(f.errorMessage_theValueIsInvalid || `Value must be a boolean`, "INVALID_TYPE");
+    }
+
+    let sf = f as ScBoolean<any>;
+
+    if (sf.requireTrue) {
+        if (v !== true) {
+            declareError(sf.errorMessage_requireTrue || `Value must be true`, "INVALID_VALUE");
+        }
+    } else if (sf.requireFalse) {
+        if (v !== false) {
+            declareError(sf.errorMessage_requireFalse || `Value must be false`, "INVALID_VALUE");
+        }
+    }
+};
 
 //endregion
 
@@ -371,6 +394,24 @@ export interface ScNumber<Opt extends boolean> extends ScField<number, Opt> {
 
 export function number<Opt extends boolean>(title: string, optional: Opt, infos?: OnlyInfos<ScNumber<Opt>>): ScNumber<Opt> {
     return {...infos, title, optional, type: "number"};
+}
+
+byTypeValidator["number"] = (v,f) => {
+    if (typeof v !== "number") {
+        declareError(f.errorMessage_theValueIsInvalid || `Value must be a number`, "INVALID_TYPE");
+    }
+
+    let sf = f as ScNumber<any>;
+
+    if ((sf.minValue!==undefined) && (v < sf.minValue)) {
+        declareError(sf.errorMessage_minValue || `Value must be at least ${sf.minValue}`, "INVALID_LENGTH");
+        return;
+    }
+
+    if ((sf.maxValue!==undefined) && (v > sf.maxValue)) {
+        declareError(sf.errorMessage_maxValue || `Value must be less than ${sf.maxValue}`, "INVALID_LENGTH");
+        return;
+    }
 }
 
 //endregion
