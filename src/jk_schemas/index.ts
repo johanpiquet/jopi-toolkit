@@ -242,6 +242,68 @@ export type SchemaToType<S extends Schema> =
     & { [K in keyof S['desc'] as S['desc'][K] extends ScField<any, true> ? K : never] ?:
     S['desc'][K] extends ScField<infer T, any> ? T : never };
 
+export interface ScOnTableRenderingInfo {
+    /**
+     * The title to use if rendering with a Table.
+     */
+    title?: string;
+
+    /**
+     * If true, then allows hiding the column
+     * when rendering into a UI table component.
+     */
+    enableHiding?: boolean;
+
+    /**
+     * If true, then the table column is hidden by default.
+     */
+    defaultHidden?: boolean;
+
+    /**
+     * If true, then the table column is hidden and remain hidden.
+     */
+    alwaysHidden?: boolean;
+
+    /**
+     * If true, then allows sorting the column
+     * when rendering into a UI table component.
+     */
+    enableSorting?: boolean;
+
+    /**
+     * If true, then allows editing the column
+     * when rendering into a UI table component.
+     */
+    enableEditing?: boolean;
+
+    /**
+     * Contains the name of the renderer to user for the header.
+     */
+    rendererForHeader?: string;
+
+    /**
+     * Contains the name of the renderer to user for the cell.
+     */
+    rendererForCell?: string;
+
+    /**
+     * Allows setting the column grow rule.
+     */
+    columnGrow?: "takeAllPlace" | "takeMinPlace";
+
+    /**
+     * Allows defining extra-css class for rendering the cells.
+     */
+    cellCssClass?: string;
+
+    /**
+     * Allows defining extra-css class for rendering the header.
+     */
+    headerCssClass?: string;
+
+    textAlign?: "left" | "center" | "right";
+}
+
 interface ScField<T, Opt extends boolean> {
     title: string;
     type: string;
@@ -259,43 +321,7 @@ interface ScField<T, Opt extends boolean> {
 
     metas?: Record<string, string>;
 
-    /**
-     * If true, then allows hiding the column
-     * when rendering into a UI table component.
-     */
-    tableEnableHiding?: boolean;
-
-    /**
-     * If true, then the table column is hidden by default.
-     */
-    tableDefaultHidden?: boolean;
-
-    /**
-     * If true, then the table column is hidden and remain hidden.
-     */
-    tableAlwaysHidden?: boolean;
-
-    /**
-     * If true, then allows sorting the column
-     * when rendering into a UI table component.
-     */
-    tableEnableSorting?: boolean;
-
-    /**
-     * If true, then allows editing the column
-     * when rendering into a UI table component.
-     */
-    tableEnableEditing?: boolean;
-
-    /**
-     * Contains the name of the renderer to user for the header.
-     */
-    tableHeaderRenderer?: string;
-
-    /**
-     * Contains the name of the renderer to user for the cell.
-     */
-    tableCellRenderer?: string;
+    onTableRendering?: ScOnTableRenderingInfo;
 }
 
 export type Field = ScField<any, any>;
