@@ -266,6 +266,16 @@ interface ScField<T, Opt extends boolean> {
     tableEnableHiding?: boolean;
 
     /**
+     * If true, then the table column is hidden by default.
+     */
+    tableDefaultHidden?: boolean;
+
+    /**
+     * If true, then the table column is hidden and remain hidden.
+     */
+    tableAlwaysHidden?: boolean;
+
+    /**
      * If true, then allows sorting the column
      * when rendering into a UI table component.
      */
@@ -291,7 +301,6 @@ interface ScField<T, Opt extends boolean> {
 export type Field = ScField<any, any>;
 export type SchemaFieldInfos = Field;
 
-
 type OnlyInfos<T> = Omit<T, "title" | "optional" | "type">;
 
 //endregion
@@ -300,7 +309,7 @@ type OnlyInfos<T> = Omit<T, "title" | "optional" | "type">;
 
 //region String
 
-export interface ScString<Opt extends boolean> extends ScField<string, Opt> {
+export interface ScString<Opt extends boolean = boolean> extends ScField<string, Opt> {
     minLength?: number;
     errorMessage_minLength?: string;
 
@@ -342,7 +351,7 @@ byTypeValidator["string"] = (v,f) => {
 
 //region Boolean
 
-export interface ScBoolean<Opt extends boolean> extends ScField<boolean, Opt> {
+export interface ScBoolean<Opt extends boolean = boolean> extends ScField<boolean, Opt> {
     requireTrue?: boolean;
     errorMessage_requireTrue?: string;
     
@@ -376,24 +385,58 @@ byTypeValidator["boolean"] = (v, f) => {
 
 //region Number
 
-export interface ScNumber<Opt extends boolean> extends ScField<number, Opt> {
+export interface ScNumber<Opt extends boolean = boolean> extends ScField<number, Opt> {
     minValue?: number;
     errorMessage_minValue?: string;
 
     maxValue?: number;
     errorMessage_maxValue?: string;
 
-    // TODO: allowDecimal
     allowDecimal?: boolean;
+
     roundMethod?: "round" | "floor" | "ceil";
     errorMessage_dontAllowDecimal?: string;
 
     incrStep?: number;
     placeholder?: string;
+
+    /**
+     * Allows displaying this value as a simple
+     * number, or a current, or a percent.
+     */
+    displayType?: "decimal" | "currency" | "percent";
+
+    /**
+     * The regional currency format to use for formating.
+     * Ex: "en-US", "fr-FR".
+     */
+    localFormat?: string;
+
+    /**
+     * The type of currency.
+     * Ex: "USD".
+     */
+    currency?: string;
 }
 
 export function number<Opt extends boolean>(title: string, optional: Opt, infos?: OnlyInfos<ScNumber<Opt>>): ScNumber<Opt> {
     return {...infos, title, optional, type: "number"};
+}
+
+export function formatNumber(value: string, fieldNumber: ScNumber, defaultLocalFormat: string = "en-US", defaultCurrency: string = "USD") {
+    const amount = parseFloat(value);
+
+    let localFormat = fieldNumber.localFormat || defaultLocalFormat;
+
+    switch (fieldNumber.displayType) {
+        case "currency":
+            return new Intl.NumberFormat(localFormat, {
+                style: "currency",
+                currency: fieldNumber.currency || defaultCurrency,
+            }).format(amount);
+        default:
+            return new Intl.NumberFormat(localFormat, {style: fieldNumber.displayType || "decimal"}).format(amount);
+    }
 }
 
 byTypeValidator["number"] = (v,f) => {
@@ -413,6 +456,23 @@ byTypeValidator["number"] = (v,f) => {
         return;
     }
 }
+
+//endregion
+
+//region Currency
+
+export function currency<Opt extends boolean>(title: string, optional: Opt, infos?: OnlyInfos<ScNumber<Opt>>): ScNumber<Opt> {
+    return number(title, optional, {...infos, displayType: "currency"})
+}
+
+//endregion
+
+//region Percent
+
+export function percent<Opt extends boolean>(title: string, optional: Opt, infos?: OnlyInfos<ScNumber<Opt>>): ScNumber<Opt> {
+    return number(title, optional, {...infos, displayType: "percent"})
+}
+
 
 //endregion
 
