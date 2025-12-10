@@ -3,6 +3,9 @@ import * as path from 'node:path';
 export * from "./common.ts";
 import * as jk_timer from "jopi-toolkit/jk_timer";
 
+import { exec } from 'child_process';
+import os from 'os';
+
 export interface GithubDownloadParams {
     /**
      * The file or directory to download.
@@ -33,7 +36,7 @@ export async function githubDownload(params: GithubDownloadParams) {
 
         await fs.mkdir(localDir, { recursive: true });
 
-        const response = await fetch(contentUrl, {headers: headers,});
+        const response = await fetch(contentUrl, { headers: headers, });
 
         if (!response.ok) {
             throw new Error(`Github download error: ${response.status} ${response.statusText}`);
@@ -68,7 +71,7 @@ export async function githubDownload(params: GithubDownloadParams) {
 
         for (const item of contents) {
             // Reduce, otherwise we get a "403 rate limit exceed" error.
-            await jk_timer.tick(gRateLimit);
+            await jk_timer.tick(50);
 
             if (item.type === 'file' && item.download_url) {
                 let itemPath = item.path;
@@ -91,19 +94,54 @@ export async function githubDownload(params: GithubDownloadParams) {
     let repoOwner = parts.pop();
     let repoName = parts.pop();
     let tree = parts.pop();
-    if (tree!=="tree") throw new Error("Invalid URL - Must be of type https://github.com/ownerName/repoName/tree/branchName/path/to/folder");
+    if (tree !== "tree") throw new Error("Invalid URL - Must be of type https://github.com/ownerName/repoName/tree/branchName/path/to/folder");
     let branchName = parts.pop();
     const pathInsideRepo = parts.reverse().join("/");
 
     await fetchAndProcessContent(pathInsideRepo, params.downloadPath);
 }
 
-function getRateLimit() {
-    let sLimit = process.env.GITHUB_API_LIMIT_SECONDS;
-    if (!sLimit) return 50;
-    let res = parseInt(sLimit);
-    if (isNaN(res)) return 50;
-    return res;
-}
 
-const gRateLimit = getRateLimit();
+export function killPort(port: string = '3000'): Promise<void> {
+    return new Promise<void>((resolve) => {
+        const isWindows = os.platform() === 'win32';
+
+        const command = isWindows
+            ? `netstat -ano | findstr :${port}`
+            : `lsof -ti :${port}`;
+
+        exec(command, (_error, stdout) => {
+            if (!stdout) {
+                resolve();
+                return;
+            }
+
+            const pids = isWindows
+                ? [...new Set(stdout.trim().split('\n').map(line => {
+                    const parts = line.trim().split(/\s+/);
+                    return parts[parts.length - 1];
+                }).filter(pid => pid && /^\d+$/.test(pid) && pid !== '0'))]
+                : stdout.trim().split('\n');
+
+            const killCmd = isWindows ? 'taskkill /PID' : 'kill -9';
+            let pending = pids.length;
+
+            if (pending === 0) {
+                resolve();
+                return;
+            }
+
+            pids.forEach(pid => {
+                exec(`${killCmd} ${pid}${isWindows ? ' /F' : ''}`, async (err) => {
+                    if (err) console.error(`Failed to kill process ${pid}`);
+                    else console.log(`⚠️  Process ${pid} automatically killed to free the port ${port}`);
+
+                    if (--pending === 0) {
+                        await jk_timer.tick(250);
+                        resolve();
+                    }
+                });
+            });
+        });
+    });
+}
