@@ -22,7 +22,8 @@
     "tsc": "tsc",
     "bun-publish": "npx tsc && bun publish",
     "untrack": "git rm -r --cached -- ./dist/**;",
-    "jopiLink": "npx jopi-mono link-add"
+    "jopiLink": "npx jopi-mono link-add",
+    "dev:tsc": "npx tsc --watch"
   },
   "devDependencies": {
     "@types/adm-zip": "^0.5.7",
