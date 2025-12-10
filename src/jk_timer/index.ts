@@ -78,6 +78,9 @@ export function tick(timeInMs: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, timeInMs));
 }
 
+export const sleep = tick;
+export const pause = tick;
+
 export function chrono(mustSaveMeasures: boolean): Chrono {
     return new ChronoImpl(mustSaveMeasures)
 }
