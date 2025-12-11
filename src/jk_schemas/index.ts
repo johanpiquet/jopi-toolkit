@@ -47,7 +47,7 @@ export function validateSchema(data: any, schema: Schema): ValidationErrors|unde
     //
     if (schema.schemaMeta.normalize) {
         try {
-            schema.schemaMeta.normalize(data);
+            schema.schemaMeta.normalize(data, gValueCheckingHelper);
         }
         catch (e: any) {
             if (e instanceof SchemaError) {
@@ -126,7 +126,7 @@ export function validateSchema(data: any, schema: Schema): ValidationErrors|unde
 
     if (schema.schemaMeta.validate) {
         try {
-            schema.schemaMeta.validate(data);
+            schema.schemaMeta.validate(data, gValueCheckingHelper);
         }
         catch (e: any) {
             if (e instanceof SchemaError) {
@@ -150,6 +150,18 @@ export function validateSchema(data: any, schema: Schema): ValidationErrors|unde
 }
 
 const byTypeValidator: Record<string, (v: any, fieldInfos: SchemaFieldInfos) => void> = {};
+
+/**
+ * A helper allowing to make field validation easier.
+ * Is sent to normalize and validate functions.
+ */
+class ValueCheckingHelper {
+    declareError(message?: string, errorCode?: string) {
+        throw new SchemaError(message, errorCode);
+    }
+}
+
+const gValueCheckingHelper = new ValueCheckingHelper();
 
 //endregion
 
@@ -197,11 +209,50 @@ const gRegistry: Record<string, RegistryEntry> = {};
 //region Schema
 
 export function schema<T extends SchemaDescriptor>(descriptor: T, meta?: SchemaMeta): Schema & { desc: T } {
-    return { desc: descriptor, schemaMeta: meta || {} };
+    return new SchemaImpl(descriptor, meta || {});
+}
+
+class SchemaImpl<T extends SchemaDescriptor> implements Schema {
+    constructor(public readonly desc: T, public readonly schemaMeta: SchemaMeta) {
+    }
+
+    toJson(): SchemaInfo {
+        return toJson(this);
+    }
+
+    addDataNormalizer(f: (allValues: any, checkHelper: ValueCheckingHelper) => void): this {
+        if (!this.schemaMeta.normalize) {
+            this.schemaMeta.normalize = f;
+        }
+
+        const f1 = this.schemaMeta.normalize;
+
+        this.schemaMeta.normalize = function (values, helper) {
+            f1(values, helper);
+            f(values, helper);
+        }
+        
+        return this;
+    }
+
+    addDataValidator(f: (allValues: any, checkHelper: ValueCheckingHelper) => void): this {
+        if (!this.schemaMeta.validate) {
+            this.schemaMeta.validate = f;
+        }
+
+        const f1 = this.schemaMeta.validate;
+
+        this.schemaMeta.validate = function (values, helper) {
+            f1(values, helper);
+            f(values, helper);
+        }
+        
+        return this;
+    }
 }
 
 export interface SchemaDescriptor  {
-    [field: string]: ScField<any, any>;
+    [field: string]: Field;
 }
 
 export interface SchemaMeta {
@@ -209,8 +260,8 @@ export interface SchemaMeta {
     description?: string;
     [key: string]: any;
     
-    normalize?: (allValues: any) => void;
-    validate?: (allValues: any) => void;
+    normalize?: (allValues: any, checkHelper: ValueCheckingHelper) => void;
+    validate?: (allValues: any, checkHelper: ValueCheckingHelper) => void;
 }
 
 export interface SchemaInfo {
@@ -219,6 +270,26 @@ export interface SchemaInfo {
 }
 
 export interface Schema extends SchemaInfo {
+    /**
+     * Get serializable data describing this schema.
+     */
+    toJson(): SchemaInfo;
+
+    /**
+     * Add a function whose role is to normalize the data.
+     *
+     * Cumulating: if a normalize function has already been added,
+     * then the previous function will be called before this one.
+     */
+    addDataNormalizer(f: (allValues: any, checkHelper: ValueCheckingHelper) => void): this;
+
+    /**
+     * Add a function whose role is to validate the data.
+     *
+     * Cumulating: if a validate function has already been added,
+     * then the previous function will be called before this one.
+     */
+    addDataValidator(f: (allValues: any, checkHelper: ValueCheckingHelper) => void): this;
 }
 
 export function toJson(schema: Schema): SchemaInfo {
