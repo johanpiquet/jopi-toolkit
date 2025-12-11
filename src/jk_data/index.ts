@@ -59,6 +59,26 @@ export class JDataRowSource_UseArray implements JDataRowSource {
     }
 }
 
+export class JDataRowSource_HttpProxy implements JDataRowSource {
+    public constructor(public readonly dataSourceName: string, private readonly url: string, public readonly schema: Schema) {
+    }
+
+    async read(params: JDataRowSource_ReadParams): Promise<JDataRowSource_ReadResult> {
+        let toSend = {dsName: this.dataSourceName, read: params};
+        let res = await fetch(this.url, {method: "POST", body: JSON.stringify(toSend)});
+
+        if (res.status !== 200) {
+            throw new Error(`Error while reading data source ${this.dataSourceName}`);
+        }
+
+        let asJson = await res.json();
+        return asJson as JDataRowSource_ReadResult;
+    }
+}
+
+/**
+ * Filter the row content according to rules.
+ */
 export function simpleRowArrayFilter(rows: any[], params: JRowArrayFilter): JDataRowSource_ReadResult {
     // > Apply filter.
 
