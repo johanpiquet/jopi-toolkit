@@ -80,7 +80,7 @@ export function validateSchema(data: any, schema: Schema): ValidationErrors|unde
 
             if (field.normalize) {
                 defaultErrorMessage = field.errorMessage_theValueIsInvalid;
-                field.normalize(value, data);
+                field.normalize(value, data, gValueCheckingHelper);
             }
 
             if (!field.optional) {
@@ -103,7 +103,7 @@ export function validateSchema(data: any, schema: Schema): ValidationErrors|unde
 
             if (field.validator) {
                 defaultErrorMessage = field.errorMessage_theValueIsInvalid;
-                field.validator(value, data);
+                field.validator(value, data, gValueCheckingHelper);
             }
         }
         catch (e: any) {
@@ -375,7 +375,46 @@ export interface ScOnTableRenderingInfo {
     textAlign?: "left" | "center" | "right";
 }
 
-interface ScField<T, Opt extends boolean> {
+/**
+ * Get information about how storing this field.
+ */
+export interface ScFieldStore {
+    /**
+     * Allow knowing if a BDD index must be created for this field.
+     * The default is true.
+     */
+    mustIndex?: boolean;
+
+    /**
+     * Allow knowing if this field is the primary key.
+     * If more than one primary is set, then a composed key will be created.
+     * The default is false.
+     */
+    isPrimaryKey?: boolean;
+
+    /**
+     * The column name to use when storing this field in a database.
+     * The default is the field name.
+     */
+    colName?: string;
+
+    /**
+     * An indication on the size of the data to store.
+     * The default is "default".
+     *
+     * - big: for storing large strings / binary.
+     * - medium: for storing item with a common size.
+     * - tiny: for storing small strings / binary.
+     */
+    dataSize?: "tiny" | "medium" | "big";
+
+    /**
+     * Allow forcing the type name for the BDD.
+     */
+    databaseType?: string;
+}
+
+export interface ScField<T, Opt extends boolean> {
     title: string;
     type: string;
 
@@ -387,12 +426,31 @@ interface ScField<T, Opt extends boolean> {
     errorMessage_theDataTypeIsInvalid?: string;
     errorMessage_theValueIsInvalid?: string;
 
-    normalize?: (value: T, allValues: any) => void;
-    validator?: (value: T, allValues: any) => void;
+    /**
+     * A function used to normalize the field value.
+     */
+    normalize?: (value: T, allValues: any, valueCheckingHelp: ValueCheckingHelper) => void;
 
+    /**
+     * A function used to validate the field.
+     */
+    validator?: (value: T, allValues: any, valueCheckingHelp: ValueCheckingHelper) => void;
+
+    /**
+     * Meta-data associated with this field.
+     * The usage is free, you can use it for whatever you want.
+     */
     metas?: Record<string, string>;
 
+    /**
+     * Get information about how to render this field in a data table.
+     */
     onTableRendering?: ScOnTableRenderingInfo;
+
+    /**
+     * Get information about how storing this field.
+     */
+    store?: ScFieldStore;
 }
 
 export type Field = ScField<any, any>;
