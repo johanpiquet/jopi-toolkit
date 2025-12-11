@@ -56,6 +56,10 @@
       "bun": "./src/jk_process/index.ts",
       "default": "./dist/jk_process/index.js"
     },
+    "./jk_data": {
+      "bun": "./src/jk_data/index.ts",
+      "default": "./dist/jk_data/index.js"
+    },
     "./jk_what": {
       "bun": "./src/jk_what/index.ts",
       "default": "./dist/jk_what/index.js"
