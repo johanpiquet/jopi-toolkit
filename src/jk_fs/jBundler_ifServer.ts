@@ -181,13 +181,34 @@ export function writeTextToFileSync(filePath: string, text: string, createDir: b
     fss.writeFileSync(filePath, text, {encoding: 'utf8', flag: 'w'});
 }
 
-export function readTextFromFile(filePath: string): Promise<string> {
-    return fs.readFile(filePath, 'utf8');
+export async function readTextFromFile(filePath: string, throwError: boolean = false): Promise<string> {
+    if (throwError) {
+        return fs.readFile(filePath, 'utf8');
+    }
+
+    try {
+        return await fs.readFile(filePath, 'utf8');
+    }
+    catch {
+        // @ts-ignore
+        return undefined;
+    }
 }
 
-export async function readJsonFromFile<T = any>(filePath: string): Promise<T> {
-    let txt = await fs.readFile(filePath, 'utf8');
-    return JSON.parse(txt) as T;
+export async function readJsonFromFile<T = any>(filePath: string, throwError: boolean = false): Promise<T> {
+    if (throwError) {
+        let txt = await fs.readFile(filePath, 'utf8');
+        return JSON.parse(txt) as T;
+    } else {
+        try {
+            let txt = await fs.readFile(filePath, 'utf8');
+            return JSON.parse(txt) as T;
+        }
+        catch {
+            // @ts-ignore
+            return undefined;
+        }
+    }
 }
 
 export function readTextFromFileSync(filePath: string): string {
