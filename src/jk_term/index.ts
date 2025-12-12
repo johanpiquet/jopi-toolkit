@@ -105,6 +105,9 @@ export const textBgRed = buildWriter(B_RED);
 export const logBlue = buildLogger(C_BLUE);
 export const textBlue = buildWriter(C_BLUE);
 
+export const logGrey = buildLogger(C_GREY);
+export const textGrey = buildWriter(C_GREY);
+
 export const logBgBlue = buildLogger(B_BLUE, C_WHITE);
 export const textBgBlue = buildWriter(B_BLUE, C_WHITE);
 
