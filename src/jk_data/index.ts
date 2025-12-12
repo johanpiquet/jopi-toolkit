@@ -1,10 +1,10 @@
-import type {Schema} from "jopi-toolkit/jk_schema";
+import {type Schema} from "jopi-toolkit/jk_schema";
 
 //region Rows Arrays
 
 export interface JFieldSorting {
-    field: string;
-    direction: "asc" | "desc";
+    id: string;
+    desc: boolean;
 }
 
 export interface JFieldFilter {
@@ -30,7 +30,7 @@ export interface JRowsFilter {
 }
 
 export interface JPageExtraction {
-    pageOffset: number;
+    pageIndex: number;
     pageSize: number;
 }
 
@@ -70,8 +70,8 @@ export function simpleRowArrayFilter(rows: any[], params: JRowArrayFilter): JTab
 
     if (params.sorting && params.sorting.length) {
         const sorting = params.sorting[0];
-        const sortField = sorting.field;
-        const sortDir = sorting.direction;
+        const sortField = sorting.id;
+        const sortDesc = sorting.desc;
 
         rows = rows.sort((a, b) => {
             let av = a[sortField];
@@ -84,19 +84,19 @@ export function simpleRowArrayFilter(rows: any[], params: JRowArrayFilter): JTab
             const bvIsNumber = typeof bv === "number";
 
             if (avIsNumber && bvIsNumber) {
-                if (sortDir === "asc") {
-                    return av - bv;
-                } else {
+                if (sortDesc) {
                     return bv - av;
+                } else {
+                    return av - bv;
                 }
             } else {
                 const avStr = String(av);
                 const bvStr = String(bv);
 
-                if (sortDir === "asc") {
-                    return avStr.localeCompare(bvStr);
-                } else {
+                if (sortDesc) {
                     return bvStr.localeCompare(avStr);
+                } else {
+                    return avStr.localeCompare(bvStr);
                 }
             }
         });
@@ -106,7 +106,7 @@ export function simpleRowArrayFilter(rows: any[], params: JRowArrayFilter): JTab
     let offset = 0;
 
     if (params.page) {
-        offset = params.page.pageOffset;
+        offset = params.page.pageIndex * params.page.pageSize;
         rows = rows.slice(offset, offset + params.page.pageSize);
     }
 
