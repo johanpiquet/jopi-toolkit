@@ -123,12 +123,13 @@ export interface JTableDs_ReadResult {
 }
 
 export interface JTableDs {
+    get name(): string;
     get schema(): Schema;
     read(params: JTableDs_ReadParams): Promise<JTableDs_ReadResult>;
 }
 
 export class JTableDs_UseArray implements JTableDs {
-    public constructor(public readonly schema: Schema, private readonly rows: any[]) {
+    public constructor(public readonly name: string, public readonly schema: Schema, private readonly rows: any[]) {
     }
 
     async read(params: JTableDs_ReadParams): Promise<JTableDs_ReadResult> {
@@ -137,11 +138,11 @@ export class JTableDs_UseArray implements JTableDs {
 }
 
 export class JTableDs_HttpProxy implements JTableDs {
-    public constructor(public readonly dataSourceName: string, private readonly url: string, public readonly schema: Schema) {
+    public constructor(public readonly name: string, private readonly url: string, public readonly schema: Schema) {
     }
 
     async read(params: JTableDs_ReadParams): Promise<JTableDs_ReadResult> {
-        let toSend = {dsName: this.dataSourceName, read: params};
+        let toSend = {dsName: this.name, read: params};
 
         let res = await fetch(this.url, {
             method: "POST",
@@ -150,7 +151,7 @@ export class JTableDs_HttpProxy implements JTableDs {
         });
 
         if (res.status !== 200) {
-            throw new Error(`Error while reading data source "${this.dataSourceName}"`);
+            throw new Error(`Error while reading data source "${this.name}"`);
         }
 
         let asJson = await res.json();
