@@ -1,13 +1,10 @@
 import type {Schema} from "jopi-toolkit/jk_schema";
 
+//region Rows Arrays
+
 export interface JFieldSorting {
     field: string;
     direction: "asc" | "desc";
-}
-
-export interface JRowsFilter {
-    field?: string;
-    value: string;
 }
 
 export interface JFieldFilter {
@@ -27,6 +24,11 @@ export type JFieldConstraintType =
     | "$nin"   // Not in an array of values
     | "$like"  // Like search %endsWith or startsWith%
 
+export interface JRowsFilter {
+    field?: string;
+    value: string;
+}
+
 export interface JRowArrayFilter {
     offset: number;
     count: number;
@@ -36,50 +38,10 @@ export interface JRowArrayFilter {
     fieldFilters?: Record<string, JFieldFilter[]>;
 }
 
-export interface JDataRowSource_ReadParams extends JRowArrayFilter {
-}
-
-export interface JDataRowSource_ReadResult {
-    rows: any[];
-    total?: number;
-    offset?: number;
-}
-
-export interface JDataRowSource {
-    get schema(): Schema;
-    read(params: JDataRowSource_ReadParams): Promise<JDataRowSource_ReadResult>;
-}
-
-export class JDataRowSource_UseArray implements JDataRowSource {
-    public constructor(public readonly schema: Schema, private readonly rows: any[]) {
-    }
-
-    async read(params: JDataRowSource_ReadParams): Promise<JDataRowSource_ReadResult> {
-        return simpleRowArrayFilter(this.rows, params);
-    }
-}
-
-export class JDataRowSource_HttpProxy implements JDataRowSource {
-    public constructor(public readonly dataSourceName: string, private readonly url: string, public readonly schema: Schema) {
-    }
-
-    async read(params: JDataRowSource_ReadParams): Promise<JDataRowSource_ReadResult> {
-        let toSend = {dsName: this.dataSourceName, read: params};
-        let res = await fetch(this.url, {method: "POST", body: JSON.stringify(toSend)});
-
-        if (res.status !== 200) {
-            throw new Error(`Error while reading data source ${this.dataSourceName}`);
-        }
-
-        let asJson = await res.json();
-        return asJson as JDataRowSource_ReadResult;
-    }
-}
-
 /**
  * Filter the row content according to rules.
  */
-export function simpleRowArrayFilter(rows: any[], params: JRowArrayFilter): JDataRowSource_ReadResult {
+export function simpleRowArrayFilter(rows: any[], params: JRowArrayFilter): JTableDs_ReadResult {
     // > Apply filter.
 
     if (params.filter) {
@@ -104,7 +66,6 @@ export function simpleRowArrayFilter(rows: any[], params: JRowArrayFilter): JDat
     // > Apply sorting.
 
     if (params.sorting && params.sorting.length) {
-        debugger;
         const sorting = params.sorting[0];
         const sortField = sorting.field;
         const sortDir = sorting.direction;
@@ -147,3 +108,54 @@ export function simpleRowArrayFilter(rows: any[], params: JRowArrayFilter): JDat
         offset: params.offset
     }
 }
+
+//endregion
+
+//region JTableDs
+
+export interface JTableDs_ReadParams extends JRowArrayFilter {
+}
+
+export interface JTableDs_ReadResult {
+    rows: any[];
+    total?: number;
+    offset?: number;
+}
+
+export interface JTableDs {
+    get schema(): Schema;
+    read(params: JTableDs_ReadParams): Promise<JTableDs_ReadResult>;
+}
+
+export class JTableDs_UseArray implements JTableDs {
+    public constructor(public readonly schema: Schema, private readonly rows: any[]) {
+    }
+
+    async read(params: JTableDs_ReadParams): Promise<JTableDs_ReadResult> {
+        return simpleRowArrayFilter(this.rows, params);
+    }
+}
+
+export class JTableDs_HttpProxy implements JTableDs {
+    public constructor(public readonly dataSourceName: string, private readonly url: string, public readonly schema: Schema) {
+    }
+
+    async read(params: JTableDs_ReadParams): Promise<JTableDs_ReadResult> {
+        let toSend = {dsName: this.dataSourceName, read: params};
+
+        let res = await fetch(this.url, {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify(toSend)
+        });
+
+        if (res.status !== 200) {
+            throw new Error(`Error while reading data source "${this.dataSourceName}"`);
+        }
+
+        let asJson = await res.json();
+        return asJson as JTableDs_ReadResult;
+    }
+}
+
+//endregion
