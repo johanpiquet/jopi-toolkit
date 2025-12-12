@@ -29,10 +29,13 @@ export interface JRowsFilter {
     value: string;
 }
 
-export interface JRowArrayFilter {
-    offset: number;
-    count: number;
+export interface JPageExtraction {
+    pageOffset: number;
+    pageSize: number;
+}
 
+export interface JRowArrayFilter {
+    page?: JPageExtraction;
     filter?: JRowsFilter;
     sorting?: JFieldSorting[];
     fieldFilters?: Record<string, JFieldFilter[]>;
@@ -100,13 +103,14 @@ export function simpleRowArrayFilter(rows: any[], params: JRowArrayFilter): JTab
     }
 
     const totalWithoutPagination = rows.length;
+    let offset = 0;
 
-    rows = rows.slice(params.offset, params.offset + params.count);
-
-    return {
-        rows, total: totalWithoutPagination,
-        offset: params.offset
+    if (params.page) {
+        offset = params.page.pageOffset;
+        rows = rows.slice(offset, offset + params.page.pageSize);
     }
+
+    return {rows, total: totalWithoutPagination, offset};
 }
 
 //endregion
