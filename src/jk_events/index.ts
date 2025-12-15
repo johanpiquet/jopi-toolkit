@@ -1,4 +1,5 @@
 import {PriorityLevel as EventPriority} from "jopi-toolkit/jk_tools";
+
 // Warning: it's export.
 export {PriorityLevel as EventPriority} from "jopi-toolkit/jk_tools";
 
@@ -31,14 +32,21 @@ export class EventGroup {
         if (this.evenSpy) this.evenSpy(eventName, e);
 
         const events = this.listenersFor[eventName];
-        if (!events) return;
+        //
+        if (events) {
+            if (events.value) {
+                const values = events.value;
 
-        if (events.value) {
-            const values = events.value;
-
-            for (const listener of values) {
-                listener(e, eventName);
+                for (const listener of values) {
+                    listener(e, eventName);
+                }
             }
+        }
+
+        let staticEvent = gStaticEvents[eventName];
+        //
+        if (staticEvent) {
+            staticEvent.send(e);
         }
     }
 
@@ -149,6 +157,7 @@ export interface SEventController {
 
 class StaticEventImpl implements StaticEvent, SEventController {
     constructor(public readonly eventName: string, private readonly eventItems: SyncEventListener[]) {
+        gStaticEvents[eventName] = this;
     }
 
     send<T>(data: T): T {
@@ -187,3 +196,5 @@ export const sendAsyncEvent = defaultEventGroup.sendAsyncEvent.bind(defaultEvent
 export function addListener<T = any|undefined>(eventName: string, priorityOrListener: EventPriority | EventListener<T>, listener?: EventListener<T>): void {
     defaultEventGroup.addListener(eventName, priorityOrListener as EventPriority, listener as EventListener<T>);
 }
+
+let gStaticEvents: Record<string, StaticEventImpl> = {};
