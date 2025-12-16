@@ -171,32 +171,22 @@ let gTempDir: string|undefined;
 
 //region Resolving
 
-export function findNodePackageDir(packageName: string, useLinuxPathFormat: boolean = true): string|undefined {
-    let currentDir = jk_fs.dirname(findPackageJson());
+export async function findNodePackageDir(packageName: string, searchFromDir = getCodeSourceDirHint()): Promise<string | undefined> {
+    let currentDir = jk_fs.resolve(searchFromDir);
 
     while (true) {
-        const packagePath = jk_fs.join(currentDir, 'node_modules', packageName);
-
-        if (jk_fs.isDirectorySync(packagePath)) {
-            if (useLinuxPathFormat) return jk_fs.win32ToLinuxPath(packagePath);
-            return packagePath;
-        }
-
+        let packagePath = jk_fs.join(currentDir, 'node_modules', packageName);
+        if (await jk_fs.isDirectory(packagePath)) return packagePath;
         const parentDir = jk_fs.dirname(currentDir);
-
-        // Reached root directory
-        if (parentDir === currentDir) {
-            break;
-        }
-
+        if (parentDir === currentDir) break;
         currentDir = parentDir;
     }
 
     return undefined;
 }
 
-export function requireNodePackageDir(packageName: string, useLinuxPathFormat: boolean = true): string {
-    let pkgDir = findNodePackageDir(packageName, useLinuxPathFormat);
+export async function requireNodePackageDir(packageName: string, searchFromDir = getCodeSourceDirHint()): Promise<string> {
+    let pkgDir = await findNodePackageDir(packageName, searchFromDir);
     if (!pkgDir) throw new Error("Package '" + packageName + "' not found");
     return pkgDir;
 }
