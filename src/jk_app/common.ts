@@ -201,7 +201,9 @@ export function findPackageJsonDir(searchFromDir = getCodeSourceDirHint()): stri
 }
 
 export function findPackageJson(searchFromDir = getCodeSourceDirHint()): string {
-    if (!searchFromDir && (gPackageJsonPath!==undefined)) return gPackageJsonPath;
+    if (!searchFromDir && (gPackageJsonPath!==undefined)) {
+        return gPackageJsonPath;
+    }
 
     let currentDir = searchFromDir;
 
