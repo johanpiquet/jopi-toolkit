@@ -41,66 +41,82 @@
   "publicPublishedDate": "12/20/2025",
   "exports": {
     "./jk_schema": {
+      "types": "./src/jk_schemas/index.ts",
       "bun": "./src/jk_schemas/index.ts",
       "default": "./dist/jk_schemas/index.js"
     },
     "./jk_tools": {
+      "types": "./src/jk_tools/index.ts",
       "bun": "./src/jk_tools/index.ts",
       "default": "./dist/jk_tools/index.js"
     },
     "./jk_process": {
+      "types": "./src/jk_process/index.ts",
       "bun": "./src/jk_process/index.ts",
       "default": "./dist/jk_process/index.js"
     },
     "./jk_data": {
+      "types": "./src/jk_data/index.ts",
       "bun": "./src/jk_data/index.ts",
       "default": "./dist/jk_data/index.js"
     },
     "./jk_what": {
+      "types": "./src/jk_what/index.ts",
       "bun": "./src/jk_what/index.ts",
       "default": "./dist/jk_what/index.js"
     },
     "./jk_os": {
+      "types": "./src/jk_os/index.ts",
       "bun": "./src/jk_os/index.ts",
       "default": "./dist/jk_os/index.js"
     },
     "./jk_crypto": {
+      "types": "./src/jk_crypto/index.ts",
       "bun": "./src/jk_crypto/index.ts",
       "default": "./dist/jk_crypto/index.js"
     },
     "./jk_thread": {
+      "types": "./src/jk_thread/index.ts",
       "bun": "./src/jk_thread/index.ts",
       "default": "./dist/jk_thread/index.js"
     },
     "./jk_events": {
+      "types": "./src/jk_events/index.ts",
       "bun": "./src/jk_events/index.ts",
       "default": "./dist/jk_events/index.js"
     },
     "./jk_fs": {
+      "types": "./src/jk_fs/index.ts",
       "bun": "./src/jk_fs/index.ts",
       "default": "./dist/jk_fs/index.js"
     },
     "./jk_timer": {
+      "types": "./src/jk_timer/index.ts",
       "bun": "./src/jk_timer/index.ts",
       "default": "./dist/jk_timer/index.js"
     },
     "./jk_term": {
+      "types": "./src/jk_term/index.ts",
       "bun": "./src/jk_term/index.ts",
       "default": "./dist/jk_term/index.js"
     },
     "./jk_app": {
+      "types": "./src/jk_app/index.ts",
       "bun": "./src/jk_app/index.ts",
       "default": "./dist/jk_app/index.js"
     },
     "./jk_compress": {
+      "types": "./src/jk_compress/index.ts",
       "bun": "./src/jk_compress/index.ts",
       "default": "./dist/jk_compress/index.js"
     },
     "./jk_webSocket": {
+      "types": "./src/jk_webSocket/index.ts",
       "bun": "./src/jk_webSocket/index.ts",
       "default": "./dist/jk_webSocket/index.js"
     },
     "./jk_logs": {
+      "types": "./src/jk_logs/index.ts",
       "bun": "./src/jk_logs/index.ts",
       "default": "./dist/jk_logs/index.js"
     }
