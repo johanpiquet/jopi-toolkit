@@ -68,6 +68,14 @@ export function readTextFromFileSync(filePath: string): string {
     throw new Error("Not implemented");
 }
 
+export async function readJsonFromFile<T = any>(filePath: string, throwError: boolean = false): Promise<T> {
+    throw new Error("Not implemented");
+}
+
+export function readJsonFromFileSync<T = any>(filePath: string, throwError: boolean = false): T {
+    throw new Error("Not implemented");
+}
+
 export async function isFile(filePath: string): Promise<boolean> {
     throw new Error("Not implemented");
 }

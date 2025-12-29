@@ -195,13 +195,27 @@ export async function readTextFromFile(filePath: string, throwError: boolean = f
     }
 }
 
+export function readTextFromFileSync(filePath: string, throwError: boolean = false): string {
+    if (throwError) {
+        return fss.readFileSync(filePath, 'utf8');
+    }
+
+    try {
+        return fss.readFileSync(filePath, 'utf8');
+    }
+    catch {
+        // @ts-ignore
+        return undefined;
+    }
+}
+
 export async function readJsonFromFile<T = any>(filePath: string, throwError: boolean = false): Promise<T> {
     if (throwError) {
-        let txt = await fs.readFile(filePath, 'utf8');
+        let txt = await readTextFromFile(filePath, true);
         return JSON.parse(txt) as T;
     } else {
         try {
-            let txt = await fs.readFile(filePath, 'utf8');
+            let txt = await readTextFromFile(filePath);
             return JSON.parse(txt) as T;
         }
         catch {
@@ -211,8 +225,20 @@ export async function readJsonFromFile<T = any>(filePath: string, throwError: bo
     }
 }
 
-export function readTextFromFileSync(filePath: string): string {
-    return fss.readFileSync(filePath, 'utf8');
+export function readJsonFromFileSync<T = any>(filePath: string, throwError: boolean = false): T {
+    if (throwError) {
+        let txt = readTextFromFileSync(filePath);
+        return JSON.parse(txt) as T;
+    } else {
+        try {
+            let txt = readTextFromFileSync(filePath);
+            return JSON.parse(txt) as T;
+        }
+        catch {
+            // @ts-ignore
+            return undefined;
+        }
+    }
 }
 
 export async function isFile(filePath: string): Promise<boolean> {
