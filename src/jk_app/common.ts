@@ -164,6 +164,10 @@ export function getTempDir(): string {
     return gTempDir;
 }
 
+export function setTempDir(dir: string) {
+    gTempDir = dir;
+}
+
 let gIsExited = false;
 let gTempDir: string|undefined;
 
