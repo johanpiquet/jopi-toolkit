@@ -106,9 +106,11 @@ export function killPort(port: string = '3000'): Promise<void> {
     return new Promise<void>((resolve) => {
         const isWindows = os.platform() === 'win32';
 
+        // On Windows, we use netstat to find the PID of the process using the port as LOCAL address.
+        // On Unix, we use lsof with -sTCP:LISTEN to only get the listening process (avoiding killing clients/browsers).
         const command = isWindows
             ? `netstat -ano | findstr :${port}`
-            : `lsof -ti :${port}`;
+            : `lsof -ti :${port} -sTCP:LISTEN`;
 
         exec(command, (_error, stdout) => {
             if (!stdout) {
@@ -119,9 +121,17 @@ export function killPort(port: string = '3000'): Promise<void> {
             const pids = isWindows
                 ? [...new Set(stdout.trim().split('\n').map(line => {
                     const parts = line.trim().split(/\s+/);
-                    return parts[parts.length - 1];
-                }).filter(pid => pid && /^\d+$/.test(pid) && pid !== '0'))]
-                : stdout.trim().split('\n');
+                    // netstat -ano output: Proto, Local Address, Foreign Address, State, PID
+                    const localAddress = parts[1] || "";
+                    const pid = parts[parts.length - 1];
+                    // Check if it's exactly the port (avoiding :3000 matching :30000)
+                    // and ensure it's the local address (avoiding killing clients connected to this port)
+                    if (localAddress.endsWith(`:${port}`)) {
+                        return pid;
+                    }
+                    return null;
+                }).filter((pid): pid is string => !!(pid && /^\d+$/.test(pid) && pid !== '0')))]
+                : stdout.trim().split('\n').filter(pid => pid && /^\d+$/.test(pid));
 
             const killCmd = isWindows ? 'taskkill /PID' : 'kill -9';
             let pending = pids.length;
@@ -133,8 +143,11 @@ export function killPort(port: string = '3000'): Promise<void> {
 
             pids.forEach(pid => {
                 exec(`${killCmd} ${pid}${isWindows ? ' /F' : ''}`, async (err) => {
-                    if (err) console.error(`Failed to kill process ${pid}`);
-                    else console.log(`⚠️  Process ${pid} automatically killed to free the port ${port}`);
+                    if (err) {
+                        // Process might have already exited
+                    } else {
+                        console.log(`⚠️  Process ${pid} automatically killed to free the port ${port}`);
+                    }
 
                     if (--pending === 0) {
                         await jk_timer.tick(250);
