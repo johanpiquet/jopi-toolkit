@@ -1,5 +1,5 @@
 {
-  "version": "3.0.25",
+  "version": "3.1.1",
   "name": "jopi-toolkit",
   "license": "MIT",
   "homepage": "https://github.com/johanpiquet/jopi-toolkit",
@@ -23,7 +23,8 @@
     "bun-publish": "npx tsc && bun publish",
     "untrack": "git rm -r --cached -- ./dist/**;",
     "jopiLink": "npx jopi-mono link-add",
-    "dev:tsc": "npx tsc --watch"
+    "dev:tsc": "tsc --watch",
+    "dev:tsc-check": "tsc --noEmit"
   },
   "devDependencies": {
     "@types/adm-zip": "^0.5.7",
@@ -37,7 +38,7 @@
     "mime-types": "^3.0.1",
     "ws": "^8.18.3"
   },
-  "publishedDate": "12/21/2025",
+  "publishedDate": "12/31/2025",
   "publicPublishedDate": "12/20/2025",
   "exports": {
     "./jk_schema": {
