@@ -22,8 +22,6 @@
     "dev:tsc-watch": "tsc --watch",
     "dev:tsc-check": "tsc --noEmit"
   },
-  "devDependencies": {
-  },
   "dependencies": {
     "@types/adm-zip": "^0.5.7",
     "@types/bun": "latest",
