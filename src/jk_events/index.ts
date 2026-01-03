@@ -1,11 +1,11 @@
-import {PriorityLevel as EventPriority} from "jopi-toolkit/jk_tools";
+import { PriorityLevel as EventPriority } from "jopi-toolkit/jk_tools";
 
 // Warning: it's export.
-export {PriorityLevel as EventPriority} from "jopi-toolkit/jk_tools";
+export { PriorityLevel as EventPriority } from "jopi-toolkit/jk_tools";
 
 // noinspection JSUnusedGlobalSymbols
 
-export type EventListener<T = any> = (e: T, eventName: string) => void|Promise<void>;
+export type EventListener<T = any> = (e: T, eventName: string) => void | Promise<void>;
 export type SyncEventListener<T = any> = (e: T, eventName: string) => void;
 
 export type EventListenerProvider = () => Promise<EventListener[]>;
@@ -28,7 +28,7 @@ export class EventGroup {
         if (events) events.remove(listener);
     }
 
-    sendEvent(eventName: string, e?: any|undefined): void {
+    sendEvent(eventName: string, e?: any | undefined): void {
         if (this.evenSpy) this.evenSpy(eventName, e);
 
         const events = this.listenersFor[eventName];
@@ -50,8 +50,8 @@ export class EventGroup {
         }
     }
 
-    async sendAsyncEvent(eventName: string, e?: any|undefined): Promise<void> {
-        if (eventName[0]!=='@') {
+    async sendAsyncEvent(eventName: string, e?: any | undefined): Promise<void> {
+        if (eventName[0] !== '@') {
             throw new Error(`Async events ${eventName} must start with @`);
         }
 
@@ -82,7 +82,7 @@ export class EventGroup {
         }
     }
 
-    addListener<T = any|undefined>(eventName: string, priorityOrListener: EventPriority | EventListener<T>, listener?: EventListener<T>): void {
+    addListener<T = any | undefined>(eventName: string, priorityOrListener: EventPriority | EventListener<T>, listener?: EventListener<T>): void {
         let priority: EventPriority;
         let actualListener: EventListener;
 
@@ -117,11 +117,11 @@ export class EventGroup {
  */
 class PriorityArray<T> {
     private entries: PriorityArrayEntry<T>[] = [];
-    private build: T[]|undefined;
+    private build: T[] | undefined;
 
     add(priority: EventPriority, value: T) {
         this.build = undefined;
-        this.entries.push({priority, value});
+        this.entries.push({ priority, value });
     }
 
     remove(value: T) {
@@ -135,7 +135,7 @@ class PriorityArray<T> {
         }
 
         return this.build = this.entries
-            .sort((a,b) => Number(a.priority) - Number(b.priority))
+            .sort((a, b) => Number(a.priority) - Number(b.priority))
             .map(e => e.value);
     }
 }
@@ -149,6 +149,7 @@ interface PriorityArrayEntry<T> {
 
 export interface StaticEvent {
     send<T>(data: T): T;
+    setThisValue(value: any): void;
 }
 
 export interface SEventController {
@@ -156,13 +157,17 @@ export interface SEventController {
 }
 
 class StaticEventImpl implements StaticEvent, SEventController {
+    private thisValue: any;
+
     constructor(public readonly eventName: string, private readonly eventItems: SyncEventListener[]) {
         gStaticEvents[eventName] = this;
     }
 
     send<T>(data: T): T {
+        let thisValue = this.thisValue ?? gStaticEventsThisValue;
+
         for (const listener of this.eventItems) {
-            listener(data, this.eventName);
+            listener.call(thisValue, data, this.eventName);
         }
 
         return data;
@@ -176,11 +181,21 @@ class StaticEventImpl implements StaticEvent, SEventController {
             if (idx >= 0) this.eventItems.splice(idx, 1);
         };
     }
+
+    setThisValue(thisValue: any): void {
+        this.thisValue = thisValue;
+    }
 }
 
 export function createStaticEvent(eventName: string, eventItems: SyncEventListener[]): StaticEvent {
     return new StaticEventImpl(eventName, eventItems);
 }
+
+export function setStaticEventsThisValue(thisValue: any) {
+    gStaticEventsThisValue = thisValue;
+}
+//
+let gStaticEventsThisValue: any;
 
 export const defaultEventGroup = new EventGroup();
 
@@ -193,7 +208,7 @@ export const removeListener = defaultEventGroup.removeListener.bind(defaultEvent
 export const sendEvent = defaultEventGroup.sendEvent.bind(defaultEventGroup);
 export const sendAsyncEvent = defaultEventGroup.sendAsyncEvent.bind(defaultEventGroup);
 
-export function addListener<T = any|undefined>(eventName: string, priorityOrListener: EventPriority | EventListener<T>, listener?: EventListener<T>): void {
+export function addListener<T = any | undefined>(eventName: string, priorityOrListener: EventPriority | EventListener<T>, listener?: EventListener<T>): void {
     defaultEventGroup.addListener(eventName, priorityOrListener as EventPriority, listener as EventListener<T>);
 }
 
