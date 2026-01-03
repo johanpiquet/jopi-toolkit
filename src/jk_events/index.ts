@@ -1,4 +1,5 @@
 import { PriorityLevel as EventPriority } from "jopi-toolkit/jk_tools";
+import { isBrowser } from "jopi-toolkit/jk_what";
 
 // Warning: it's export.
 export { PriorityLevel as EventPriority } from "jopi-toolkit/jk_tools";
@@ -9,6 +10,9 @@ export type EventListener<T = any> = (e: T, eventName: string) => void | Promise
 export type SyncEventListener<T = any> = (e: T, eventName: string) => void;
 
 export type EventListenerProvider = () => Promise<EventListener[]>;
+
+let gStaticEvents: Record<string, any> = {};
+let gStaticEventsThisValue: any;
 
 export class EventGroup {
     private readonly listenersFor: Record<string, PriorityArray<EventListener>> = {};
@@ -183,7 +187,9 @@ class StaticEventImpl implements StaticEvent, SEventController {
     }
 
     setThisValue(thisValue: any): void {
-        this.thisValue = thisValue;
+        if (isBrowser) {
+            this.thisValue = thisValue;
+        }
     }
 }
 
@@ -192,10 +198,11 @@ export function createStaticEvent(eventName: string, eventItems: SyncEventListen
 }
 
 export function setStaticEventsThisValue(thisValue: any) {
-    gStaticEventsThisValue = thisValue;
+    if (isBrowser) {
+        gStaticEventsThisValue = thisValue;
+    }
 }
-//
-let gStaticEventsThisValue: any;
+
 
 export const defaultEventGroup = new EventGroup();
 
@@ -211,5 +218,3 @@ export const sendAsyncEvent = defaultEventGroup.sendAsyncEvent.bind(defaultEvent
 export function addListener<T = any | undefined>(eventName: string, priorityOrListener: EventPriority | EventListener<T>, listener?: EventListener<T>): void {
     defaultEventGroup.addListener(eventName, priorityOrListener as EventPriority, listener as EventListener<T>);
 }
-
-let gStaticEvents: Record<string, StaticEventImpl> = {};
