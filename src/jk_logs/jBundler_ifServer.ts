@@ -4,6 +4,12 @@ import type {LogInitializer} from "./index.ts";
 
 export function init(init: LogInitializer) {
     const mainDir = jk_app.findPackageJsonDir();
+    
+    // Possible that no package.json is found.
+    // For exemple, when using a command line tool (ex: jopi init).
+    //
+    if (!mainDir) return;
+
     const filePath = jk_fs.join(mainDir, "logConfig.json");
 
     if (!jk_fs.isFileSync(filePath)) return;

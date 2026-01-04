@@ -195,12 +195,24 @@ export async function requireNodePackageDir(packageName: string, searchFromDir =
     return pkgDir;
 }
 
-export function findPackageJsonDir(searchFromDir = getCodeSourceDirHint()): string {
-    let pkgJsonPath = findPackageJson(searchFromDir);
+export function findRequiredPackageJsonDir(searchFromDir = getCodeSourceDirHint()): string {
+    let pkgJsonPath = findRequiredPackageJson(searchFromDir);
     return jk_fs.dirname(pkgJsonPath);
 }
 
-export function findPackageJson(searchFromDir = getCodeSourceDirHint()): string {
+export function findPackageJsonDir(searchFromDir = getCodeSourceDirHint()): string|undefined {
+    let pkgJsonPath = findPackageJson(searchFromDir);
+    if (!pkgJsonPath) return undefined;
+    return jk_fs.dirname(pkgJsonPath);
+}
+
+export function findRequiredPackageJson(searchFromDir = getCodeSourceDirHint()): string {
+    let res = findPackageJson(searchFromDir);
+    if (!res) throw new Error("No package.json found.");
+    return res;
+}
+
+export function findPackageJson(searchFromDir = getCodeSourceDirHint()): string|undefined {
     if (!searchFromDir && (gPackageJsonPath!==undefined)) {
         return gPackageJsonPath;
     }
@@ -220,7 +232,7 @@ export function findPackageJson(searchFromDir = getCodeSourceDirHint()): string 
         currentDir = parentDir;
     }
 
-    throw "No package.json found."
+    return undefined;
 }
 //
 let gPackageJsonPath: string|undefined;
@@ -242,7 +254,7 @@ export function getCodeSourceDirHint() {
 export function getSourceCodeDir(): string {
     if (gSourceCodeDir) return gSourceCodeDir;
 
-    let pkgJsonPath = findPackageJson();
+    let pkgJsonPath = findRequiredPackageJson();
     let dirName = jk_fs.join(jk_fs.dirname(pkgJsonPath), "src");
 
     if (jk_fs.isDirectorySync(dirName)) {
@@ -265,7 +277,7 @@ export function getCompiledCodeDir(): string {
         return gCompiledSourcesDir = sourceCodeDir;
     }
 
-    let pkgJsonPath = findPackageJson();
+    let pkgJsonPath = findRequiredPackageJson();
 
     let rootDir = jk_fs.dirname(pkgJsonPath);
 
