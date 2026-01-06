@@ -291,7 +291,7 @@ export function getCompiledCodeDir(): string {
     return rootDir;
 }
 
-export function getCompiledFilePathFor(sourceFilePath: string): string {
+export function getCompiledFilePathFor(sourceFilePath: string, replaceExtension = true): string {
     const compiledCodeDir = getCompiledCodeDir();
     const sourceCodeDir = getSourceCodeDir();
 
@@ -301,9 +301,16 @@ export function getCompiledFilePathFor(sourceFilePath: string): string {
 
     let filePath = sourceFilePath.substring(sourceCodeDir.length);
 
-    if (isNodeJS && !filePath.endsWith(".js")) {
+    if (replaceExtension && !filePath.endsWith(".js")) {
         let idx = filePath.lastIndexOf(".");
-        if (idx !== -1) filePath = filePath.substring(0, idx) + ".js";
+        let ext = filePath.substring(idx);
+
+        // This avoid case where there is no extension but a punct in the name.
+        // Ex: importing "@/lib/jopijs.menu.getManager"
+        //
+        if ((ext === ".ts") || (ext === ".tsx")) {
+            filePath = filePath.substring(0, idx) + ".js";
+        }
     }
 
     return jk_fs.join(compiledCodeDir, filePath);
