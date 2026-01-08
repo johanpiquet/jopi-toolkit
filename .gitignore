@@ -3,3 +3,5 @@ node_modules
 /.turbo
 dist
 *.js
+.jopi-sync.json
+.jopi.state.updating
